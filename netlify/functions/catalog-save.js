@@ -9,11 +9,20 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
+function buildTimePassword() {
+  try {
+    return String(require('../../lib/catalogAuth.cjs').ADMIN_PASSWORD || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 function allowedPasswords() {
   return [
     process.env.ADMIN_PASSWORD,
     process.env.CATALOG_ADMIN_PASSWORD,
     process.env.VITE_ADMIN_PASSWORD,
+    buildTimePassword(),
   ]
     .map((s) => String(s || '').trim())
     .filter(Boolean);
@@ -40,7 +49,7 @@ function verifyPassword(body, headers) {
       status: 503,
       error: 'Sunucuda admin şifresi tanımlı değil',
       hint:
-        'Netlify → Site configuration → Environment variables → ADMIN_PASSWORD ekleyin (admin giriş şifrenizle aynı). Scope: All veya Functions. Sonra Clear cache and deploy.',
+        'Netlify → Environment variables → VITE_ADMIN_PASSWORD (admin giriş şifreniz) tanımlı olsun, Scope: Builds veya All. Sonra Clear cache and deploy.',
     };
   }
 

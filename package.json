@@ -6,7 +6,7 @@
   "description": "B2B oyuncak katalog sitesi - Netlify static deploy",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/generate-catalog-auth.cjs && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
