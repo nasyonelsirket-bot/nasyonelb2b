@@ -1,7 +1,7 @@
 /**
  * Admin kataloğunu siteye yayınlar (Netlify Blobs).
  */
-const { getStore } = require('@netlify/blobs');
+const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -104,7 +104,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore({ name: 'b2b-catalog', consistency: 'strong' });
+    const store = getCatalogStore(event);
     const updatedAt = new Date().toISOString();
 
     const tasks = [
@@ -136,7 +136,8 @@ exports.handler = async (event) => {
       headers: HEADERS,
       body: JSON.stringify({
         error: err.message || 'Kayıt başarısız',
-        hint: 'Netlify Blobs etkin mi kontrol edin (Pro plan gerekebilir).',
+        hint:
+          'Netlify üzerinde yeniden deploy edin. Hata sürerse Site configuration → Environment variables → NETLIFY_SITE_ID ve NETLIFY_AUTH_TOKEN (Personal Access Token, Blobs izni) ekleyin.',
       }),
     };
   }

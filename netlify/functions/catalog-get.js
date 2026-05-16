@@ -1,7 +1,7 @@
 /**
  * Herkese açık katalog — admin panelinde yayınlanan ürünler buradan okunur.
  */
-const { getStore } = require('@netlify/blobs');
+const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +21,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore({ name: 'b2b-catalog', consistency: 'eventual' });
+    const store = getCatalogStore(event);
     const [products, categories, banners, settings, updatedAt] = await Promise.all([
       store.get('products', { type: 'json' }),
       store.get('categories', { type: 'json' }),
