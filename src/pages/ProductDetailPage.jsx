@@ -10,22 +10,30 @@ import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
 import { getMinOrderInfo } from '@/utils/orderRules';
 import { formatPrice } from '@/utils/whatsapp';
+import { getProductImages } from '@/utils/productImage';
+import ProductImage from '@/components/product/ProductImage';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const { getProductById, settings } = useStore();
+  const { getProductById } = useStore();
   const { addToCart } = useCart();
   const product = getProductById(id);
-  const minLineValue = Number(settings.minOrderLineValue) || 2000;
   const minInfo = useMemo(
-    () => (product ? getMinOrderInfo(product, minLineValue) : null),
-    [product, minLineValue],
+    () => (product ? getMinOrderInfo(product) : null),
+    [product],
   );
   const [qty, setQty] = useState(1);
+  const [imageIndex, setImageIndex] = useState(0);
+  const gallery = useMemo(() => getProductImages(product), [product]);
+  const activeImage = gallery[imageIndex] || gallery[0];
 
   useEffect(() => {
     if (minInfo) setQty(minInfo.minQty);
   }, [minInfo?.minQty, product?.id]);
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [product?.id]);
 
   if (!product || !minInfo) {
     return (
@@ -47,8 +55,29 @@ export default function ProductDetailPage() {
         </Link>
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <div className="aspect-square overflow-hidden rounded-2xl bg-brand-50">
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
+          <div className="space-y-3">
+            <ProductImage
+              src={activeImage}
+              alt={product.name}
+              variant="detail"
+              className="rounded-2xl border border-brand-100 shadow-card w-full"
+            />
+            {gallery.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {gallery.map((url, i) => (
+                  <button
+                    key={`${url}-${i}`}
+                    type="button"
+                    onClick={() => setImageIndex(i)}
+                    className={`shrink-0 rounded-lg border-2 overflow-hidden transition ${
+                      i === imageIndex ? 'border-accent-gold ring-2 ring-accent-gold/30' : 'border-brand-100 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <ProductImage src={url} alt="" variant="thumb" className="!w-16 !h-16" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -59,9 +88,6 @@ export default function ProductDetailPage() {
             <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
             <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>
             <p className="font-display text-4xl font-bold text-brand-700 mt-6">{formatPrice(product.price)}</p>
-            <p className="text-sm text-brand-600 mt-2">
-              Bu üründen sepette en az {formatPrice(minLineValue)} tutarında sipariş verilmelidir.
-            </p>
             <p className="mt-6 text-gray-600 leading-relaxed">{product.description}</p>
 
             <div className="mt-8 max-w-sm">

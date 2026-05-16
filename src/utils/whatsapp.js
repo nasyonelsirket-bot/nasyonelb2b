@@ -1,4 +1,6 @@
 import { resolveMinQuantity } from '@/utils/orderRules';
+import { getCartDiscount } from '@/utils/cartDiscount';
+import { getFreeShippingStatus, getOrderPayableTotal, STANDARD_SHIPPING_FEE_TL } from '@/utils/cartShipping';
 
 export function formatPrice(price) {
   return new Intl.NumberFormat('tr-TR', {
@@ -17,7 +19,6 @@ function padLine(text, width = 28) {
 export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   const cleanPhone = String(phone).replace(/\D/g, '');
   const siteName = options.siteName || 'Nasyonel Toys';
-  const minLineValue = options.minLineValue || 2000;
   const dateStr = new Date().toLocaleDateString('tr-TR', {
     day: '2-digit',
     month: 'long',
@@ -25,6 +26,14 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  let subtotal = 0;
+  cartItems.forEach((item) => {
+    subtotal += item.price * item.quantity;
+  });
+  const discount = options.discount || getCartDiscount(subtotal);
+  const shipping = options.shipping || getFreeShippingStatus(discount.subtotal);
+  const orderTotal = getOrderPayableTotal(discount.grandTotal, shipping);
 
   const lines = [
     '╔══════════════════════════════════╗',
@@ -51,12 +60,9 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
     '',
   ];
 
-  let grandTotal = 0;
-
   cartItems.forEach((item, index) => {
     const lineTotal = item.price * item.quantity;
-    grandTotal += lineTotal;
-    const minQty = resolveMinQuantity(item, minLineValue);
+    const minQty = resolveMinQuantity(item);
 
     lines.push(
       `*▸ KALEM ${index + 1}*`,
@@ -76,7 +82,25 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   lines.push(
     '━━━━━━━━ *SİPARİŞ ÖZETİ* ━━━━━━━━━',
     `📦 *Ürün çeşidi:* ${cartItems.length}`,
-    `💰 *GENEL TOPLAM:* *${formatPrice(grandTotal)}*`,
+    `💵 *Ara Toplam:* ${formatPrice(discount.subtotal)}`,
+    `🏷️ *İskonto:* ${discount.tierLabel} (-${formatPrice(discount.discountAmount)})`,
+    discount.upsellMessage ? `💡 _${discount.upsellMessage}_` : null,
+    `🚚 *Kargo:* ${shipping.eligible ? '*Bedava* ✓' : formatPrice(shipping.shippingFee)}`,
+    `✅ *ÖDENECEK TUTAR:* *${formatPrice(orderTotal)}*`,
+    '',
+    '━━━━━━━━ *KARGO* ━━━━━━━━━━━━━━━━━',
+    `• ${formatPrice(shipping.threshold)} altı: *${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo*`,
+    `• ${formatPrice(shipping.threshold)} ve üzeri: *kargo bedava*`,
+    shipping.eligible
+      ? '• Bu siparişe *kargo bedava* uygulandı ✓'
+      : `• Bu siparişe ${formatPrice(shipping.shippingFee)} kargo eklendi (${formatPrice(shipping.remaining)} daha eklenirse bedava)`,
+    '',
+    '━━━━━━━━ *İSKONTO KOŞULLARI* ━━━━━━━━',
+    `• ${formatPrice(discount.threshold)} altı sepet: *%5 iskonto*`,
+    `• ${formatPrice(discount.threshold)} ve üzeri sepet: *%10 iskonto*`,
+    discount.tier === 'high'
+      ? '• Bu siparişe *%10* uygulandı ✓'
+      : `• Bu siparişe *%5* uygulandı (${formatPrice(discount.remainingToHigh)} daha eklenirse %10)`,
     '',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '✅ *Sipariş onayı için lütfen yanıtlayın.*',

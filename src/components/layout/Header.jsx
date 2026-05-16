@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { Menu, X, ShoppingCart, Search } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
+import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 
 const NAV = [
   { to: '/', label: 'Ana Sayfa' },
@@ -20,7 +21,7 @@ function resolveLogoUrl(url) {
 
 export default function Header() {
   const { settings } = useStore();
-  const { totalItems, cartAnimating } = useCart();
+  const { totalItems, totalPrice, cartAnimating } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -35,9 +36,12 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
-      <div className="bg-brand-950 text-brand-100 text-center text-xs py-2 px-4">
+      <div className="bg-brand-950 text-brand-100 text-center text-xs py-2 px-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
         <span className="text-accent-gold font-semibold">Nasyonel Toys</span>
-        {' '}— WhatsApp sipariş formu | Ürün başına min. 2.000 ₺
+        <span className="text-brand-300 hidden sm:inline">·</span>
+        <span>Toptan oyuncak katalog</span>
+        <span className="text-brand-300 hidden sm:inline">·</span>
+        <FreeShippingBanner subtotal={totalPrice} compact />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

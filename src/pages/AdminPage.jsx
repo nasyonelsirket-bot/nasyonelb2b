@@ -334,35 +334,58 @@ function CategoryAdmin({ store, setMsg }) {
 
 function BannerAdmin({ store, setMsg }) {
   const banners = Array.isArray(store.banners) ? store.banners : [];
-  const [b, setB] = useState({ title: '', subtitle: '', image: '', link: '/', active: true });
+  const [b, setB] = useState({ title: '', subtitle: '', image: '', link: '', active: true });
   const add = () => {
-    if (!b.title.trim()) return;
-    startTransition(() => store.addBanner(b));
-    setB({ title: '', subtitle: '', image: '', link: '/', active: true });
+    if (!b.image?.trim()) {
+      setMsg('Banner için görsel yükleyin');
+      return;
+    }
+    startTransition(() =>
+      store.addBanner({
+        ...b,
+        title: b.title.trim(),
+        subtitle: b.subtitle.trim(),
+        link: b.link.trim(),
+      }),
+    );
+    setB({ title: '', subtitle: '', image: '', link: '', active: true });
     setMsg('Banner eklendi');
   };
   return (
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
       <h2 className="font-bold">Banner Yönetimi</h2>
-      <input placeholder="Başlık" value={b.title} onChange={(e) => setB({ ...b, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <input placeholder="Alt başlık" value={b.subtitle} onChange={(e) => setB({ ...b, subtitle: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <input placeholder="Link (örn: /kategoriler)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+      <p className="text-sm text-gray-500">
+        Sadece görsel yükleyerek başlıksız banner ekleyebilirsiniz. Başlık ve alt başlık isteğe bağlıdır.
+      </p>
       <ImageDropzone
-        label="Banner görseli"
-        hint="Görseli sürükle-bırak veya tıkla"
+        label="Banner görseli (zorunlu)"
+        hint="Önerilen: 1400×600 · mobilde 4:3, masaüstünde geniş format"
         value={b.image}
         onChange={(url) => setB({ ...b, image: url })}
-        onFile={(file) => processImageFile(file, { maxWidth: 1400, maxHeight: 600, quality: 0.85 })}
+        onFile={(file) => processImageFile(file, { maxWidth: 1600, maxHeight: 720, quality: 0.88 })}
         aspect="video"
       />
-      <Button variant="primary" onClick={add}>Banner Ekle</Button>
+      <details className="rounded-lg border border-brand-100 bg-brand-50/50 p-3">
+        <summary className="cursor-pointer text-sm font-medium text-brand-800">İsteğe bağlı: başlık ve link</summary>
+        <div className="mt-3 space-y-2">
+          <input placeholder="Başlık (boş bırakılabilir)" value={b.title} onChange={(e) => setB({ ...b, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+          <input placeholder="Alt başlık" value={b.subtitle} onChange={(e) => setB({ ...b, subtitle: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+          <input placeholder="Tıklanınca gidilecek link (örn: /kategoriler)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+        </div>
+      </details>
+      <Button variant="primary" onClick={add} disabled={!b.image?.trim()}>
+        Banner Ekle
+      </Button>
       <ul className="space-y-3 mt-4">
         {banners.map((banner) => (
           <li key={banner.id} className="flex gap-3 items-center border-b border-brand-50 py-3">
             {banner.image && (
               <img src={banner.image} alt="" className="h-14 w-24 rounded object-cover shrink-0" />
             )}
-            <span className="flex-1 text-sm font-medium">{banner.title}</span>
+            <span className="flex-1 text-sm font-medium truncate">
+              {banner.title?.trim() || 'Başlıksız banner'}
+              {banner.link ? ` · ${banner.link}` : ''}
+            </span>
             <button type="button" onClick={() => store.deleteBanner(banner.id)} className="text-red-600 shrink-0">
               <Trash2 className="h-4 w-4" />
             </button>
@@ -418,7 +441,8 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
       <div className="rounded-2xl bg-white p-8 shadow-card">
         <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Onaylı ürünler görsel, stok kodu ve satış fiyatı ile çekilir. Toptan fiyat = Trendyol fiyatı ÷ bölücü.
+          Onaylı ürünler en büyük görsel URL’si ile çekilir (boyut küçültülmez). Toptan fiyat = Trendyol fiyatı ÷ bölücü.
+          Mevcut ürünler için görselleri güncellemek üzere yeniden senkronize edin.
         </p>
         {tyProgress && (
           <p className="text-sm text-brand-600 mb-2">
@@ -461,18 +485,6 @@ function SettingsAdmin({ store, setMsg }) {
         }
         aspect="logo"
       />
-      <div>
-        <label className="text-xs text-gray-500">Ürün başına minimum sipariş tutarı (₺)</label>
-        <input
-          type="number"
-          min="1"
-          step="100"
-          value={s.minOrderLineValue ?? 2000}
-          onChange={(e) => setS({ ...s, minOrderLineValue: e.target.value })}
-          className="w-full rounded-lg border px-3 py-2 text-sm mt-1"
-        />
-        <p className="text-xs text-gray-400 mt-1">Örn: 300 ₺ ürün → min. 7 adet (2.100 ₺)</p>
-      </div>
       {[
         ['whatsappNumber', 'WhatsApp Numarası'],
         ['metaPixelId', 'Meta Pixel ID'],

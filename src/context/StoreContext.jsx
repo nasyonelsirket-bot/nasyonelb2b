@@ -7,7 +7,11 @@ import {
 } from '@/data/demoProducts';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
-import { buildCategoriesFromProducts } from '@/utils/categories';
+import {
+  buildCategoriesFromProducts,
+  getProductCountsByCategory,
+  sortCategoriesBySearchPopularity,
+} from '@/utils/categories';
 
 const StoreContext = createContext(null);
 
@@ -37,6 +41,16 @@ export function StoreProvider({ children }) {
   useEffect(() => saveToStorage(KEYS.CATEGORIES, categories), [categories]);
   useEffect(() => saveToStorage(KEYS.BANNERS, banners), [banners]);
   useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
+
+  const productCountsByCategory = useMemo(
+    () => getProductCountsByCategory(products),
+    [products],
+  );
+
+  const sortedCategories = useMemo(
+    () => sortCategoriesBySearchPopularity(categories, productCountsByCategory),
+    [categories, productCountsByCategory],
+  );
 
   const addProduct = useCallback((product) => {
     setProducts((prev) => [
@@ -166,7 +180,7 @@ export function StoreProvider({ children }) {
   const value = useMemo(
     () => ({
       products,
-      categories,
+      categories: sortedCategories,
       banners,
       settings,
       addProduct,
@@ -193,6 +207,7 @@ export function StoreProvider({ children }) {
     [
       products,
       categories,
+      sortedCategories,
       banners,
       settings,
       addProduct,

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
 import { useStore } from '@/context/StoreContext';
+import { getCategorySearchScore } from '@/data/categorySearchRank';
 
 export default function CategoriesPage() {
   const { products, categories } = useStore();
@@ -34,11 +35,15 @@ export default function CategoriesPage() {
     }
 
     return [...byName.entries()]
-      .sort(([a], [b]) => a.localeCompare(b, 'tr'))
       .map(([name, items]) => ({
         category: { name, icon: '📦' },
         items,
-      }));
+      }))
+      .sort((a, b) => {
+        const scoreDiff = getCategorySearchScore(b.category.name) - getCategorySearchScore(a.category.name);
+        if (scoreDiff !== 0) return scoreDiff;
+        return b.items.length - a.items.length;
+      });
   }, [cat, categories, products]);
 
   return (

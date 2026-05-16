@@ -1,79 +1,163 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import Button from '@/components/ui/Button';
 
+const AUTO_MS = 5500;
+const SWIPE_THRESHOLD = 48;
+
 export default function HeroBanner() {
   const { banners } = useStore();
-  const active = (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false);
+  const active = (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false && b.image);
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStart = useRef(null);
+
+  const count = active.length;
+  const go = useCallback(
+    (delta) => {
+      if (count <= 1) return;
+      setIndex((i) => (i + delta + count) % count);
+    },
+    [count],
+  );
 
   useEffect(() => {
-    if (active.length <= 1) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % active.length), 6000);
+    setIndex((i) => (count ? Math.min(i, count - 1) : 0));
+  }, [count]);
+
+  useEffect(() => {
+    if (count <= 1 || paused) return;
+    const t = setInterval(() => go(1), AUTO_MS);
     return () => clearInterval(t);
-  }, [active.length]);
+  }, [count, paused, go]);
 
-  if (!active.length) return null;
+  const onTouchStart = (e) => {
+    touchStart.current = e.touches[0].clientX;
+  };
 
-  const current = active[index];
+  const onTouchEnd = (e) => {
+    if (touchStart.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current;
+    touchStart.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+    go(dx < 0 ? 1 : -1);
+  };
+
+  if (!count) return null;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl mx-4 sm:mx-6 lg:mx-8 mt-6 max-w-7xl lg:mx-auto">
-      <div
-        key={current.id}
-        className="relative aspect-[21/9] min-h-[280px] sm:min-h-[360px] transition-opacity duration-500"
-      >
-        <img
-          src={current.image}
-          alt={current.title}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-950/90 via-brand-900/70 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center px-8 sm:px-12 lg:px-16 max-w-2xl">
-          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-            {current.title}
-          </h1>
-          <p className="mt-3 text-lg text-brand-200">{current.subtitle}</p>
-          <div className="mt-6">
-            <Link to={current.link || '/kategoriler'}>
-              <Button variant="gold" size="lg">
-                Keşfet <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <section
+      className="hero-carousel relative mx-3 mt-4 sm:mx-6 sm:mt-6 lg:mx-auto lg:max-w-7xl lg:px-8"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      aria-label="Kampanya bannerları"
+      aria-roledescription="carousel"
+    >
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg ring-1 ring-brand-900/10">
+        <div
+          className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[21/9] min-h-[200px] sm:min-h-[260px] md:min-h-[300px] bg-brand-900"
+          aria-live="polite"
+        >
+          {active.map((banner, i) => {
+            const isActive = i === index;
+            const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
+            const link = banner.link?.trim() || '';
+            const slide = (
+              <>
+                <img
+                  src={banner.image}
+                  alt={banner.title?.trim() || `Banner ${i + 1}`}
+                  className={`hero-slide-img absolute inset-0 h-full w-full object-cover ${isActive ? 'hero-slide-img-active' : ''}`}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  draggable={false}
+                />
+                {hasText && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40" />
+                    <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-10 lg:px-14 max-w-xl pointer-events-none">
+                      {banner.title?.trim() && (
+                        <h2 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
+                          {banner.title}
+                        </h2>
+                      )}
+                      {banner.subtitle?.trim() && (
+                        <p className="mt-2 text-sm sm:text-lg text-brand-100/95 line-clamp-2">{banner.subtitle}</p>
+                      )}
+                      {link && banner.title?.trim() && (
+                        <div className="mt-4 pointer-events-auto">
+                          <Link to={link}>
+                            <Button variant="gold" size="md" className="sm:size-lg">
+                              Keşfet <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            );
 
-      {active.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={() => setIndex((i) => (i - 1 + active.length) % active.length)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur hover:bg-white/30"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIndex((i) => (i + 1) % active.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-2 text-white backdrop-blur hover:bg-white/30"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-            {active.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all ${i === index ? 'w-8 bg-white' : 'w-2 bg-white/50'}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
+            return (
+              <div
+                key={banner.id}
+                className={`hero-slide absolute inset-0 ${isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'}`}
+                aria-hidden={!isActive}
+              >
+                {link && !hasText ? (
+                  <Link to={link} className="block h-full w-full" tabIndex={isActive ? 0 : -1}>
+                    {slide}
+                  </Link>
+                ) : (
+                  slide
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {count > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/40 p-1.5 text-white backdrop-blur-sm transition hover:bg-brand-950/60 sm:left-4 sm:p-2"
+              aria-label="Önceki banner"
+            >
+              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/40 p-1.5 text-white backdrop-blur-sm transition hover:bg-brand-950/60 sm:right-4 sm:p-2"
+              aria-label="Sonraki banner"
+            >
+              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
+            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
+              {active.map((banner, i) => (
+                <button
+                  key={banner.id}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === index
+                      ? 'h-2 w-6 sm:w-8 bg-accent-gold shadow-sm'
+                      : 'h-2 w-2 bg-white/60 hover:bg-white/90'
+                  }`}
+                  aria-label={`Banner ${i + 1}`}
+                  aria-current={i === index ? 'true' : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </section>
   );
 }

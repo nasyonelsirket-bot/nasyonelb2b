@@ -3,7 +3,7 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 4;
+export const BRAND_VERSION = 5;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
@@ -60,6 +60,14 @@ export function runBrandMigration() {
       settings.contactMapQuery = DEFAULT_SETTINGS.contactMapQuery;
       settings.contactEmail = DEFAULT_SETTINGS.contactEmail;
     }
+    if (
+      !settings.aboutText ||
+      /toywholesale/i.test(settings.aboutText) ||
+      settings.aboutText.includes('15 yılı aşkın')
+    ) {
+      settings.aboutText = DEFAULT_SETTINGS.aboutText;
+    }
+    delete settings.minOrderLineValue;
 
     const storedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     const categories = refreshCategoryIcons(

@@ -65,7 +65,7 @@ function ProductFormFields({ form, setForm }) {
           onChange={(e) => setForm({ ...form, minOrder: parseInt(e.target.value, 10) || 1 })}
           className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-gray-400 mt-1">Ürün başına min. 2.000 ₺ kuralına göre otomatik hesaplanır</p>
+        <p className="text-xs text-gray-400 mt-1">Boş bırakılırsa minimum 1 adet uygulanır</p>
       </div>
       <div className="sm:col-span-2">
         <ImageDropzone
@@ -356,7 +356,13 @@ function ProductRow({
         </td>
         <td className="p-3">
           {p.image ? (
-            <img src={p.image} alt="" className="h-10 w-10 rounded object-cover bg-brand-50" />
+            <div className="product-media product-media--thumb !w-10 !h-10 rounded border border-brand-100">
+              {p.image ? (
+                <img src={p.image} alt="" className="product-media-img p-0.5" />
+              ) : (
+                <span className="text-[10px] text-gray-400">—</span>
+              )}
+            </div>
           ) : (
             <div className="h-10 w-10 rounded bg-brand-100" />
           )}

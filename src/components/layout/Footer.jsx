@@ -1,9 +1,22 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
+import { DEFAULT_SETTINGS } from '@/data/demoProducts';
+
+function footerAboutText(settings) {
+  const raw = String(settings?.aboutText || '').trim();
+  const fallback = DEFAULT_SETTINGS.aboutText;
+  let text = raw;
+  if (!text || /toywholesale/i.test(text)) {
+    text = fallback;
+  }
+  if (text.length <= 200) return text;
+  return `${text.slice(0, 197).replace(/\s+\S*$/, '')}…`;
+}
 
 export default function Footer() {
   const { settings } = useStore();
+  const siteName = settings.siteName || 'Nasyonel Toys';
 
   return (
     <footer className="gradient-hero text-white mt-auto">
@@ -16,10 +29,12 @@ export default function Footer() {
                   ? '/nasyonel-logo.png?v=3'
                   : settings.logoUrl
               }
-              alt={settings.siteName || 'Nasyonel'}
+              alt={siteName}
               className="site-logo-footer mb-4 rounded-lg bg-white/95 px-3 py-2"
             />
-            <p className="text-brand-200 text-sm max-w-md">{settings.aboutText?.slice(0, 150)}...</p>
+            <p className="text-brand-200 text-sm max-w-md leading-relaxed">
+              {footerAboutText(settings)}
+            </p>
           </div>
           <div>
             <h4 className="font-display font-bold mb-4">Hızlı Linkler</h4>
@@ -48,7 +63,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300">
-          © {new Date().getFullYear()} Nasyonel Toys. Tüm hakları saklıdır.
+          © {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.
         </div>
       </div>
     </footer>

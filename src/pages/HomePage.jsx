@@ -15,8 +15,7 @@ const FEATURES = [
 ];
 
 export default function HomePage() {
-  const { products, settings } = useStore();
-  const minLineValue = Number(settings.minOrderLineValue) || 2000;
+  const { products } = useStore();
   const [params] = useSearchParams();
   const q = params.get('q')?.toLowerCase();
 
@@ -60,7 +59,7 @@ export default function HomePage() {
       <ProductGrid
         products={filtered}
         title={q ? `Arama: "${q}"` : 'Tüm Ürünler'}
-        subtitle={`${filtered.length} ürün · Ürün başına minimum ${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(minLineValue)} sipariş`}
+        subtitle={`${filtered.length} ürün listeleniyor`}
       />
     </>
   );

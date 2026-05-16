@@ -4,19 +4,15 @@ import { ShoppingCart, Eye } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
+import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
-import { useStore } from '@/context/StoreContext';
 import { getMinOrderInfo } from '@/utils/orderRules';
+import { getPrimaryImage } from '@/utils/productImage';
 import { formatPrice } from '@/utils/whatsapp';
 
 export default function ProductCard({ product }) {
-  const { settings } = useStore();
   const { addToCart } = useCart();
-  const minLineValue = Number(settings.minOrderLineValue) || 2000;
-  const minInfo = useMemo(
-    () => getMinOrderInfo(product, minLineValue),
-    [product, minLineValue],
-  );
+  const minInfo = useMemo(() => getMinOrderInfo(product), [product]);
   const [qty, setQty] = useState(minInfo.minQty);
 
   const handleAdd = (e) => {
@@ -26,14 +22,14 @@ export default function ProductCard({ product }) {
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
-      <Link to={`/urun/${product.id}`} className="relative aspect-square overflow-hidden bg-brand-50">
-        <img
-          src={product.image || 'https://via.placeholder.com/400x400?text=Urun'}
+      <Link to={`/urun/${product.id}`} className="relative block border-b border-brand-100">
+        <ProductImage
+          src={getPrimaryImage(product)}
           alt={product.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          variant="card"
+          className="rounded-t-2xl"
         />
-        <div className="absolute inset-0 flex items-center justify-center bg-brand-900/40 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-brand-900/40 opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none">
           <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800">
             <Eye className="h-4 w-4" /> İncele
           </span>
