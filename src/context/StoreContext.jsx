@@ -49,6 +49,14 @@ export function StoreProvider({ children }) {
     setProducts((prev) => (Array.isArray(prev) ? prev.filter((p) => p.id !== id) : []));
   }, []);
 
+  const deleteProducts = useCallback((ids) => {
+    const idSet = new Set((ids || []).filter(Boolean));
+    if (!idSet.size) return;
+    setProducts((prev) =>
+      (Array.isArray(prev) ? prev : []).filter((p) => !idSet.has(p.id)),
+    );
+  }, []);
+
   const importProducts = useCallback((newProducts, newCategories) => {
     setProducts((prev) => {
       const safePrev = Array.isArray(prev) ? prev : [];
@@ -126,6 +134,7 @@ export function StoreProvider({ children }) {
       addProduct,
       updateProduct,
       deleteProduct,
+      deleteProducts,
       importProducts,
       addCategory,
       updateCategory,
@@ -148,6 +157,7 @@ export function StoreProvider({ children }) {
       addProduct,
       updateProduct,
       deleteProduct,
+      deleteProducts,
       importProducts,
       addCategory,
       updateCategory,

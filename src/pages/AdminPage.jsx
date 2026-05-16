@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, Plus, LogOut } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import AdminToast from '@/components/admin/AdminToast';
+import ProductsAdmin from '@/components/admin/ProductsAdmin';
+import ImageDropzone from '@/components/admin/ImageDropzone';
+import { processImageFile } from '@/utils/imageUpload';
 import { useStore } from '@/context/StoreContext';
 import { parseExcelFile } from '@/utils/excel';
 import { syncAllTrendyolProducts } from '@/services/trendyol';
@@ -17,31 +20,15 @@ const TABS = [
   { id: 'trendyol', label: 'Trendyol', icon: RefreshCw },
 ];
 
-const EMPTY_PRODUCT = {
-  name: '',
-  sku: '',
-  category: '',
-  price: 0,
-  image: '',
-  description: '',
-  isNew: false,
-  isCampaign: false,
-  minOrder: 1,
-};
-
 export default function AdminPage() {
   const store = useStore();
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('b2b_admin') === '1');
   const [password, setPassword] = useState('');
   const [tab, setTab] = useState('products');
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(EMPTY_PRODUCT);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState('success');
   const [tyLoading, setTyLoading] = useState(false);
   const [tyProgress, setTyProgress] = useState(null);
-
-  const products = Array.isArray(store.products) ? store.products : [];
 
   const showMsg = useCallback((text, type = 'success') => {
     setMsg(text);
@@ -65,38 +52,6 @@ export default function AdminPage() {
   const logout = () => {
     sessionStorage.removeItem('b2b_admin');
     setAuthed(false);
-  };
-
-  const saveProduct = (e) => {
-    e.preventDefault();
-    if (editing) {
-      store.updateProduct(editing, form);
-      showMsg('Ürün güncellendi');
-    } else {
-      store.addProduct({ ...form, id: `p-${Date.now()}` });
-      showMsg('Ürün eklendi');
-    }
-    setEditing(null);
-    setForm(EMPTY_PRODUCT);
-  };
-
-  const startEdit = (p) => {
-    setEditing(p.id);
-    setForm({ ...p });
-    setTab('products');
-  };
-
-  const handleDeleteProduct = (id, name) => {
-    if (!id) return;
-    if (!window.confirm(`"${name || 'Bu ürün'}" silinsin mi?`)) return;
-    startTransition(() => {
-      store.deleteProduct(id);
-      if (editing === id) {
-        setEditing(null);
-        setForm(EMPTY_PRODUCT);
-      }
-    });
-    showMsg('Ürün silindi');
   };
 
   const handleExcel = async (e) => {
@@ -180,72 +135,7 @@ export default function AdminPage() {
 
           <main className="flex-1 p-6 max-w-5xl">
             {tab === 'products' && (
-              <div className="space-y-8">
-                <form onSubmit={saveProduct} className="rounded-2xl bg-white p-6 shadow-card space-y-4">
-                  <h2 className="font-bold text-brand-900">{editing ? 'Ürün Düzenle' : 'Ürün Ekle'}</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {['name', 'sku', 'category', 'image'].map((f) => (
-                      <input
-                        key={f}
-                        placeholder={f}
-                        value={form[f] || ''}
-                        onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                        className="rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                        required={f === 'name' || f === 'sku'}
-                      />
-                    ))}
-                    <input
-                      type="number"
-                      step="0.01"
-                      placeholder="Fiyat"
-                      value={Number.isFinite(form.price) ? form.price : ''}
-                      onChange={(e) => {
-                        const v = parseFloat(e.target.value);
-                        setForm({ ...form, price: Number.isFinite(v) ? v : 0 });
-                      }}
-                      className="rounded-lg border border-brand-200 px-3 py-2 text-sm"
-                    />
-                    <input type="number" min="1" placeholder="Min. Sipariş Adedi" value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: parseInt(e.target.value, 10) || 1 })} className="rounded-lg border border-brand-200 px-3 py-2 text-sm" />
-                  </div>
-                  <textarea placeholder="Açıklama" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm h-20" />
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isNew} onChange={(e) => setForm({ ...form, isNew: e.target.checked })} /> Yeni</label>
-                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isCampaign} onChange={(e) => setForm({ ...form, isCampaign: e.target.checked })} /> Kampanya</label>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button type="submit" variant="primary"><Plus className="h-4 w-4" /> Kaydet</Button>
-                    {editing && <Button type="button" variant="secondary" onClick={() => { setEditing(null); setForm(EMPTY_PRODUCT); }}>İptal</Button>}
-                  </div>
-                </form>
-
-                <div className="rounded-2xl bg-white shadow-card overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-brand-50">
-                      <tr>
-                        <th className="p-3 text-left">Ürün</th>
-                        <th className="p-3">SKU</th>
-                        <th className="p-3">Min</th>
-                        <th className="p-3">Fiyat</th>
-                        <th className="p-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map((p, index) => (
-                        <tr key={p.id || `row-${index}`} className="border-t border-brand-50">
-                          <td className="p-3">{p.name}</td>
-                          <td className="p-3 text-center">{p.sku}</td>
-                          <td className="p-3 text-center">{p.minOrder || 1}</td>
-                          <td className="p-3 text-center">{p.price} ₺</td>
-                          <td className="p-3 flex gap-2 justify-end">
-                            <button type="button" onClick={() => startEdit(p)} className="text-brand-600 text-xs">Düzenle</button>
-                            <button type="button" onClick={() => handleDeleteProduct(p.id, p.name)} className="text-red-600" title="Sil"><Trash2 className="h-4 w-4" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <ProductsAdmin store={store} showMsg={showMsg} />
             )}
 
             {tab === 'categories' && (
@@ -318,7 +208,8 @@ function BannerAdmin({ store, setMsg }) {
   const banners = Array.isArray(store.banners) ? store.banners : [];
   const [b, setB] = useState({ title: '', subtitle: '', image: '', link: '/', active: true });
   const add = () => {
-    store.addBanner(b);
+    if (!b.title.trim()) return;
+    startTransition(() => store.addBanner(b));
     setB({ title: '', subtitle: '', image: '', link: '/', active: true });
     setMsg('Banner eklendi');
   };
@@ -327,13 +218,26 @@ function BannerAdmin({ store, setMsg }) {
       <h2 className="font-bold">Banner Yönetimi</h2>
       <input placeholder="Başlık" value={b.title} onChange={(e) => setB({ ...b, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
       <input placeholder="Alt başlık" value={b.subtitle} onChange={(e) => setB({ ...b, subtitle: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <input placeholder="Görsel URL" value={b.image} onChange={(e) => setB({ ...b, image: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+      <input placeholder="Link (örn: /kampanyalar)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+      <ImageDropzone
+        label="Banner görseli"
+        hint="Görseli sürükle-bırak veya tıkla"
+        value={b.image}
+        onChange={(url) => setB({ ...b, image: url })}
+        onFile={(file) => processImageFile(file, { maxWidth: 1400, maxHeight: 600, quality: 0.85 })}
+        aspect="video"
+      />
       <Button variant="primary" onClick={add}>Banner Ekle</Button>
-      <ul className="space-y-2 mt-4">
+      <ul className="space-y-3 mt-4">
         {banners.map((banner) => (
-          <li key={banner.id} className="flex justify-between text-sm border-b py-2">
-            <span>{banner.title}</span>
-            <button type="button" onClick={() => store.deleteBanner(banner.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
+          <li key={banner.id} className="flex gap-3 items-center border-b border-brand-50 py-3">
+            {banner.image && (
+              <img src={banner.image} alt="" className="h-14 w-24 rounded object-cover shrink-0" />
+            )}
+            <span className="flex-1 text-sm font-medium">{banner.title}</span>
+            <button type="button" onClick={() => store.deleteBanner(banner.id)} className="text-red-600 shrink-0">
+              <Trash2 className="h-4 w-4" />
+            </button>
           </li>
         ))}
       </ul>
@@ -386,7 +290,7 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
       <div className="rounded-2xl bg-white p-8 shadow-card">
         <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Onaylı ve satışta olan ürünleriniz çekilir. Toptan fiyat = Trendyol fiyatı ÷ bölücü.
+          Onaylı ürünler görsel, stok kodu ve satış fiyatı ile çekilir. Toptan fiyat = Trendyol fiyatı ÷ bölücü.
         </p>
         {tyProgress && (
           <p className="text-sm text-brand-600 mb-2">
@@ -405,15 +309,26 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
 function SettingsAdmin({ store, setMsg }) {
   const [s, setS] = useState({ ...store.settings });
   const save = () => {
-    store.updateSettings(s);
+    startTransition(() => {
+      store.updateSettings(s);
+    });
     setMsg('Ayarlar kaydedildi');
   };
   return (
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
       <h2 className="font-bold">Site Ayarları</h2>
+      <ImageDropzone
+        label="Site logosu"
+        hint="Logoyu sürükle-bırak — marka temasına uygun arka plan uygulanır"
+        value={s.logoUrl}
+        onChange={(url) => setS({ ...s, logoUrl: url })}
+        onFile={(file) =>
+          processImageFile(file, { maxWidth: 400, maxHeight: 160, quality: 0.9, addBrandBackground: true })
+        }
+        aspect="logo"
+      />
       {[
         ['whatsappNumber', 'WhatsApp Numarası'],
-        ['logoUrl', 'Logo URL'],
         ['metaPixelId', 'Meta Pixel ID'],
         ['gaId', 'Google Analytics ID'],
         ['siteUrl', 'Site URL'],
