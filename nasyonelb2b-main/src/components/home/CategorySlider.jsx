@@ -3,13 +3,14 @@ import { useStore } from '@/context/StoreContext';
 
 export default function CategorySlider() {
   const { categories } = useStore();
+  const list = Array.isArray(categories) ? categories : [];
 
   return (
     <section className="py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="font-display text-2xl font-bold text-brand-900 mb-6">Kategoriler</h2>
         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
-          {categories.map((cat) => (
+          {list.map((cat) => (
             <Link
               key={cat.id}
               to={`/kategoriler?cat=${encodeURIComponent(cat.name)}`}

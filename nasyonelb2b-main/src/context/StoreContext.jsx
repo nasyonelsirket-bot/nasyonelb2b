@@ -5,23 +5,25 @@ import {
   DEMO_BANNERS,
   DEFAULT_SETTINGS,
 } from '@/data/demoProducts';
-import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
+import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
 const StoreContext = createContext(null);
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(() =>
-    loadFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
+    loadArrayFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
   );
   const [categories, setCategories] = useState(() =>
-    loadFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES),
+    loadArrayFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES),
   );
   const [banners, setBanners] = useState(() =>
-    loadFromStorage(KEYS.BANNERS, DEMO_BANNERS),
+    loadArrayFromStorage(KEYS.BANNERS, DEMO_BANNERS),
   );
   const [settings, setSettings] = useState(() => {
     const stored = loadFromStorage(KEYS.SETTINGS, null);
-    return { ...DEFAULT_SETTINGS, ...stored };
+    const safe =
+      stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    return { ...DEFAULT_SETTINGS, ...safe };
   });
 
   useEffect(() => saveToStorage(KEYS.PRODUCTS, products), [products]);
@@ -30,27 +32,37 @@ export function StoreProvider({ children }) {
   useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
 
   const addProduct = useCallback((product) => {
-    setProducts((prev) => [...prev, { ...product, id: product.id || `p-${Date.now()}` }]);
+    setProducts((prev) => [
+      ...(Array.isArray(prev) ? prev : []),
+      { ...product, id: product.id || `p-${Date.now()}` },
+    ]);
   }, []);
 
   const updateProduct = useCallback((id, updates) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setProducts((prev) =>
+      (Array.isArray(prev) ? prev : []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    );
   }, []);
 
   const deleteProduct = useCallback((id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    if (!id) return;
+    setProducts((prev) => (Array.isArray(prev) ? prev.filter((p) => p.id !== id) : []));
   }, []);
 
   const importProducts = useCallback((newProducts, newCategories) => {
     setProducts((prev) => {
-      const map = new Map(prev.map((p) => [p.sku, p]));
-      newProducts.forEach((p) => map.set(p.sku, p));
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const map = new Map(safePrev.map((p) => [p.sku || p.id, p]));
+      newProducts.forEach((p) => {
+        if (p?.sku || p?.id) map.set(p.sku || p.id, p);
+      });
       return Array.from(map.values());
     });
     if (newCategories?.length) {
       setCategories((prev) => {
-        const names = new Set(prev.map((c) => c.name));
-        const merged = [...prev];
+        const safePrev = Array.isArray(prev) ? prev : [];
+        const names = new Set(safePrev.map((c) => c.name));
+        const merged = [...safePrev];
         newCategories.forEach((c) => {
           if (!names.has(c.name)) merged.push(c);
         });
@@ -88,12 +100,13 @@ export function StoreProvider({ children }) {
   }, []);
 
   const getProductById = useCallback(
-    (id) => products.find((p) => p.id === id),
+    (id) => (Array.isArray(products) ? products : []).find((p) => p.id === id),
     [products],
   );
 
   const getProductsByCategory = useCallback(
-    (categoryName) => products.filter((p) => p.category === categoryName),
+    (categoryName) =>
+      (Array.isArray(products) ? products : []).filter((p) => p.category === categoryName),
     [products],
   );
 

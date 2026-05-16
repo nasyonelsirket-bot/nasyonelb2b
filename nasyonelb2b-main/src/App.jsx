@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { StoreProvider } from '@/context/StoreContext';
 import { CartProvider } from '@/context/CartContext';
 import Layout from '@/components/layout/Layout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -47,7 +48,7 @@ export default function App() {
                 <Route path="hakkimizda" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="iletisim" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />
               </Route>
-              <Route path="admin" element={<Suspense fallback={<PageLoader />}><AdminPage /></Suspense>} />
+              <Route path="admin" element={<Suspense fallback={<PageLoader />}><ErrorBoundary><AdminPage /></ErrorBoundary></Suspense>} />
             </Routes>
           </BrowserRouter>
         </CartProvider>
