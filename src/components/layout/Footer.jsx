@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
+import { APP_VERSION } from '@/constants/appVersion';
 
 function footerAboutText(settings) {
   const raw = String(settings?.aboutText || '').trim();
@@ -62,8 +63,9 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300">
-          © {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.
+        <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300 space-y-1">
+          <p>© {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.</p>
+          <p className="text-xs text-brand-400">Site sürümü: {APP_VERSION}</p>
         </div>
       </div>
     </footer>
