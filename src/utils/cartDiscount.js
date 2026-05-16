@@ -4,31 +4,36 @@ export const DISCOUNT_THRESHOLD_TL = 30000;
 export const DISCOUNT_RATE_LOW = 0.05;
 export const DISCOUNT_RATE_HIGH = 0.1;
 
-export function getCartDiscount(subtotal, threshold = DISCOUNT_THRESHOLD_TL) {
+/** %10: ara toplam ≥ 30.000 veya ödenecek tutar (iskonto + kargo) ≥ 30.000 */
+export function resolveDiscountRate(
+  subtotal,
+  shippingFee = 0,
+  threshold = DISCOUNT_THRESHOLD_TL,
+) {
   const amount = Math.max(0, Number(subtotal) || 0);
+  const ship = Math.max(0, Number(shippingFee) || 0);
 
-  if (amount <= 0) {
-    return {
-      subtotal: 0,
-      threshold,
-      rate: DISCOUNT_RATE_LOW,
-      ratePercent: 5,
-      discountAmount: 0,
-      grandTotal: 0,
-      tier: 'low',
-      tierLabel: '%5 Bayi İskontosu',
-      remainingToHigh: threshold,
-      upsellMessage: null,
-      currentDiscountMessage: null,
-    };
-  }
+  if (amount <= 0) return DISCOUNT_RATE_LOW;
+  if (amount >= threshold) return DISCOUNT_RATE_HIGH;
 
-  const isHighTier = amount >= threshold;
-  const rate = isHighTier ? DISCOUNT_RATE_HIGH : DISCOUNT_RATE_LOW;
+  const payableWithHighRate = amount * (1 - DISCOUNT_RATE_HIGH) + ship;
+  if (payableWithHighRate >= threshold) return DISCOUNT_RATE_HIGH;
+
+  return DISCOUNT_RATE_LOW;
+}
+
+export function buildDiscountFromRate(
+  subtotal,
+  rate,
+  { orderTotal = 0, threshold = DISCOUNT_THRESHOLD_TL } = {},
+) {
+  const amount = Math.max(0, Number(subtotal) || 0);
   const discountAmount = Math.round(amount * rate * 100) / 100;
   const grandTotal = Math.round((amount - discountAmount) * 100) / 100;
-  const remainingToHigh = Math.max(0, threshold - amount);
-  const progressPercent = Math.min(100, (amount / threshold) * 100);
+  const payable = Math.max(0, Number(orderTotal) || grandTotal);
+  const isHighTier = rate >= DISCOUNT_RATE_HIGH - 0.001;
+  const remainingToHigh = Math.max(0, threshold - payable);
+  const progressPercent = Math.min(100, (payable / threshold) * 100);
 
   return {
     subtotal: amount,
@@ -37,16 +42,25 @@ export function getCartDiscount(subtotal, threshold = DISCOUNT_THRESHOLD_TL) {
     ratePercent: rate * 100,
     discountAmount,
     grandTotal,
+    orderTotal: payable,
     tier: isHighTier ? 'high' : 'low',
     tierLabel: isHighTier ? '%10 Bayi İskontosu' : '%5 Bayi İskontosu',
     remainingToHigh,
     progressPercent,
     upsellMessage:
       !isHighTier && remainingToHigh > 0
-        ? `Sepete ${formatPrice(remainingToHigh)} daha ürün eklersen size özel %10 iskonto uygulanır!`
+        ? `Ödenecek tutarınız ${formatPrice(payable)}. ${formatPrice(remainingToHigh)} daha eklerseniz %10 iskonto uygulanır!`
         : null,
     currentDiscountMessage: isHighTier
-      ? 'Tebrikler! Sepet tutarınıza %10 bayi iskontosu uygulandı.'
-      : 'Sepet tutarınıza %5 bayi iskontosu uygulandı.',
+      ? `Ödenecek tutarınız ${formatPrice(payable)} — %10 bayi iskontosu uygulandı.`
+      : `Ödenecek tutarınız ${formatPrice(payable)} — %5 bayi iskontosu uygulandı.`,
   };
+}
+
+/** @deprecated — getCartOrderSummary kullanın */
+export function getCartDiscount(subtotal, threshold = DISCOUNT_THRESHOLD_TL) {
+  const rate = resolveDiscountRate(subtotal, 0, threshold);
+  const discountAmount = Math.round(subtotal * rate * 100) / 100;
+  const grandTotal = Math.round((subtotal - discountAmount) * 100) / 100;
+  return buildDiscountFromRate(subtotal, rate, { orderTotal: grandTotal, threshold });
 }

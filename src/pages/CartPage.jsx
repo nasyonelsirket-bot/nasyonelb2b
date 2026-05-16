@@ -7,13 +7,8 @@ import QuantityControls from '@/components/product/QuantityControls';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
 import { getMinOrderInfo } from '@/utils/orderRules';
-import { getCartDiscount, DISCOUNT_THRESHOLD_TL } from '@/utils/cartDiscount';
-import {
-  getFreeShippingStatus,
-  getOrderPayableTotal,
-  FREE_SHIPPING_THRESHOLD_TL,
-  STANDARD_SHIPPING_FEE_TL,
-} from '@/utils/cartShipping';
+import { DISCOUNT_THRESHOLD_TL } from '@/utils/cartDiscount';
+import { getCartOrderSummary, FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import { formatPrice, openWhatsApp } from '@/utils/whatsapp';
 
@@ -22,9 +17,9 @@ function formatThreshold(n) {
 }
 
 const MARKETING = [
-  `${formatThreshold(FREE_SHIPPING_THRESHOLD_TL)} altı ${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo · üzeri bedava`,
-  `${formatThreshold(DISCOUNT_THRESHOLD_TL)} altı: %5 iskonto · üzeri: %10 iskonto`,
-  'WhatsApp sipariş formunda iskonto ve kargo bilgisi yer alır.',
+  `${formatThreshold(FREE_SHIPPING_THRESHOLD_TL)} üzeri kargo bedava (sepet tutarına göre)`,
+  `Ödenecek tutar ${formatThreshold(DISCOUNT_THRESHOLD_TL)} altı %5, üzeri %10 iskonto`,
+  'Kargo ücreti iskonto sonrası tutara eklenir.',
 ];
 
 export default function CartPage() {
@@ -41,19 +36,14 @@ export default function CartPage() {
   } = useCart();
   const { settings } = useStore();
 
-  const discount = useMemo(() => getCartDiscount(totalPrice), [totalPrice]);
-  const shipping = useMemo(() => getFreeShippingStatus(discount.subtotal), [discount.subtotal]);
-  const orderTotal = useMemo(
-    () => getOrderPayableTotal(discount.grandTotal, shipping),
-    [discount.grandTotal, shipping],
-  );
+  const orderSummary = useMemo(() => getCartOrderSummary(totalPrice), [totalPrice]);
+  const { discount, shipping, totalAfterDiscount, orderTotal } = orderSummary;
 
   const handleWhatsApp = () => {
     if (!isCartValid) return;
     openWhatsApp(settings.whatsappNumber, items, {
       siteName: settings.siteName || 'Nasyonel Toys',
-      discount,
-      shipping,
+      orderSummary,
     });
   };
 
@@ -76,12 +66,8 @@ export default function CartPage() {
       <SEO title="Sepet" path="/sepet" noindex />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="font-display text-3xl font-bold text-brand-900">Sepetim</h1>
-        <p className="text-sm text-brand-600 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="inline-flex items-center gap-1 cursor-default">
-            🚚 Altı {formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo · {formatThreshold(FREE_SHIPPING_THRESHOLD_TL)} üzeri bedava
-          </span>
-          <span>·</span>
-          <span>{formatThreshold(DISCOUNT_THRESHOLD_TL)} altı %5, üzeri %10 iskonto</span>
+        <p className="text-sm text-brand-600 mt-1">
+          {formatThreshold(FREE_SHIPPING_THRESHOLD_TL)} üzeri sepetlerde kargo bedava · Kargo, iskonto sonrası tutara eklenir
         </p>
 
         <div className="mt-6 rounded-2xl border border-accent-gold/40 bg-gradient-to-r from-amber-50 to-brand-50 p-4 sm:p-5">
@@ -100,12 +86,12 @@ export default function CartPage() {
               )}
               {discount.tier === 'high' && (
                 <p className="mt-2 text-sm text-emerald-700 font-medium">
-                  {formatThreshold(DISCOUNT_THRESHOLD_TL)} barajını geçtiniz — %10 iskonto aktif!
+                  Ödenecek tutar {formatThreshold(DISCOUNT_THRESHOLD_TL)} üzeri — %10 iskonto aktif!
                 </p>
               )}
               <div className="mt-3">
                 <div className="flex justify-between text-xs text-gray-600 mb-1">
-                  <span>{formatPrice(discount.subtotal)}</span>
+                  <span>Ödenecek: {formatPrice(orderTotal)}</span>
                   <span>{formatThreshold(DISCOUNT_THRESHOLD_TL)} (%10 için)</span>
                 </div>
                 <div className="h-2.5 rounded-full bg-white/80 overflow-hidden border border-brand-200">
@@ -179,8 +165,12 @@ export default function CartPage() {
                   <dt>{discount.tierLabel}</dt>
                   <dd className="font-semibold">-{formatPrice(discount.discountAmount)}</dd>
                 </div>
-                <div className="flex justify-between text-emerald-800">
-                  <dt className="flex items-center gap-1 cursor-default" title="5000 TL üzeri kargo bedava">
+                <div className="flex justify-between text-brand-800 font-medium border-b border-brand-100 pb-2">
+                  <dt>İskonto sonrası</dt>
+                  <dd>{formatPrice(totalAfterDiscount)}</dd>
+                </div>
+                <div className="flex justify-between text-emerald-800 pt-1">
+                  <dt className="flex items-center gap-1" title="5000 TL üzeri sepette kargo bedava">
                     <span aria-hidden>🚚</span> Kargo
                   </dt>
                   <dd className="font-semibold">
@@ -204,13 +194,10 @@ export default function CartPage() {
                 </div>
               </dl>
 
-              {!shipping.eligible && shipping.shippingFee > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Ürünler {formatPrice(discount.grandTotal)} + kargo {formatPrice(shipping.shippingFee)}
-                </p>
-              )}
-
-              <p className="text-xs text-gray-500 mt-2">{items.length} ürün çeşidi</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Ödenecek = iskonto sonrası {formatPrice(totalAfterDiscount)}
+                {!shipping.eligible ? ` + kargo ${formatPrice(shipping.shippingFee)}` : ' (kargo bedava)'}
+              </p>
 
               {minOrderViolations.length > 0 && (
                 <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
