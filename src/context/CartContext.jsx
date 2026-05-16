@@ -1,7 +1,19 @@
 import { createContext, useContext, useCallback, useState, useMemo } from 'react';
-import { resolveMinQuantity, isLineValid } from '@/utils/orderRules';
+import { DEFAULT_SETTINGS } from '@/data/demoProducts';
+import { loadFromStorage, KEYS } from '@/utils/storage';
+import { resolveMinQuantity, isLineValid, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 
 const CartContext = createContext(null);
+
+function getMinLineValue() {
+  try {
+    const s = loadFromStorage(KEYS.SETTINGS, {});
+    const v = Number(s?.minOrderLineValue);
+    return Number.isFinite(v) && v > 0 ? v : DEFAULT_MIN_LINE_VALUE_TL;
+  } catch {
+    return DEFAULT_SETTINGS.minOrderLineValue || DEFAULT_MIN_LINE_VALUE_TL;
+  }
+}
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
@@ -14,7 +26,8 @@ export function CartProvider({ children }) {
 
   const addToCart = useCallback(
     (product, quantity = null) => {
-      const minQty = resolveMinQuantity(product);
+      const minLineValue = getMinLineValue();
+      const minQty = resolveMinQuantity(product, minLineValue);
       const qty = Math.max(quantity ?? minQty, minQty);
       setItems((prev) => {
         const existing = prev.find((i) => i.id === product.id);
@@ -31,10 +44,11 @@ export function CartProvider({ children }) {
   );
 
   const setQuantity = useCallback((productId, quantity) => {
+    const minLineValue = getMinLineValue();
     setItems((prev) =>
       prev.map((i) => {
         if (i.id !== productId) return i;
-        const minQty = resolveMinQuantity(i);
+        const minQty = resolveMinQuantity(i, minLineValue);
         const q = quantity <= 0 ? 0 : Math.max(quantity, minQty);
         return { ...i, quantity: q };
       }),
@@ -54,11 +68,14 @@ export function CartProvider({ children }) {
   );
 
   const decrement = useCallback((productId, amount = 1) => {
+    const minLineValue = getMinLineValue();
     setItems((prev) =>
       prev
-        .map((i) =>
-          i.id === productId ? { ...i, quantity: i.quantity - amount } : i,
-        )
+        .map((i) => {
+          if (i.id !== productId) return i;
+          const minQty = resolveMinQuantity(i, minLineValue);
+          return { ...i, quantity: i.quantity - amount };
+        })
         .filter((i) => i.quantity > 0),
     );
   }, []);
@@ -79,18 +96,25 @@ export function CartProvider({ children }) {
     [items],
   );
 
-  const minOrderViolations = useMemo(
-    () =>
-      items
-        .filter((i) => !isLineValid(i))
-        .map((i) => ({
+  const minOrderViolations = useMemo(() => {
+    const minLineValue = getMinLineValue();
+    return items
+      .filter((i) => !isLineValid(i, minLineValue))
+      .map((i) => {
+        const minQty = resolveMinQuantity(i, minLineValue);
+        const lineTotal = i.price * i.quantity;
+        const requiredTotal = i.price * minQty;
+        return {
           id: i.id,
           name: i.name,
-          minOrder: resolveMinQuantity(i),
+          minOrder: minQty,
           quantity: i.quantity,
-        })),
-    [items],
-  );
+          lineTotal,
+          requiredTotal,
+          minLineValue,
+        };
+      });
+  }, [items]);
 
   const isCartValid = minOrderViolations.length === 0;
 
@@ -109,7 +133,7 @@ export function CartProvider({ children }) {
         totalPrice,
         minOrderViolations,
         isCartValid,
-        resolveMinQuantity,
+        getMinLineValue,
       }}
     >
       {children}

@@ -8,19 +8,21 @@ import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
-import { getMinOrderInfo } from '@/utils/orderRules';
+import { getMinOrderInfo, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
+import KdvNotice from '@/components/ui/KdvNotice';
 import { formatPrice } from '@/utils/whatsapp';
 import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const { getProductById } = useStore();
+  const { getProductById, settings } = useStore();
   const { addToCart } = useCart();
   const product = getProductById(id);
+  const minLineValue = Number(settings.minOrderLineValue) || DEFAULT_MIN_LINE_VALUE_TL;
   const minInfo = useMemo(
-    () => (product ? getMinOrderInfo(product) : null),
-    [product],
+    () => (product ? getMinOrderInfo(product, minLineValue) : null),
+    [product, minLineValue],
   );
   const [qty, setQty] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
@@ -88,9 +90,10 @@ export default function ProductDetailPage() {
             <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
             <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>
             <p className="font-display text-4xl font-bold text-brand-700 mt-6">{formatPrice(product.price)}</p>
+            <KdvNotice className="mt-2" />
             <p className="mt-6 text-gray-600 leading-relaxed">{product.description}</p>
 
-            <div className="mt-8 max-w-sm">
+            <div className="mt-8 max-w-md">
               <QuantityControls
                 quantity={qty}
                 minOrder={minInfo.minQty}
@@ -98,6 +101,7 @@ export default function ProductDetailPage() {
                 onChange={setQty}
                 onIncrement={(n) => setQty((q) => q + n)}
                 onDecrement={(n) => setQty((q) => Math.max(minInfo.minQty, q - n))}
+                showBulk
               />
             </div>
 

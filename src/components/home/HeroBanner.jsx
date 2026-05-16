@@ -57,11 +57,8 @@ export default function HeroBanner() {
       aria-label="Kampanya bannerları"
       aria-roledescription="carousel"
     >
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg ring-1 ring-brand-900/10">
-        <div
-          className="relative aspect-[4/3] sm:aspect-[16/7] md:aspect-[21/9] min-h-[200px] sm:min-h-[260px] md:min-h-[300px] bg-brand-900"
-          aria-live="polite"
-        >
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg bg-brand-950">
+        <div className="relative min-h-[180px] sm:min-h-[240px] md:min-h-[280px] flex items-center justify-center" aria-live="polite">
           {active.map((banner, i) => {
             const isActive = i === index;
             const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
@@ -71,14 +68,16 @@ export default function HeroBanner() {
                 <img
                   src={banner.image}
                   alt={banner.title?.trim() || `Banner ${i + 1}`}
-                  className={`hero-slide-img absolute inset-0 h-full w-full object-cover ${isActive ? 'hero-slide-img-active' : ''}`}
+                  className={`hero-banner-img max-w-full max-h-[50vh] w-auto h-auto object-contain mx-auto block ${
+                    isActive ? 'hero-slide-img-active' : ''
+                  }`}
                   loading={i === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   draggable={false}
                 />
                 {hasText && (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40 pointer-events-none" />
                     <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-10 lg:px-14 max-w-xl pointer-events-none">
                       {banner.title?.trim() && (
                         <h2 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
@@ -106,11 +105,13 @@ export default function HeroBanner() {
             return (
               <div
                 key={banner.id}
-                className={`hero-slide absolute inset-0 ${isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'}`}
+                className={`hero-slide absolute inset-0 flex items-center justify-center p-2 sm:p-4 ${
+                  isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'
+                }`}
                 aria-hidden={!isActive}
               >
                 {link && !hasText ? (
-                  <Link to={link} className="block h-full w-full" tabIndex={isActive ? 0 : -1}>
+                  <Link to={link} className="flex w-full h-full items-center justify-center" tabIndex={isActive ? 0 : -1}>
                     {slide}
                   </Link>
                 ) : (

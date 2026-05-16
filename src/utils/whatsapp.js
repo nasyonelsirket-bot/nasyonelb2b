@@ -1,5 +1,6 @@
 import { resolveMinQuantity } from '@/utils/orderRules';
-import { getCartOrderSummary } from '@/utils/cartShipping';
+import { getCartDiscount } from '@/utils/cartDiscount';
+import { getFreeShippingStatus, getOrderPayableTotal, STANDARD_SHIPPING_FEE_TL } from '@/utils/cartShipping';
 
 export function formatPrice(price) {
   return new Intl.NumberFormat('tr-TR', {
@@ -30,10 +31,9 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   cartItems.forEach((item) => {
     subtotal += item.price * item.quantity;
   });
-  const summary =
-    options.orderSummary ||
-    getCartOrderSummary(subtotal);
-  const { discount, shipping, totalAfterDiscount, orderTotal } = summary;
+  const discount = options.discount || getCartDiscount(subtotal);
+  const shipping = options.shipping || getFreeShippingStatus(discount.subtotal);
+  const orderTotal = getOrderPayableTotal(discount.grandTotal, shipping);
 
   const lines = [
     '╔══════════════════════════════════╗',
@@ -82,13 +82,25 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   lines.push(
     '━━━━━━━━ *SİPARİŞ ÖZETİ* ━━━━━━━━━',
     `📦 *Ürün çeşidi:* ${cartItems.length}`,
-    `💵 *Ara toplam:* ${formatPrice(discount.subtotal)}`,
+    `💵 *Ara Toplam:* ${formatPrice(discount.subtotal)}`,
     `🏷️ *İskonto:* ${discount.tierLabel} (-${formatPrice(discount.discountAmount)})`,
-    `📊 *İskonto sonrası:* ${formatPrice(totalAfterDiscount)}`,
-    `🚚 *Kargo:* ${shipping.eligible ? 'Bedava' : formatPrice(shipping.shippingFee)}`,
-    `✅ *Ödenecek tutar:* *${formatPrice(orderTotal)}*`,
+    discount.upsellMessage ? `💡 _${discount.upsellMessage}_` : null,
+    `🚚 *Kargo:* ${shipping.eligible ? '*Bedava* ✓' : formatPrice(shipping.shippingFee)}`,
+    `✅ *ÖDENECEK TUTAR:* *${formatPrice(orderTotal)}*`,
     '',
-    '_Fiyatlarımıza KDV dahil değildir._',
+    '━━━━━━━━ *KARGO* ━━━━━━━━━━━━━━━━━',
+    `• ${formatPrice(shipping.threshold)} altı: *${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo*`,
+    `• ${formatPrice(shipping.threshold)} ve üzeri: *kargo bedava*`,
+    shipping.eligible
+      ? '• Bu siparişe *kargo bedava* uygulandı ✓'
+      : `• Bu siparişe ${formatPrice(shipping.shippingFee)} kargo eklendi (${formatPrice(shipping.remaining)} daha eklenirse bedava)`,
+    '',
+    '━━━━━━━━ *İSKONTO KOŞULLARI* ━━━━━━━━',
+    `• ${formatPrice(discount.threshold)} altı sepet: *%5 iskonto*`,
+    `• ${formatPrice(discount.threshold)} ve üzeri sepet: *%10 iskonto*`,
+    discount.tier === 'high'
+      ? '• Bu siparişe *%10* uygulandı ✓'
+      : `• Bu siparişe *%5* uygulandı (${formatPrice(discount.remainingToHigh)} daha eklenirse %10)`,
     '',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '✅ *Sipariş onayı için lütfen yanıtlayın.*',

@@ -10,6 +10,7 @@ export default function QuantityControls({
   onIncrement,
   onDecrement,
   compact = false,
+  showBulk = false,
 }) {
   const handleChange = (val) => {
     const num = Math.max(0, parseInt(val, 10) || 0);
@@ -50,7 +51,7 @@ export default function QuantityControls({
         </button>
       </div>
 
-      {!compact && (
+      {(!compact || showBulk) && (
         <div className="flex flex-wrap gap-1.5">
           {QUICK_ADD.map((n) => (
             <button

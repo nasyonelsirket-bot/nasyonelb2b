@@ -128,17 +128,8 @@
     transition: transform 0.3s ease-out;
   }
 
-  .hero-slide-img-active {
-    animation: hero-ken-burns 7s ease-out forwards;
-  }
-
-  @keyframes hero-ken-burns {
-    from {
-      transform: scale(1);
-    }
-    to {
-      transform: scale(1.08);
-    }
+  .hero-banner-img {
+    object-fit: contain;
   }
 
   @media (prefers-reduced-motion: reduce) {

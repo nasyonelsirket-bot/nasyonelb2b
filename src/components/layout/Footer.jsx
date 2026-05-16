@@ -30,7 +30,7 @@ export default function Footer() {
                   : settings.logoUrl
               }
               alt={siteName}
-              className="site-logo-footer mb-4 rounded-lg bg-white/95 px-3 py-2"
+              className="site-logo-footer mb-4"
             />
             <p className="text-brand-200 text-sm max-w-md leading-relaxed">
               {footerAboutText(settings)}

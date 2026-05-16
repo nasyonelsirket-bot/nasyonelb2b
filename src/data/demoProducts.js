@@ -191,4 +191,5 @@ export const DEFAULT_SETTINGS = {
   trendyolApiKey: '',
   trendyolApiSecret: '',
   trendyolPriceDivisor: '4',
+  minOrderLineValue: 2000,
 };

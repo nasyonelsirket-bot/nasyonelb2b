@@ -1,4 +1,5 @@
 import ProductCard from '@/components/product/ProductCard';
+import KdvNotice from '@/components/ui/KdvNotice';
 
 export default function ProductGrid({ products, title, subtitle }) {
   if (!products?.length) {
@@ -18,6 +19,7 @@ export default function ProductGrid({ products, title, subtitle }) {
               <h2 className="font-display text-2xl font-bold text-brand-900">{title}</h2>
             )}
             {subtitle && <p className="mt-1 text-gray-600">{subtitle}</p>}
+            <KdvNotice className="mt-2" />
           </div>
         )}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

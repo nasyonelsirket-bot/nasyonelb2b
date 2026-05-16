@@ -6,13 +6,17 @@ import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
-import { getMinOrderInfo } from '@/utils/orderRules';
+import { useStore } from '@/context/StoreContext';
+import KdvNotice from '@/components/ui/KdvNotice';
+import { getMinOrderInfo, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 import { getPrimaryImage } from '@/utils/productImage';
 import { formatPrice } from '@/utils/whatsapp';
 
 export default function ProductCard({ product }) {
+  const { settings } = useStore();
   const { addToCart } = useCart();
-  const minInfo = useMemo(() => getMinOrderInfo(product), [product]);
+  const minLineValue = Number(settings.minOrderLineValue) || DEFAULT_MIN_LINE_VALUE_TL;
+  const minInfo = useMemo(() => getMinOrderInfo(product, minLineValue), [product, minLineValue]);
   const [qty, setQty] = useState(minInfo.minQty);
 
   const handleAdd = (e) => {
@@ -52,6 +56,7 @@ export default function ProductCard({ product }) {
         <p className="mt-3 font-display text-xl font-bold text-brand-700">
           {formatPrice(product.price)}
         </p>
+        <KdvNotice className="mt-1" />
 
         <div className="mt-3">
           <QuantityControls
