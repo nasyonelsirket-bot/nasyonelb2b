@@ -8,6 +8,8 @@ import {
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
+import { fetchPublishedCatalog, publishCatalog as publishCatalogApi } from '@/services/catalogApi';
+import { settingsForPublish, mergePublishedSettings } from '@/utils/catalogPublish';
 import {
   buildCategoriesFromProducts,
   getProductCountsByCategory,
@@ -16,8 +18,22 @@ import {
 
 const StoreContext = createContext(null);
 
+function loadLocalSettings(migration) {
+  if (migration?.settings) return migration.settings;
+  const stored = loadFromStorage(KEYS.SETTINGS, null);
+  const safe = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+  const merged = { ...DEFAULT_SETTINGS, ...safe };
+  merged.pdfSettings = mergePdfSettings(merged.pdfSettings);
+  return merged;
+}
+
 export function StoreProvider({ children }) {
   const migration = useMemo(() => runBrandMigration(), []);
+
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogSource, setCatalogSource] = useState('local');
+  const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   const [products, setProducts] = useState(() =>
     loadArrayFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
@@ -30,15 +46,40 @@ export function StoreProvider({ children }) {
   const [banners, setBanners] = useState(() =>
     loadArrayFromStorage(KEYS.BANNERS, DEMO_BANNERS),
   );
-  const [settings, setSettings] = useState(() => {
-    if (migration?.settings) return migration.settings;
-    const stored = loadFromStorage(KEYS.SETTINGS, null);
-    const safe =
-      stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
-    const merged = { ...DEFAULT_SETTINGS, ...safe };
-    merged.pdfSettings = mergePdfSettings(merged.pdfSettings);
-    return merged;
-  });
+  const [settings, setSettings] = useState(() => loadLocalSettings(migration));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const remote = await fetchPublishedCatalog();
+      if (cancelled) return;
+
+      if (remote?.products?.length) {
+        setProducts(remote.products);
+        setCategories(
+          refreshCategoryIcons(
+            remote.categories?.length ? remote.categories : buildCategoriesFromProducts(remote.products),
+          ),
+        );
+        if (remote.banners?.length) setBanners(remote.banners);
+        setSettings((prev) => mergePublishedSettings(prev, remote.settings));
+        setCatalogSource('server');
+        setCatalogUpdatedAt(remote.updatedAt || null);
+        saveToStorage(KEYS.PRODUCTS, remote.products);
+        saveToStorage(KEYS.CATEGORIES, remote.categories || []);
+        if (remote.banners?.length) saveToStorage(KEYS.BANNERS, remote.banners);
+      } else {
+        setCatalogSource('local');
+      }
+
+      setCatalogReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => saveToStorage(KEYS.PRODUCTS, products), [products]);
   useEffect(() => saveToStorage(KEYS.CATEGORIES, categories), [categories]);
@@ -168,13 +209,39 @@ export function StoreProvider({ children }) {
     setProducts(DEMO_PRODUCTS);
     setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     setBanners(DEMO_BANNERS);
-    setSettings(DEFAULT_SETTINGS);
+    setSettings({ ...DEFAULT_SETTINGS, pdfSettings: mergePdfSettings(DEFAULT_SETTINGS.pdfSettings) });
+    setCatalogSource('local');
     try {
       localStorage.setItem('b2b_brand_version', String(4));
     } catch {
       /* ignore */
     }
   }, []);
+
+  const publishCatalog = useCallback(
+    async (password) => {
+      const list = Array.isArray(products) ? products : [];
+      if (!list.length) {
+        throw new Error('Yayınlanacak ürün yok. Önce Trendyol veya Excel ile ürün ekleyin.');
+      }
+      setPublishing(true);
+      try {
+        const result = await publishCatalogApi({
+          products: list,
+          categories: Array.isArray(categories) ? categories : [],
+          banners: Array.isArray(banners) ? banners : [],
+          settings: settingsForPublish(settings),
+          password,
+        });
+        setCatalogSource('server');
+        setCatalogUpdatedAt(result.updatedAt || new Date().toISOString());
+        return result;
+      } finally {
+        setPublishing(false);
+      }
+    },
+    [products, categories, banners, settings],
+  );
 
   const refreshAllCategoryEmojis = useCallback(() => {
     setCategories((prev) => refreshCategoryIcons(prev, { force: true }));
@@ -203,9 +270,14 @@ export function StoreProvider({ children }) {
       getProductById,
       getProductsByCategory,
       resetToDemo,
+      publishCatalog,
       refreshAllCategoryEmojis,
       setProducts,
       setCategories,
+      catalogReady,
+      catalogSource,
+      catalogUpdatedAt,
+      publishing,
     }),
     [
       products,
@@ -213,6 +285,10 @@ export function StoreProvider({ children }) {
       sortedCategories,
       banners,
       settings,
+      catalogReady,
+      catalogSource,
+      catalogUpdatedAt,
+      publishing,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -230,9 +306,18 @@ export function StoreProvider({ children }) {
       getProductById,
       getProductsByCategory,
       resetToDemo,
+      publishCatalog,
       refreshAllCategoryEmojis,
     ],
   );
+
+  if (!catalogReady) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center bg-brand-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600" aria-label="Yükleniyor" />
+      </div>
+    );
+  }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

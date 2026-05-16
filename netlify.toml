@@ -17,6 +17,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/catalog"
+  to = "/.netlify/functions/catalog-get"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/catalog/save"
+  to = "/.netlify/functions/catalog-save"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"

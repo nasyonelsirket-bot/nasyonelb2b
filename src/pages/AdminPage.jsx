@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, FileText } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, FileText, CloudUpload } from 'lucide-react';
+import { getAdminPasswordForPublish } from '@/services/catalogApi';
 import PdfSettingsAdmin from '@/components/admin/PdfSettingsAdmin';
 import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
 import Button from '@/components/ui/Button';
@@ -50,13 +51,29 @@ export default function AdminPage() {
     e.preventDefault();
     if (password === ADMIN_PASS) {
       sessionStorage.setItem('b2b_admin', '1');
+      sessionStorage.setItem('b2b_admin_pass', password);
       setAuthed(true);
     } else showMsg('Hatalı şifre', 'error');
   };
 
   const logout = () => {
     sessionStorage.removeItem('b2b_admin');
+    sessionStorage.removeItem('b2b_admin_pass');
     setAuthed(false);
+  };
+
+  const handlePublishCatalog = async () => {
+    const pass = getAdminPasswordForPublish();
+    if (!pass) {
+      showMsg('Yeniden giriş yapın', 'error');
+      return;
+    }
+    try {
+      const result = await store.publishCatalog(pass);
+      showMsg(`${result.productCount} ürün siteye yayınlandı — müşteriler artık görebilir`);
+    } catch (err) {
+      showMsg(err.message || 'Yayınlama başarısız', 'error');
+    }
   };
 
   const handleExcel = async (e) => {
@@ -65,7 +82,17 @@ export default function AdminPage() {
     try {
       const { products, categories } = await parseExcelFile(file);
       store.importProducts(products, categories);
-      showMsg(`${products.length} ürün içe aktarıldı`);
+      const pass = getAdminPasswordForPublish();
+      if (pass && products.length) {
+        try {
+          await store.publishCatalog(pass);
+          showMsg(`${products.length} ürün içe aktarıldı ve siteye yayınlandı`);
+        } catch {
+          showMsg(`${products.length} ürün içe aktarıldı — yayın için Siteye Yayınla`);
+        }
+      } else {
+        showMsg(`${products.length} ürün içe aktarıldı`);
+      }
     } catch (err) {
       showMsg(`Excel hatası: ${err.message}`, 'error');
     }
@@ -84,9 +111,24 @@ export default function AdminPage() {
     try {
       const { products: tyProducts, categories } = await syncAllTrendyolProducts(store.settings, setTyProgress);
       store.importTrendyolProducts(tyProducts);
-      showMsg(
-        `${tyProducts.length} ürün çekildi, ${categories.length} kategoriye ayrıldı (emojiler atandı)`,
-      );
+      const pass = getAdminPasswordForPublish();
+      if (pass) {
+        try {
+          const pub = await store.publishCatalog(pass);
+          showMsg(
+            `${tyProducts.length} ürün çekildi ve siteye yayınlandı (${pub.productCount} ürün canlı)`,
+          );
+        } catch (pubErr) {
+          showMsg(
+            `${tyProducts.length} ürün çekildi ancak yayınlanamadı: ${pubErr.message}. Ayarlar → Siteye Yayınla deneyin.`,
+            'error',
+          );
+        }
+      } else {
+        showMsg(
+          `${tyProducts.length} ürün çekildi — siteye yayınlamak için Ayarlar → Siteye Yayınla`,
+        );
+      }
     } catch (err) {
       showMsg(`Trendyol: ${err.message}`, 'error');
     }
@@ -119,11 +161,30 @@ export default function AdminPage() {
     <>
       <AdminToast message={msg} type={msgType} onClose={clearMsg} />
       <div className="min-h-screen bg-gray-100">
-        <div className="bg-brand-900 text-white px-4 py-4 flex items-center justify-between">
-          <h1 className="font-display text-xl font-bold">Admin Panel</h1>
-          <button type="button" onClick={logout} className="flex items-center gap-2 text-sm hover:text-brand-200">
-            <LogOut className="h-4 w-4" /> Çıkış
-          </button>
+        <div className="bg-brand-900 text-white px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="font-display text-xl font-bold">Admin Panel</h1>
+            <p className="text-xs text-brand-200 mt-0.5">
+              {store.catalogSource === 'server'
+                ? `Canlı katalog: ${store.products?.length || 0} ürün${store.catalogUpdatedAt ? ` · ${new Date(store.catalogUpdatedAt).toLocaleString('tr-TR')}` : ''}`
+                : `Sadece bu cihazda: ${store.products?.length || 0} ürün — müşteriler göremez, yayınlayın`}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="gold"
+              size="sm"
+              onClick={handlePublishCatalog}
+              disabled={store.publishing || !store.products?.length}
+            >
+              <CloudUpload className="h-4 w-4" />
+              {store.publishing ? 'Yayınlanıyor...' : 'Siteye Yayınla'}
+            </Button>
+            <button type="button" onClick={logout} className="flex items-center gap-2 text-sm hover:text-brand-200 px-2 py-1">
+              <LogOut className="h-4 w-4" /> Çıkış
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row">
