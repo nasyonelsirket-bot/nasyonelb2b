@@ -52,7 +52,12 @@ export default function SEO({
       <meta name="twitter:description" content={desc} />
       <meta name="twitter:image" content={ogImage} />
 
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      {!noindex && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
     </Helmet>
   );
 }

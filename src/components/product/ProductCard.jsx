@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ShoppingCart, Eye } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -19,13 +18,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
-    >
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover">
       <Link to={`/urun/${product.id}`} className="relative aspect-square overflow-hidden bg-brand-50">
         <img
           src={product.image || 'https://via.placeholder.com/400x400?text=Urun'}
@@ -83,6 +76,6 @@ export default function ProductCard({ product }) {
           Sepete Ekle
         </Button>
       </div>
-    </motion.article>
+    </article>
   );
 }

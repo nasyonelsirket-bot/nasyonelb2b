@@ -21,7 +21,9 @@ export function StoreProvider({ children }) {
   );
   const [settings, setSettings] = useState(() => {
     const stored = loadFromStorage(KEYS.SETTINGS, null);
-    return { ...DEFAULT_SETTINGS, ...stored };
+    const safe =
+      stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    return { ...DEFAULT_SETTINGS, ...safe };
   });
 
   useEffect(() => saveToStorage(KEYS.PRODUCTS, products), [products]);
@@ -30,11 +32,16 @@ export function StoreProvider({ children }) {
   useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
 
   const addProduct = useCallback((product) => {
-    setProducts((prev) => [...prev, { ...product, id: product.id || `p-${Date.now()}` }]);
+    setProducts((prev) => [
+      ...(Array.isArray(prev) ? prev : []),
+      { ...product, id: product.id || `p-${Date.now()}` },
+    ]);
   }, []);
 
   const updateProduct = useCallback((id, updates) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setProducts((prev) =>
+      (Array.isArray(prev) ? prev : []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    );
   }, []);
 
   const deleteProduct = useCallback((id) => {
@@ -53,8 +60,9 @@ export function StoreProvider({ children }) {
     });
     if (newCategories?.length) {
       setCategories((prev) => {
-        const names = new Set(prev.map((c) => c.name));
-        const merged = [...prev];
+        const safePrev = Array.isArray(prev) ? prev : [];
+        const names = new Set(safePrev.map((c) => c.name));
+        const merged = [...safePrev];
         newCategories.forEach((c) => {
           if (!names.has(c.name)) merged.push(c);
         });
@@ -92,12 +100,13 @@ export function StoreProvider({ children }) {
   }, []);
 
   const getProductById = useCallback(
-    (id) => products.find((p) => p.id === id),
+    (id) => (Array.isArray(products) ? products : []).find((p) => p.id === id),
     [products],
   );
 
   const getProductsByCategory = useCallback(
-    (categoryName) => products.filter((p) => p.category === categoryName),
+    (categoryName) =>
+      (Array.isArray(products) ? products : []).filter((p) => p.category === categoryName),
     [products],
   );
 

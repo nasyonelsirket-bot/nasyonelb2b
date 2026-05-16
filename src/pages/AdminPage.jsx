@@ -275,6 +275,7 @@ export default function AdminPage() {
 
 function CategoryAdmin({ store, setMsg }) {
   const [name, setName] = useState('');
+  const categories = Array.isArray(store.categories) ? store.categories : [];
   const add = () => {
     if (!name.trim()) return;
     store.addCategory({ name, slug: name.toLowerCase().replace(/\s+/g, '-'), icon: '📦' });
@@ -289,7 +290,7 @@ function CategoryAdmin({ store, setMsg }) {
         <Button variant="primary" onClick={add}>Ekle</Button>
       </div>
       <ul className="space-y-2">
-        {store.categories.map((c) => (
+        {categories.map((c) => (
           <li key={c.id} className="flex justify-between items-center border-b py-2 text-sm">
             <span>{c.icon} {c.name}</span>
             <button type="button" onClick={() => store.deleteCategory(c.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
@@ -301,6 +302,7 @@ function CategoryAdmin({ store, setMsg }) {
 }
 
 function BannerAdmin({ store, setMsg }) {
+  const banners = Array.isArray(store.banners) ? store.banners : [];
   const [b, setB] = useState({ title: '', subtitle: '', image: '', link: '/', active: true });
   const add = () => {
     store.addBanner(b);
@@ -315,7 +317,7 @@ function BannerAdmin({ store, setMsg }) {
       <input placeholder="Görsel URL" value={b.image} onChange={(e) => setB({ ...b, image: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
       <Button variant="primary" onClick={add}>Banner Ekle</Button>
       <ul className="space-y-2 mt-4">
-        {store.banners.map((banner) => (
+        {banners.map((banner) => (
           <li key={banner.id} className="flex justify-between text-sm border-b py-2">
             <span>{banner.title}</span>
             <button type="button" onClick={() => store.deleteBanner(banner.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></button>

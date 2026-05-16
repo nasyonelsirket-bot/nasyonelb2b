@@ -20,8 +20,9 @@ export default function HomePage() {
   const q = params.get('q')?.toLowerCase();
 
   const filtered = useMemo(() => {
-    if (!q) return products;
-    return products.filter(
+    const list = Array.isArray(products) ? products : [];
+    if (!q) return list;
+    return list.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
