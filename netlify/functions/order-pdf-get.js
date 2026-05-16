@@ -44,7 +44,11 @@ exports.handler = async (event) => {
       isBase64Encoded: true,
     };
   } catch (err) {
-    console.error('order-pdf-get:', err);
-    return { statusCode: 500, headers: { 'Content-Type': 'text/plain' }, body: 'PDF oluşturulamadı' };
+    console.error('order-pdf-get:', err?.message || err, err?.stack);
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      body: 'PDF oluşturulamadı',
+    };
   }
 };
