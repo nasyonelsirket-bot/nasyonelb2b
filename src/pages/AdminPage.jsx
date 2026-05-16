@@ -461,6 +461,18 @@ function SettingsAdmin({ store, setMsg }) {
         }
         aspect="logo"
       />
+      <div>
+        <label className="text-xs text-gray-500">Ürün başına minimum sipariş tutarı (₺)</label>
+        <input
+          type="number"
+          min="1"
+          step="100"
+          value={s.minOrderLineValue ?? 2000}
+          onChange={(e) => setS({ ...s, minOrderLineValue: e.target.value })}
+          className="w-full rounded-lg border px-3 py-2 text-sm mt-1"
+        />
+        <p className="text-xs text-gray-400 mt-1">Örn: 300 ₺ ürün → min. 7 adet (2.100 ₺)</p>
+      </div>
       {[
         ['whatsappNumber', 'WhatsApp Numarası'],
         ['metaPixelId', 'Meta Pixel ID'],
@@ -468,6 +480,7 @@ function SettingsAdmin({ store, setMsg }) {
         ['siteUrl', 'Site URL'],
         ['contactPhone', 'Telefon'],
         ['contactEmail', 'E-posta'],
+        ['contactAddress', 'Adres'],
       ].map(([key, label]) => (
         <div key={key}>
           <label className="text-xs text-gray-500">{label}</label>

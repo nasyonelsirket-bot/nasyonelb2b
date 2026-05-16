@@ -5,6 +5,7 @@ const QUICK_ADD = [1, 10, 50, 100];
 export default function QuantityControls({
   quantity,
   minOrder = 1,
+  minOrderHint,
   onChange,
   onIncrement,
   onDecrement,
@@ -66,9 +67,9 @@ export default function QuantityControls({
 
       {quantity > 0 && quantity < minOrder && (
         <p className="text-xs text-amber-600 font-medium">
-          Minimum {minOrder} adet —{' '}
+          {minOrderHint || `Minimum ${minOrder} adet`} —{' '}
           <button type="button" onClick={setToMin} className="underline">
-            {minOrder} yap
+            Minimuma getir
           </button>
         </p>
       )}

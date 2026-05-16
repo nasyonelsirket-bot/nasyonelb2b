@@ -57,7 +57,7 @@ function ProductFormFields({ form, setForm }) {
         />
       </div>
       <div>
-        <label className="text-xs text-gray-500">Min. sipariş</label>
+        <label className="text-xs text-gray-500">Min. adet (opsiyonel)</label>
         <input
           type="number"
           min="1"
@@ -65,6 +65,7 @@ function ProductFormFields({ form, setForm }) {
           onChange={(e) => setForm({ ...form, minOrder: parseInt(e.target.value, 10) || 1 })}
           className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
         />
+        <p className="text-xs text-gray-400 mt-1">Ürün başına min. 2.000 ₺ kuralına göre otomatik hesaplanır</p>
       </div>
       <div className="sm:col-span-2">
         <ImageDropzone

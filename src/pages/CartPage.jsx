@@ -5,21 +5,36 @@ import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
+import { getMinOrderInfo } from '@/utils/orderRules';
 import { formatPrice, openWhatsApp } from '@/utils/whatsapp';
 
 const MARKETING = [
-  'Size özel iskonto için siparişinizi WhatsApp üzerinden gönderin.',
+  'WhatsApp sipariş formu firma bilgilerinizi doldurmanız için hazırlanır.',
   'Toplu siparişlerde ek indirim uygulanabilir.',
   'Bayi temsilcimiz sizinle iletişime geçecektir.',
 ];
 
 export default function CartPage() {
-  const { items, totalPrice, minOrderViolations, isCartValid, removeFromCart, setQuantity, increment, decrement, clearCart } = useCart();
+  const {
+    items,
+    totalPrice,
+    minOrderViolations,
+    isCartValid,
+    removeFromCart,
+    setQuantity,
+    increment,
+    decrement,
+    clearCart,
+  } = useCart();
   const { settings } = useStore();
+  const minLineValue = Number(settings.minOrderLineValue) || 2000;
 
   const handleWhatsApp = () => {
     if (!isCartValid) return;
-    openWhatsApp(settings.whatsappNumber, items);
+    openWhatsApp(settings.whatsappNumber, items, {
+      siteName: settings.siteName || 'Nasyonel Toys',
+      minLineValue,
+    });
   };
 
   if (!items.length) {
@@ -41,35 +56,44 @@ export default function CartPage() {
       <SEO title="Sepet" path="/sepet" noindex />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="font-display text-3xl font-bold text-brand-900">Sepetim</h1>
+        <p className="text-sm text-brand-600 mt-1">
+          Her ürün satırı için minimum {formatPrice(minLineValue)} sipariş tutarı uygulanır.
+        </p>
 
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <div key={item.id} className="flex gap-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-card">
-                <img src={item.image} alt="" className="h-24 w-24 rounded-lg object-cover" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-brand-900">{item.name}</h3>
-                  <p className="text-sm text-gray-500">SKU: {item.sku}</p>
-                  <p className="text-brand-700 font-bold mt-1">{formatPrice(item.price)}</p>
-                  {(item.minOrder || 1) > 1 && (
-                    <p className="text-xs text-brand-600 mt-1">Min. sipariş: {item.minOrder} adet</p>
-                  )}
-                  <div className="mt-3 max-w-xs">
-                    <QuantityControls
-                      quantity={item.quantity}
-                      minOrder={item.minOrder || 1}
-                      onChange={(q) => setQuantity(item.id, q)}
-                      onIncrement={(n) => increment(item.id, n)}
-                      onDecrement={(n) => decrement(item.id, n)}
-                      compact
-                    />
+            {items.map((item) => {
+              const minInfo = getMinOrderInfo(item, minLineValue);
+              const lineTotal = item.price * item.quantity;
+              return (
+                <div key={item.id} className="flex gap-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-card">
+                  <img src={item.image} alt="" className="h-24 w-24 rounded-lg object-cover" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-brand-900">{item.name}</h3>
+                    <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                    <p className="text-brand-700 font-bold mt-1">{formatPrice(item.price)} / adet</p>
+                    <p className="text-xs text-brand-600 mt-1">{minInfo.label}</p>
+                    <p className="text-sm font-semibold text-brand-800 mt-1">
+                      Satır: {formatPrice(lineTotal)}
+                    </p>
+                    <div className="mt-3 max-w-xs">
+                      <QuantityControls
+                        quantity={item.quantity}
+                        minOrder={minInfo.minQty}
+                        minOrderHint={minInfo.label}
+                        onChange={(q) => setQuantity(item.id, q)}
+                        onIncrement={(n) => increment(item.id, n)}
+                        onDecrement={(n) => decrement(item.id, n)}
+                        compact
+                      />
+                    </div>
                   </div>
+                  <button type="button" onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 p-2">
+                    <Trash2 className="h-5 w-5" />
+                  </button>
                 </div>
-                <button type="button" onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 p-2">
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
             <button type="button" onClick={clearCart} className="text-sm text-gray-500 hover:text-red-600">
               Sepeti Temizle
             </button>
@@ -86,12 +110,12 @@ export default function CartPage() {
               {minOrderViolations.length > 0 && (
                 <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
                   <p className="flex items-center gap-2 text-sm font-semibold text-amber-800">
-                    <AlertTriangle className="h-4 w-4" /> Minimum sipariş uyarısı
+                    <AlertTriangle className="h-4 w-4" /> Minimum tutar uyarısı
                   </p>
                   <ul className="mt-2 text-xs text-amber-700 space-y-1">
                     {minOrderViolations.map((v) => (
                       <li key={v.id}>
-                        {v.name}: min {v.minOrder} adet (şu an {v.quantity})
+                        {v.name}: {formatPrice(v.lineTotal)} — en az {formatPrice(v.requiredTotal)} olmalı
                       </li>
                     ))}
                   </ul>
@@ -106,8 +130,11 @@ export default function CartPage() {
                 disabled={!isCartValid}
               >
                 <MessageCircle className="h-5 w-5" />
-                Siparişi WhatsApp ile Gönder
+                Sipariş Formunu WhatsApp ile Gönder
               </Button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Düzenli sipariş formu olarak iletilir; firma bilgilerinizi mesajda tamamlayın.
+              </p>
             </div>
 
             <div className="rounded-2xl bg-brand-900 text-white p-6 space-y-3">

@@ -15,7 +15,8 @@ const FEATURES = [
 ];
 
 export default function HomePage() {
-  const { products } = useStore();
+  const { products, settings } = useStore();
+  const minLineValue = Number(settings.minOrderLineValue) || 2000;
   const [params] = useSearchParams();
   const q = params.get('q')?.toLowerCase();
 
@@ -57,9 +58,9 @@ export default function HomePage() {
       </section>
 
       <ProductGrid
-        products={filtered.slice(0, 8)}
-        title={q ? `Arama: "${q}"` : 'Öne Çıkan Ürünler'}
-        subtitle="Toptan fiyatlarla hemen sipariş verin"
+        products={filtered}
+        title={q ? `Arama: "${q}"` : 'Tüm Ürünler'}
+        subtitle={`${filtered.length} ürün · Ürün başına minimum ${new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(minLineValue)} sipariş`}
       />
     </>
   );

@@ -1,20 +1,27 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import { useCart } from '@/context/CartContext';
+import { useStore } from '@/context/StoreContext';
+import { getMinOrderInfo } from '@/utils/orderRules';
 import { formatPrice } from '@/utils/whatsapp';
 
 export default function ProductCard({ product }) {
+  const { settings } = useStore();
   const { addToCart } = useCart();
-  const [qty, setQty] = useState(product.minOrder || 1);
+  const minLineValue = Number(settings.minOrderLineValue) || 2000;
+  const minInfo = useMemo(
+    () => getMinOrderInfo(product, minLineValue),
+    [product, minLineValue],
+  );
+  const [qty, setQty] = useState(minInfo.minQty);
 
   const handleAdd = (e) => {
     e.preventDefault();
-    const finalQty = Math.max(qty, product.minOrder || 1);
-    addToCart(product, finalQty);
+    addToCart(product, Math.max(qty, minInfo.minQty));
   };
 
   return (
@@ -42,11 +49,9 @@ export default function ProductCard({ product }) {
         </Link>
         <p className="mt-0.5 text-xs text-gray-500">SKU: {product.sku}</p>
 
-        {(product.minOrder || 1) > 1 && (
-          <div className="mt-2">
-            <Badge variant="min">Min. Sipariş: {product.minOrder} Adet</Badge>
-          </div>
-        )}
+        <div className="mt-2">
+          <Badge variant="min">{minInfo.label}</Badge>
+        </div>
 
         <p className="mt-3 font-display text-xl font-bold text-brand-700">
           {formatPrice(product.price)}
@@ -55,19 +60,16 @@ export default function ProductCard({ product }) {
         <div className="mt-3">
           <QuantityControls
             quantity={qty}
-            minOrder={product.minOrder || 1}
+            minOrder={minInfo.minQty}
+            minOrderHint={minInfo.label}
             onChange={setQty}
             onIncrement={(n) => setQty((q) => q + n)}
-            onDecrement={(n) => setQty((q) => Math.max(product.minOrder || 1, q - n))}
+            onDecrement={(n) => setQty((q) => Math.max(minInfo.minQty, q - n))}
             compact
           />
         </div>
 
-        <Button
-          variant="primary"
-          className="mt-3 w-full"
-          onClick={handleAdd}
-        >
+        <Button type="button" variant="primary" className="mt-3 w-full" onClick={handleAdd}>
           <ShoppingCart className="h-4 w-4" />
           Sepete Ekle
         </Button>

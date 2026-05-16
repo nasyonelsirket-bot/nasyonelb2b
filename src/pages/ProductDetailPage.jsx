@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -8,16 +8,26 @@ import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
+import { getMinOrderInfo } from '@/utils/orderRules';
 import { formatPrice } from '@/utils/whatsapp';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const { getProductById } = useStore();
+  const { getProductById, settings } = useStore();
   const { addToCart } = useCart();
   const product = getProductById(id);
-  const [qty, setQty] = useState(product?.minOrder || 1);
+  const minLineValue = Number(settings.minOrderLineValue) || 2000;
+  const minInfo = useMemo(
+    () => (product ? getMinOrderInfo(product, minLineValue) : null),
+    [product, minLineValue],
+  );
+  const [qty, setQty] = useState(1);
 
-  if (!product) {
+  useEffect(() => {
+    if (minInfo) setQty(minInfo.minQty);
+  }, [minInfo?.minQty, product?.id]);
+
+  if (!product || !minInfo) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center">
         <p className="text-gray-500">Ürün bulunamadı.</p>
@@ -25,8 +35,6 @@ export default function ProductDetailPage() {
       </div>
     );
   }
-
-  const min = product.minOrder || 1;
 
   return (
     <>
@@ -44,24 +52,26 @@ export default function ProductDetailPage() {
           </div>
 
           <div>
-            {min > 1 && (
-              <div className="flex gap-2 mb-3">
-                <Badge variant="min">Min. Sipariş: {min} Adet</Badge>
-              </div>
-            )}
+            <div className="flex gap-2 mb-3">
+              <Badge variant="min">{minInfo.label}</Badge>
+            </div>
             <p className="text-sm text-brand-500">{product.category}</p>
             <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
             <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>
             <p className="font-display text-4xl font-bold text-brand-700 mt-6">{formatPrice(product.price)}</p>
+            <p className="text-sm text-brand-600 mt-2">
+              Bu üründen sepette en az {formatPrice(minLineValue)} tutarında sipariş verilmelidir.
+            </p>
             <p className="mt-6 text-gray-600 leading-relaxed">{product.description}</p>
 
             <div className="mt-8 max-w-sm">
               <QuantityControls
                 quantity={qty}
-                minOrder={min}
+                minOrder={minInfo.minQty}
+                minOrderHint={minInfo.label}
                 onChange={setQty}
                 onIncrement={(n) => setQty((q) => q + n)}
-                onDecrement={(n) => setQty((q) => Math.max(min, q - n))}
+                onDecrement={(n) => setQty((q) => Math.max(minInfo.minQty, q - n))}
               />
             </div>
 
@@ -69,10 +79,10 @@ export default function ProductDetailPage() {
               variant="primary"
               size="lg"
               className="mt-6"
-              onClick={() => addToCart(product, Math.max(qty, min))}
+              onClick={() => addToCart(product, Math.max(qty, minInfo.minQty))}
             >
               <ShoppingCart className="h-5 w-5" />
-              Sepete Ekle ({Math.max(qty, min)} adet)
+              Sepete Ekle ({Math.max(qty, minInfo.minQty)} adet · {formatPrice(product.price * Math.max(qty, minInfo.minQty))})
             </Button>
           </div>
         </div>
