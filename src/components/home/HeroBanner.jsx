@@ -37,8 +37,8 @@ export default function HeroBanner() {
           </h1>
           <p className="mt-3 text-lg text-brand-200">{current.subtitle}</p>
           <div className="mt-6">
-            <Link to={current.link || '/kampanyalar'}>
-              <Button variant="secondary" size="lg">
+            <Link to={current.link || '/kategoriler'}>
+              <Button variant="gold" size="lg">
                 Keşfet <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>

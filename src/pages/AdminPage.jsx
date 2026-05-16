@@ -4,6 +4,8 @@ import Button from '@/components/ui/Button';
 import AdminToast from '@/components/admin/AdminToast';
 import ProductsAdmin from '@/components/admin/ProductsAdmin';
 import ImageDropzone from '@/components/admin/ImageDropzone';
+import EmojiPicker from '@/components/admin/EmojiPicker';
+import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { processImageFile } from '@/utils/imageUpload';
 import { useStore } from '@/context/StoreContext';
 import { parseExcelFile } from '@/utils/excel';
@@ -178,25 +180,85 @@ export default function AdminPage() {
 
 function CategoryAdmin({ store, setMsg }) {
   const [name, setName] = useState('');
+  const [icon, setIcon] = useState('📦');
+  const [editingId, setEditingId] = useState(null);
+  const [editIcon, setEditIcon] = useState('📦');
   const categories = Array.isArray(store.categories) ? store.categories : [];
+
+  const slugify = (text) =>
+    text
+      .toLocaleLowerCase('tr')
+      .replace(/[^a-z0-9ğüşıöç]+/gi, '-')
+      .replace(/(^-|-$)/g, '');
+
   const add = () => {
     if (!name.trim()) return;
-    store.addCategory({ name, slug: name.toLowerCase().replace(/\s+/g, '-'), icon: '📦' });
+    const chosenIcon = icon || suggestEmojiForName(name);
+    startTransition(() => {
+      store.addCategory({ name: name.trim(), slug: slugify(name), icon: chosenIcon });
+    });
     setName('');
+    setIcon('📦');
     setMsg('Kategori eklendi');
   };
+
+  const startEditIcon = (c) => {
+    setEditingId(c.id);
+    setEditIcon(c.icon || '📦');
+  };
+
+  const saveEditIcon = (id) => {
+    startTransition(() => {
+      store.updateCategory(id, { icon: editIcon });
+    });
+    setEditingId(null);
+    setMsg('Kategori emojisi güncellendi');
+  };
+
   return (
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
       <h2 className="font-bold">Kategori Yönetimi</h2>
-      <div className="flex gap-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Kategori adı" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
-        <Button variant="primary" onClick={add}>Ekle</Button>
-      </div>
-      <ul className="space-y-2">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Kategori adı"
+        className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+      />
+      <EmojiPicker value={icon} onChange={setIcon} categoryName={name} autoSuggest />
+      <Button variant="primary" onClick={add} className="w-full sm:w-auto">
+        Kategori Ekle
+      </Button>
+
+      <ul className="space-y-3 pt-2 border-t border-brand-100">
         {categories.map((c) => (
-          <li key={c.id} className="flex justify-between items-center border-b py-2 text-sm">
-            <span>{c.icon} {c.name}</span>
-            <button type="button" onClick={() => store.deleteCategory(c.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
+          <li key={c.id} className="border-b border-brand-50 pb-3 last:border-0">
+            <div className="flex justify-between items-center gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => (editingId === c.id ? setEditingId(null) : startEditIcon(c))}
+                className="flex items-center gap-2 text-left hover:text-brand-600"
+                title="Emojiyi değiştir"
+              >
+                <span className="text-xl">{c.icon || '📦'}</span>
+                <span className="font-medium">{c.name}</span>
+              </button>
+              <button type="button" onClick={() => store.deleteCategory(c.id)} className="text-red-600 shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            {editingId === c.id && (
+              <div className="mt-3 p-3 rounded-xl bg-brand-50/50 border border-brand-100 space-y-2">
+                <EmojiPicker value={editIcon} onChange={setEditIcon} categoryName={c.name} />
+                <div className="flex gap-2">
+                  <Button type="button" variant="primary" onClick={() => saveEditIcon(c.id)}>
+                    Kaydet
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+                    İptal
+                  </Button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -218,7 +280,7 @@ function BannerAdmin({ store, setMsg }) {
       <h2 className="font-bold">Banner Yönetimi</h2>
       <input placeholder="Başlık" value={b.title} onChange={(e) => setB({ ...b, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
       <input placeholder="Alt başlık" value={b.subtitle} onChange={(e) => setB({ ...b, subtitle: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <input placeholder="Link (örn: /kampanyalar)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+      <input placeholder="Link (örn: /kategoriler)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
       <ImageDropzone
         label="Banner görseli"
         hint="Görseli sürükle-bırak veya tıkla"
@@ -319,11 +381,17 @@ function SettingsAdmin({ store, setMsg }) {
       <h2 className="font-bold">Site Ayarları</h2>
       <ImageDropzone
         label="Site logosu"
-        hint="Logoyu sürükle-bırak — marka temasına uygun arka plan uygulanır"
+        hint="PNG veya SVG önerilir — şeffaf arka plan, logo tam görünsün"
         value={s.logoUrl}
         onChange={(url) => setS({ ...s, logoUrl: url })}
         onFile={(file) =>
-          processImageFile(file, { maxWidth: 400, maxHeight: 160, quality: 0.9, addBrandBackground: true })
+          processImageFile(file, {
+            maxWidth: 560,
+            maxHeight: 140,
+            quality: 0.92,
+            addBrandBackground: false,
+            preserveTransparency: true,
+          })
         }
         aspect="logo"
       />

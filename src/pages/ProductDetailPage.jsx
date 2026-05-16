@@ -44,11 +44,11 @@ export default function ProductDetailPage() {
           </div>
 
           <div>
-            <div className="flex gap-2 mb-3">
-              {product.isNew && <Badge variant="new">Yeni</Badge>}
-              {product.isCampaign && <Badge variant="campaign">Kampanya</Badge>}
-              {min > 1 && <Badge variant="min">Min. Sipariş: {min} Adet</Badge>}
-            </div>
+            {min > 1 && (
+              <div className="flex gap-2 mb-3">
+                <Badge variant="min">Min. Sipariş: {min} Adet</Badge>
+              </div>
+            )}
             <p className="text-sm text-brand-500">{product.category}</p>
             <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
             <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>

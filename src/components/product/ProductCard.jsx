@@ -26,10 +26,6 @@ export default function ProductCard({ product }) {
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {product.isNew && <Badge variant="new">Yeni</Badge>}
-          {product.isCampaign && <Badge variant="campaign">Kampanya</Badge>}
-        </div>
         <div className="absolute inset-0 flex items-center justify-center bg-brand-900/40 opacity-0 transition-opacity group-hover:opacity-100">
           <span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-800">
             <Eye className="h-4 w-4" /> İncele

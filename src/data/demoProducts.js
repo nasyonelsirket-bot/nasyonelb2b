@@ -13,7 +13,7 @@ export const DEMO_BANNERS = [
     title: '2026 B2B Bahar Kataloğu',
     subtitle: '500+ üründe toptan fiyat avantajı',
     image: 'https://images.unsplash.com/photo-1558060379-ef192627cc42?w=1400&q=80',
-    link: '/kampanyalar',
+    link: '/kategoriler',
     active: true,
   },
   {
@@ -21,7 +21,7 @@ export const DEMO_BANNERS = [
     title: 'Yeni Sezon Oyuncaklar',
     subtitle: 'Bayi özel fiyatlarıyla stokta',
     image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1400&q=80',
-    link: '/yeni-urunler',
+    link: '/kategoriler',
     active: true,
   },
 ];
@@ -174,8 +174,8 @@ export const DEMO_PRODUCTS = [
 ];
 
 export const DEFAULT_SETTINGS = {
-  siteName: 'ToyWholesale B2B',
-  tagline: 'Profesyonel Oyuncak Toptan Katalog',
+  siteName: 'Nasyonel Toys B2B',
+  tagline: 'Hayaller Oyunla Başlar — Toptan Oyuncak Katalog',
   logoUrl: '/logo.svg',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
@@ -185,7 +185,7 @@ export const DEFAULT_SETTINGS = {
   contactPhone: '+90 555 123 45 67',
   contactAddress: 'İstanbul, Türkiye',
   aboutText:
-    'ToyWholesale B2B, 15 yılı aşkın tecrübesiyle oyuncak sektöründe toptan satış yapan güvenilir bir tedarikçidir. 500+ ürün çeşidi, hızlı sevkiyat ve WhatsApp üzerinden kolay sipariş imkânı sunuyoruz.',
+    'Nasyonel Grup, 2018 yılından bu yana üretim, tedarik ve e-ticaret alanlarında büyüyen; Nasyonel Toys, Elysane ve Nasyonel Home markalarını bünyesinde barındıran güçlü bir marka yapılanmasıdır.',
   trendyolSupplierId: '',
   trendyolApiKey: '',
   trendyolApiSecret: '',

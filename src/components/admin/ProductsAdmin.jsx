@@ -1,5 +1,5 @@
-import { useState, startTransition } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useMemo, startTransition } from 'react';
+import { Plus, Trash2, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ImageDropzone from '@/components/admin/ImageDropzone';
 import { processImageFile } from '@/utils/imageUpload';
@@ -11,8 +11,6 @@ const EMPTY_PRODUCT = {
   price: 0,
   image: '',
   description: '',
-  isNew: false,
-  isCampaign: false,
   minOrder: 1,
 };
 
@@ -85,18 +83,12 @@ function ProductFormFields({ form, setForm }) {
           className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm h-16"
         />
       </div>
-      <div className="sm:col-span-2 flex gap-4">
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!form.isNew} onChange={(e) => setForm({ ...form, isNew: e.target.checked })} />
-          Yeni
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!form.isCampaign} onChange={(e) => setForm({ ...form, isCampaign: e.target.checked })} />
-          Kampanya
-        </label>
-      </div>
     </div>
   );
+}
+
+function normalizeSearch(value) {
+  return String(value || '').trim().toLocaleLowerCase('tr');
 }
 
 export default function ProductsAdmin({ store, showMsg }) {
@@ -106,6 +98,29 @@ export default function ProductsAdmin({ store, showMsg }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(EMPTY_PRODUCT);
   const [selected, setSelected] = useState(() => new Set());
+  const [searchName, setSearchName] = useState('');
+  const [searchSku, setSearchSku] = useState('');
+
+  const filteredProducts = useMemo(() => {
+    const nameQ = normalizeSearch(searchName);
+    const skuQ = normalizeSearch(searchSku);
+    if (!nameQ && !skuQ) return products;
+
+    return products.filter((p) => {
+      const name = normalizeSearch(p.name);
+      const sku = normalizeSearch(p.sku);
+      if (nameQ && !name.includes(nameQ)) return false;
+      if (skuQ && !sku.includes(skuQ)) return false;
+      return true;
+    });
+  }, [products, searchName, searchSku]);
+
+  const hasActiveSearch = Boolean(searchName.trim() || searchSku.trim());
+
+  const clearSearch = () => {
+    setSearchName('');
+    setSearchSku('');
+  };
 
   const toggleSelect = (id) => {
     setSelected((prev) => {
@@ -117,8 +132,21 @@ export default function ProductsAdmin({ store, showMsg }) {
   };
 
   const toggleSelectAll = () => {
-    if (selected.size === products.length) setSelected(new Set());
-    else setSelected(new Set(products.map((p) => p.id).filter(Boolean)));
+    const visibleIds = filteredProducts.map((p) => p.id).filter(Boolean);
+    const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+    if (allVisibleSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        visibleIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        visibleIds.forEach((id) => next.add(id));
+        return next;
+      });
+    }
   };
 
   const handleBulkDelete = () => {
@@ -189,7 +217,46 @@ export default function ProductsAdmin({ store, showMsg }) {
             Seçilenleri Sil ({selected.size})
           </Button>
         )}
-        <span className="text-sm text-gray-500 ml-auto">{products.length} ürün</span>
+        <span className="text-sm text-gray-500 ml-auto">
+          {hasActiveSearch
+            ? `${filteredProducts.length} / ${products.length} ürün`
+            : `${products.length} ürün`}
+        </span>
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-card border border-brand-100">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="search"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              placeholder="Ürün adı ile ara"
+              className="w-full rounded-lg border border-brand-200 pl-9 pr-3 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+            />
+          </div>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="search"
+              value={searchSku}
+              onChange={(e) => setSearchSku(e.target.value)}
+              placeholder="Stok kodu ile ara"
+              className="w-full rounded-lg border border-brand-200 pl-9 pr-3 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
+            />
+          </div>
+          {hasActiveSearch && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 px-4 py-2.5 text-sm text-brand-700 hover:bg-brand-50 whitespace-nowrap"
+            >
+              <X className="h-4 w-4" />
+              Temizle
+            </button>
+          )}
+        </div>
       </div>
 
       {showAdd && (
@@ -211,9 +278,12 @@ export default function ProductsAdmin({ store, showMsg }) {
                 <th className="p-3 w-10">
                   <input
                     type="checkbox"
-                    checked={products.length > 0 && selected.size === products.length}
+                    checked={
+                      filteredProducts.length > 0 &&
+                      filteredProducts.every((p) => selected.has(p.id))
+                    }
                     onChange={toggleSelectAll}
-                    aria-label="Tümünü seç"
+                    aria-label="Görünenleri seç"
                   />
                 </th>
                 <th className="p-3 text-left w-14">Görsel</th>
@@ -225,7 +295,7 @@ export default function ProductsAdmin({ store, showMsg }) {
               </tr>
             </thead>
             <tbody>
-              {products.map((p, index) => (
+              {filteredProducts.map((p, index) => (
                 <ProductRow
                   key={p.id || `row-${index}`}
                   p={p}
@@ -245,6 +315,14 @@ export default function ProductsAdmin({ store, showMsg }) {
         </div>
         {!products.length && (
           <p className="text-center text-gray-500 py-8 text-sm">Henüz ürün yok. Yeni ürün ekleyin veya Trendyol’dan çekin.</p>
+        )}
+        {products.length > 0 && !filteredProducts.length && (
+          <p className="text-center text-gray-500 py-8 text-sm">
+            Arama kriterlerine uygun ürün bulunamadı.
+            <button type="button" onClick={clearSearch} className="block mx-auto mt-2 text-brand-600 text-xs font-medium hover:underline">
+              Aramayı temizle
+            </button>
+          </p>
         )}
       </div>
     </div>

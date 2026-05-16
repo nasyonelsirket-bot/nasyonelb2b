@@ -7,11 +7,13 @@ import { useCart } from '@/context/CartContext';
 const NAV = [
   { to: '/', label: 'Ana Sayfa' },
   { to: '/kategoriler', label: 'Kategoriler' },
-  { to: '/yeni-urunler', label: 'Yeni Ürünler' },
-  { to: '/kampanyalar', label: 'Kampanyalar' },
   { to: '/hakkimizda', label: 'Hakkımızda' },
   { to: '/iletisim', label: 'İletişim' },
 ];
+
+function isDefaultLogo(url) {
+  return !url || url === '/logo.svg' || url.endsWith('/logo.svg');
+}
 
 export default function Header() {
   const { settings } = useStore();
@@ -19,26 +21,33 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
 
+  const logoSrc = settings.logoUrl || '/logo.svg';
+
   const navClass = ({ isActive }) =>
-    `text-sm font-medium transition-colors ${isActive ? 'text-brand-600' : 'text-gray-600 hover:text-brand-600'}`;
+    `text-sm font-medium transition-colors pb-0.5 border-b-2 ${
+      isActive
+        ? 'text-brand-900 border-accent-gold'
+        : 'text-gray-600 border-transparent hover:text-brand-800 hover:border-brand-200'
+    }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-brand-100 shadow-sm">
-      <div className="bg-brand-900 text-white text-center text-xs py-1.5 px-4">
-        B2B Toptan Sipariş — WhatsApp ile hızlı sipariş | Minimum sipariş ürün bazlı uygulanır
+    <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
+      <div className="bg-brand-950 text-brand-100 text-center text-xs py-2 px-4">
+        <span className="text-accent-gold font-semibold">B2B Toptan Sipariş</span>
+        {' '}— WhatsApp ile hızlı sipariş | Minimum sipariş ürün bazlı uygulanır
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-3 shrink-0">
+        <div className="flex min-h-[4.75rem] sm:min-h-[5rem] items-center justify-between gap-4 py-2">
+          <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[45%] sm:max-w-none py-0.5">
             <img
-              src={settings.logoUrl || '/logo.svg'}
-              alt={settings.siteName}
-              className="h-10 w-auto"
+              src={logoSrc}
+              alt={settings.siteName || 'Nasyonel'}
+              className={`site-logo ${!isDefaultLogo(logoSrc) ? 'max-h-14 sm:max-h-16' : ''}`}
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6">
+          <nav className="hidden lg:flex items-center gap-7">
             {NAV.map((item) => (
               <NavLink key={item.to} to={item.to} className={navClass} end={item.to === '/'}>
                 {item.label}
@@ -48,7 +57,7 @@ export default function Header() {
 
           <div className="hidden md:flex flex-1 max-w-md mx-4">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-400" />
               <input
                 type="search"
                 placeholder="Ürün veya stok kodu ara..."
@@ -59,14 +68,14 @@ export default function Header() {
                     window.location.href = `/?q=${encodeURIComponent(search.trim())}`;
                   }
                 }}
-                className="w-full rounded-full border border-brand-200 bg-brand-50/50 py-2 pl-10 pr-4 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-full border border-brand-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-accent-gold focus:outline-none focus:ring-2 focus:ring-accent-gold/25"
               />
             </div>
           </div>
 
           <Link
             to="/sepet"
-            className={`relative flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors ${cartAnimating ? 'animate-cart-bounce' : ''}`}
+            className={`relative flex items-center gap-2 rounded-full bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800 transition-colors shadow-md shadow-brand-900/20 ${cartAnimating ? 'animate-cart-bounce' : ''}`}
           >
             <ShoppingCart className="h-5 w-5" />
             <span className="hidden sm:inline">Sepet</span>
@@ -79,7 +88,7 @@ export default function Header() {
 
           <button
             type="button"
-            className="lg:hidden p-2 text-brand-700"
+            className="lg:hidden p-2 text-brand-800"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menü"
           >

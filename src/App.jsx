@@ -10,8 +10,6 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
-const CampaignsPage = lazy(() => import('@/pages/CampaignsPage'));
-const NewProductsPage = lazy(() => import('@/pages/NewProductsPage'));
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
@@ -43,8 +41,6 @@ export default function App() {
                 <Route path="kategoriler" element={<Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense>} />
                 <Route path="urun/:id" element={<Suspense fallback={<PageLoader />}><ProductDetailPage /></Suspense>} />
                 <Route path="sepet" element={<Suspense fallback={<PageLoader />}><CartPage /></Suspense>} />
-                <Route path="kampanyalar" element={<Suspense fallback={<PageLoader />}><CampaignsPage /></Suspense>} />
-                <Route path="yeni-urunler" element={<Suspense fallback={<PageLoader />}><NewProductsPage /></Suspense>} />
                 <Route path="hakkimizda" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="iletisim" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />
               </Route>

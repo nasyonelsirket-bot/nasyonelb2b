@@ -10,15 +10,22 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
-            <img src={settings.logoUrl || '/logo.svg'} alt="" className="h-10 brightness-0 invert mb-4" />
+            <img
+              src={
+                !settings.logoUrl || settings.logoUrl === '/logo.svg'
+                  ? '/logo-light.svg'
+                  : settings.logoUrl
+              }
+              alt={settings.siteName || 'Nasyonel'}
+              className="site-logo-footer mb-4"
+            />
             <p className="text-brand-200 text-sm max-w-md">{settings.aboutText?.slice(0, 150)}...</p>
           </div>
           <div>
             <h4 className="font-display font-bold mb-4">Hızlı Linkler</h4>
             <ul className="space-y-2 text-sm text-brand-200">
               <li><Link to="/kategoriler" className="hover:text-white">Kategoriler</Link></li>
-              <li><Link to="/yeni-urunler" className="hover:text-white">Yeni Ürünler</Link></li>
-              <li><Link to="/kampanyalar" className="hover:text-white">Kampanyalar</Link></li>
+              <li><Link to="/hakkimizda" className="hover:text-white">Hakkımızda</Link></li>
               <li><Link to="/sepet" className="hover:text-white">Sepetim</Link></li>
             </ul>
           </div>

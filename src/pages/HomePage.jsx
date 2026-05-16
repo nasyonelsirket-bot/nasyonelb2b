@@ -44,7 +44,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 grid grid-cols-2 md:grid-cols-4 gap-6">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-900 text-accent-gold shadow-md shadow-brand-900/15">
                 <Icon className="h-6 w-6" />
               </div>
               <div>
