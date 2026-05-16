@@ -41,6 +41,7 @@ export default function CartPage() {
 
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
   const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const discount = useMemo(() => getCartDiscount(totalPrice), [totalPrice]);
@@ -59,6 +60,7 @@ export default function CartPage() {
 
   const handleSubmit = async () => {
     setFormError('');
+    setFormSuccess('');
     const err = validateCustomer();
     if (err) {
       setFormError(err);
@@ -84,11 +86,13 @@ export default function CartPage() {
         shipping,
         orderTotal,
       });
-      if (!result.shared) {
-        setFormError('PDF indirildi. WhatsApp açıldı — lütfen PDF dosyasını mesaja ekleyerek gönderin.');
+      if (result.mode === 'cancelled') {
+        setFormError(result.message);
+      } else {
+        setFormSuccess(result.message);
       }
-    } catch {
-      setFormError('Sipariş gönderilemedi. Lütfen tekrar deneyin.');
+    } catch (err) {
+      setFormError(err?.message || 'Sipariş gönderilemedi. Lütfen tekrar deneyin.');
     } finally {
       setSubmitting(false);
     }
@@ -274,6 +278,11 @@ export default function CartPage() {
                   {formError}
                 </p>
               )}
+              {formSuccess && (
+                <p className="mt-4 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  {formSuccess}
+                </p>
+              )}
 
               <Button
                 variant="whatsapp"
@@ -283,10 +292,10 @@ export default function CartPage() {
                 disabled={!isCartValid || submitting}
               >
                 <MessageCircle className="h-5 w-5" />
-                {submitting ? 'PDF hazırlanıyor...' : 'PDF Sipariş Formu ile WhatsApp Gönder'}
+                {submitting ? 'Hazırlanıyor...' : 'WhatsApp ile Sipariş Gönder'}
               </Button>
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Sipariş PDF olarak indirilir; WhatsApp&apos;ta dosyayı ekleyerek gönderin.
+                Sipariş, ayarlardaki işletme WhatsApp numarasına iletilir. PDF tarayıcıda açılmaz; mobilde PDF ekli, masaüstünde metin olarak gider.
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatPrice } from '@/utils/whatsapp';
+import { formatPrice, buildWhatsAppOrderMessage, openWhatsAppToBusiness } from '@/utils/whatsapp';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { registerPdfFonts, setPdfFont, PDF_FONT } from '@/utils/pdfFont';
@@ -226,14 +226,15 @@ export async function downloadOrderPdf(pdfResult) {
   URL.revokeObjectURL(url);
 }
 
-export function openWhatsAppWithPdf(phone, customer, siteName) {
-  const clean = String(phone).replace(/\D/g, '');
-  const text = encodeURIComponent(
-    `Merhaba,\n\n${customer.companyName} adına sipariş formu (PDF) gönderiyorum.\n\n${siteName} — Sipariş onayınızı rica ederim.`,
-  );
-  window.open(`https://wa.me/${clean}?text=${text}`, '_blank', 'noopener,noreferrer');
+function cleanWhatsAppPhone(phone) {
+  return String(phone || '').replace(/\D/g, '');
 }
 
+/**
+ * PDF müşteriye indirilmez/gösterilmez.
+ * Mobil: PDF ekli paylaşım → WhatsApp'ta işletme sohbetine gönderin.
+ * Masaüstü: işletme numarasına dolu sipariş metni açılır (PDF eklenemez).
+ */
 export async function submitOrderViaWhatsApp({
   phone,
   siteName,
@@ -245,6 +246,20 @@ export async function submitOrderViaWhatsApp({
   shipping,
   orderTotal,
 }) {
+  const businessPhone = cleanWhatsAppPhone(phone);
+  if (!businessPhone) {
+    throw new Error('WhatsApp numarası ayarlarda tanımlı değil');
+  }
+
+  const orderMessage = buildWhatsAppOrderMessage(items, {
+    siteName,
+    customer,
+    discount,
+    shipping,
+    orderTotal,
+    withPdfNote: true,
+  });
+
   const pdf = await generateOrderPdf({
     siteName,
     siteLogoUrl,
@@ -256,22 +271,37 @@ export async function submitOrderViaWhatsApp({
     orderTotal,
   });
 
-  await downloadOrderPdf(pdf);
+  const pdfFile = new File([pdf.blob], pdf.fileName, { type: 'application/pdf' });
 
-  if (navigator.canShare?.({ files: [new File([pdf.blob], pdf.fileName, { type: 'application/pdf' })] })) {
+  if (navigator.canShare?.({ files: [pdfFile] })) {
     try {
-      const file = new File([pdf.blob], pdf.fileName, { type: 'application/pdf' });
       await navigator.share({
-        title: `${siteName} Sipariş`,
-        text: `${customer.companyName} sipariş formu`,
-        files: [file],
+        title: `${siteName} — Yeni sipariş`,
+        text: orderMessage,
+        files: [pdfFile],
       });
-      return { shared: true };
-    } catch {
-      /* fallback */
+      return {
+        mode: 'share',
+        message:
+          'WhatsApp açıldı. PDF ekli mesajı işletmeye göndermek için *Gönder*\'e basın.',
+      };
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        return { mode: 'cancelled', message: 'Gönderim iptal edildi.' };
+      }
     }
   }
 
-  openWhatsAppWithPdf(phone, customer, siteName);
-  return { shared: false, downloaded: true };
+  openWhatsAppToBusiness(businessPhone, items, {
+    siteName,
+    customer,
+    discount,
+    shipping,
+    orderTotal,
+  });
+  return {
+    mode: 'whatsapp',
+    message:
+      'WhatsApp işletme sohbetiniz açıldı. Sipariş özeti hazır — *Gönder*\'e basın. (Bu cihazda PDF otomatik eklenemez; mobilde PDF ekli gönderim kullanılır.)',
+  };
 }

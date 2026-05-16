@@ -16,9 +16,9 @@ function padLine(text, width = 28) {
   return s + ' '.repeat(width - s.length);
 }
 
-export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
-  const cleanPhone = String(phone).replace(/\D/g, '');
+export function buildWhatsAppOrderMessage(cartItems, options = {}) {
   const siteName = options.siteName || 'Nasyonel Toys';
+  const customer = options.customer || {};
   const dateStr = new Date().toLocaleDateString('tr-TR', {
     day: '2-digit',
     month: 'long',
@@ -33,7 +33,8 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   });
   const discount = options.discount || getCartDiscount(subtotal);
   const shipping = options.shipping || getFreeShippingStatus(discount.subtotal);
-  const orderTotal = getOrderPayableTotal(discount.grandTotal, shipping);
+  const orderTotal =
+    options.orderTotal ?? getOrderPayableTotal(discount.grandTotal, shipping);
 
   const lines = [
     '╔══════════════════════════════════╗',
@@ -44,17 +45,16 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
     '',
     '━━━━━━━━ *MÜŞTERİ BİLGİLERİ* ━━━━━━━━',
     '🏢 *Firma / Bayi Adı:*',
-    '→ ................................',
+    `→ ${customer.companyName?.trim() || '................................'}`,
     '',
     '👤 *Yetkili Kişi:*',
-    '→ ................................',
+    `→ ${customer.contactName?.trim() || '................................'}`,
     '',
     '📞 *İletişim Telefonu:*',
-    '→ ................................',
+    `→ ${customer.phone?.trim() || '................................'}`,
     '',
     '📍 *Teslimat Adresi:*',
-    '→ ................................',
-    '→ ................................',
+    `→ ${customer.address?.trim() || '................................'}`,
     '',
     '━━━━━━━━ *SİPARİŞ KALEMLERİ* ━━━━━━━━',
     '',
@@ -87,6 +87,9 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
     discount.upsellMessage ? `💡 _${discount.upsellMessage}_` : null,
     `🚚 *Kargo:* ${shipping.eligible ? '*Bedava* ✓' : formatPrice(shipping.shippingFee)}`,
     `✅ *ÖDENECEK TUTAR:* *${formatPrice(orderTotal)}*`,
+    options.withPdfNote
+      ? '\n📎 *Sipariş formu (PDF) bu mesaja eklenmiştir.*'
+      : null,
     '',
     '━━━━━━━━ *KARGO* ━━━━━━━━━━━━━━━━━',
     `• ${formatPrice(shipping.threshold)} altı: *${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo*`,
@@ -107,8 +110,18 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
     'Teşekkürler — Nasyonel Toys 🧸',
   );
 
-  const message = encodeURIComponent(lines.filter(Boolean).join('\n'));
+  return lines.filter(Boolean).join('\n');
+}
+
+export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
+  const cleanPhone = String(phone).replace(/\D/g, '');
+  const message = encodeURIComponent(buildWhatsAppOrderMessage(cartItems, options));
   return `https://wa.me/${cleanPhone}?text=${message}`;
+}
+
+export function openWhatsAppToBusiness(phone, cartItems, options = {}) {
+  const url = buildWhatsAppOrderUrl(phone, cartItems, options);
+  window.location.href = url;
 }
 
 export function openWhatsApp(phone, cartItems, options = {}) {
