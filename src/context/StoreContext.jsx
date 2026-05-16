@@ -18,6 +18,14 @@ import {
 
 const StoreContext = createContext(null);
 
+function isAdminSession() {
+  try {
+    return sessionStorage.getItem('b2b_admin') === '1';
+  } catch {
+    return false;
+  }
+}
+
 function loadLocalSettings(migration) {
   if (migration?.settings) return migration.settings;
   const stored = loadFromStorage(KEYS.SETTINGS, null);
@@ -35,55 +43,116 @@ export function StoreProvider({ children }) {
   const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(null);
   const [publishing, setPublishing] = useState(false);
 
-  const [products, setProducts] = useState(() =>
-    loadArrayFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
-  );
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(() => {
     if (migration?.categories?.length) return migration.categories;
-    const stored = loadArrayFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES);
-    return refreshCategoryIcons(stored);
+    return refreshCategoryIcons(DEMO_CATEGORIES);
   });
-  const [banners, setBanners] = useState(() =>
-    loadArrayFromStorage(KEYS.BANNERS, DEMO_BANNERS),
-  );
+  const [banners, setBanners] = useState(() => DEMO_BANNERS);
   const [settings, setSettings] = useState(() => loadLocalSettings(migration));
+
+  const applyRemoteCatalog = useCallback((remote) => {
+    if (!remote?.products?.length) return false;
+    setProducts(remote.products);
+    setCategories(
+      refreshCategoryIcons(
+        remote.categories?.length ? remote.categories : buildCategoriesFromProducts(remote.products),
+      ),
+    );
+    if (remote.banners?.length) setBanners(remote.banners);
+    setSettings((prev) => mergePublishedSettings(prev, remote.settings));
+    setCatalogSource('server');
+    const updatedAt = remote.updatedAt || new Date().toISOString();
+    setCatalogUpdatedAt(updatedAt);
+    saveToStorage(KEYS.PRODUCTS, remote.products);
+    saveToStorage(KEYS.CATEGORIES, remote.categories || []);
+    if (remote.banners?.length) saveToStorage(KEYS.BANNERS, remote.banners);
+    saveToStorage(KEYS.CATALOG_META, {
+      updatedAt,
+      productCount: remote.products.length,
+    });
+    return true;
+  }, []);
+
+  const applyCachedCatalog = useCallback(() => {
+    const meta = loadFromStorage(KEYS.CATALOG_META, null);
+    const cachedProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
+    if (!meta?.updatedAt || !cachedProducts.length) return false;
+    setProducts(cachedProducts);
+    const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
+    setCategories(
+      refreshCategoryIcons(
+        cachedCategories.length ? cachedCategories : buildCategoriesFromProducts(cachedProducts),
+      ),
+    );
+    const cachedBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+    if (cachedBanners.length) setBanners(cachedBanners);
+    setCatalogSource('cache');
+    setCatalogUpdatedAt(meta.updatedAt);
+    return true;
+  }, []);
+
+  const applyLocalAdminCatalog = useCallback(() => {
+    if (!isAdminSession()) return false;
+    const localProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
+    if (!localProducts.length) return false;
+    setProducts(localProducts);
+    const localCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
+    setCategories(
+      refreshCategoryIcons(
+        localCategories.length ? localCategories : buildCategoriesFromProducts(localProducts),
+      ),
+    );
+    const localBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+    if (localBanners.length) setBanners(localBanners);
+    setCatalogSource('local');
+    return true;
+  }, []);
+
+  const loadPublishedCatalog = useCallback(async () => {
+    const remote = await fetchPublishedCatalog();
+    if (applyRemoteCatalog(remote)) return;
+    if (applyCachedCatalog()) return;
+    if (applyLocalAdminCatalog()) return;
+    setProducts(DEMO_PRODUCTS);
+    setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
+    setBanners(DEMO_BANNERS);
+    setCatalogSource('local');
+  }, [applyRemoteCatalog, applyCachedCatalog, applyLocalAdminCatalog]);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const remote = await fetchPublishedCatalog();
-      if (cancelled) return;
-
-      if (remote?.products?.length) {
-        setProducts(remote.products);
-        setCategories(
-          refreshCategoryIcons(
-            remote.categories?.length ? remote.categories : buildCategoriesFromProducts(remote.products),
-          ),
-        );
-        if (remote.banners?.length) setBanners(remote.banners);
-        setSettings((prev) => mergePublishedSettings(prev, remote.settings));
-        setCatalogSource('server');
-        setCatalogUpdatedAt(remote.updatedAt || null);
-        saveToStorage(KEYS.PRODUCTS, remote.products);
-        saveToStorage(KEYS.CATEGORIES, remote.categories || []);
-        if (remote.banners?.length) saveToStorage(KEYS.BANNERS, remote.banners);
-      } else {
-        setCatalogSource('local');
-      }
-
-      setCatalogReady(true);
+      await loadPublishedCatalog();
+      if (!cancelled) setCatalogReady(true);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadPublishedCatalog]);
 
-  useEffect(() => saveToStorage(KEYS.PRODUCTS, products), [products]);
-  useEffect(() => saveToStorage(KEYS.CATEGORIES, categories), [categories]);
-  useEffect(() => saveToStorage(KEYS.BANNERS, banners), [banners]);
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadPublishedCatalog();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [loadPublishedCatalog]);
+
+  useEffect(() => {
+    if (!catalogReady) return;
+    saveToStorage(KEYS.PRODUCTS, products);
+  }, [products, catalogReady]);
+  useEffect(() => {
+    if (!catalogReady) return;
+    saveToStorage(KEYS.CATEGORIES, categories);
+  }, [categories, catalogReady]);
+  useEffect(() => {
+    if (!catalogReady) return;
+    saveToStorage(KEYS.BANNERS, banners);
+  }, [banners, catalogReady]);
   useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
 
   const productCountsByCategory = useMemo(
@@ -233,8 +302,13 @@ export function StoreProvider({ children }) {
           settings: settingsForPublish(settings),
           password,
         });
+        const updatedAt = result.updatedAt || new Date().toISOString();
         setCatalogSource('server');
-        setCatalogUpdatedAt(result.updatedAt || new Date().toISOString());
+        setCatalogUpdatedAt(updatedAt);
+        saveToStorage(KEYS.CATALOG_META, {
+          updatedAt,
+          productCount: list.length,
+        });
         return result;
       } finally {
         setPublishing(false);

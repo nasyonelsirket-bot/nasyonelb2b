@@ -3,7 +3,12 @@ const CATALOG_SAVE = '/api/catalog/save';
 
 export async function fetchPublishedCatalog() {
   try {
-    const res = await fetch(CATALOG_GET, { method: 'GET', cache: 'no-store' });
+    const url = `${CATALOG_GET}?_=${Date.now()}`;
+    const res = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { Pragma: 'no-cache', 'Cache-Control': 'no-cache' },
+    });
     if (!res.ok) return null;
     const data = await res.json();
     if (!Array.isArray(data?.products) || !data.products.length) return null;

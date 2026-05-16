@@ -4,6 +4,7 @@ const KEYS = {
   BANNERS: 'b2b_banners',
   SETTINGS: 'b2b_settings',
   CART: 'b2b_cart',
+  CATALOG_META: 'b2b_catalog_meta',
 };
 
 export function loadFromStorage(key, fallback) {

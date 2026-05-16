@@ -1,3 +1,5 @@
 /api/trendyol/sync  /.netlify/functions/trendyol-sync  200!
+/api/catalog  /.netlify/functions/catalog-get  200!
+/api/catalog/save  /.netlify/functions/catalog-save  200!
 /yeni-urunler  /kategoriler  301
 /kampanyalar  /kategoriler  301

@@ -7,7 +7,7 @@ const HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
-  'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+  'Cache-Control': 'no-store, no-cache, must-revalidate',
 };
 
 const EMPTY = { products: [], categories: [], banners: [], settings: null, updatedAt: null };
