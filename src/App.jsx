@@ -5,6 +5,8 @@ import { StoreProvider } from '@/context/StoreContext';
 import { CartProvider } from '@/context/CartContext';
 import Layout from '@/components/layout/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
+import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
 
 import HomePage from '@/pages/HomePage';
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -29,6 +31,8 @@ export default function App() {
       <StoreProvider>
         <CartProvider>
           <BrowserRouter>
+            <Ga4Bootstrap />
+            <Ga4PageTracker />
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />

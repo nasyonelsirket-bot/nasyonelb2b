@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Trash2, AlertTriangle, Sparkles, Tag, TrendingUp, Truck } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -12,6 +12,7 @@ import { getCartDiscount, DISCOUNT_THRESHOLD_TL } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { formatPrice } from '@/utils/whatsapp';
 import { submitOrderViaWhatsApp } from '@/utils/orderPdf';
+import { trackBeginCheckout, trackPurchase } from '@/lib/analytics/ga4';
 
 function formatThreshold(n) {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(n);
@@ -51,6 +52,13 @@ export default function CartPage() {
     [discount.grandTotal, shipping],
   );
 
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (!items.length || checkoutTracked.current) return;
+    checkoutTracked.current = true;
+    trackBeginCheckout(items);
+  }, [items]);
+
   const validateCustomer = () => {
     if (!customer.companyName.trim()) return 'Firma / bayi adı zorunludur.';
     if (!customer.address.trim()) return 'Teslimat adresi zorunludur.';
@@ -87,6 +95,15 @@ export default function CartPage() {
         orderTotal,
       });
       setFormSuccess(result.message);
+      if (result.orderId) {
+        trackPurchase({
+          transactionId: result.orderId,
+          items,
+          value: orderTotal,
+          shipping: shipping.shippingFee,
+          coupon: discount.tierLabel,
+        });
+      }
     } catch (err) {
       setFormError(err?.message || 'Sipariş gönderilemedi. Lütfen tekrar deneyin.');
     } finally {

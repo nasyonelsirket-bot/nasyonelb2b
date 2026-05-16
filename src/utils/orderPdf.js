@@ -257,7 +257,7 @@ export async function submitOrderViaWhatsApp({
     .trim()
     .slice(0, 40) || 'siparis';
 
-  const { url: pdfUrl } = await uploadOrderForPdfLink({
+  const { url: pdfUrl, id: orderId } = await uploadOrderForPdfLink({
     siteName,
     siteLogoUrl,
     pdfSettings,
@@ -282,6 +282,7 @@ export async function submitOrderViaWhatsApp({
   return {
     mode: 'whatsapp',
     pdfUrl,
+    orderId,
     message:
       'WhatsApp açıldı. Hazır mesajdaki PDF linki ile siparişiniz iletilecek — Gönder\'e basın.',
   };

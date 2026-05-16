@@ -2,6 +2,7 @@ import { createContext, useContext, useCallback, useState, useMemo, useEffect } 
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
 import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { resolveMinQuantity, isLineValid, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
+import { trackAddToCart } from '@/lib/analytics/ga4';
 
 const CartContext = createContext(null);
 
@@ -51,6 +52,7 @@ export function CartProvider({ children }) {
         }
         return [...prev, { ...product, quantity: qty }];
       });
+      trackAddToCart(product, qty);
       triggerAnimation();
     },
     [triggerAnimation],

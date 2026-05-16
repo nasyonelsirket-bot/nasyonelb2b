@@ -13,6 +13,7 @@ import KdvNotice from '@/components/ui/KdvNotice';
 import { formatPrice } from '@/utils/whatsapp';
 import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
+import { trackViewItem } from '@/lib/analytics/ga4';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -35,6 +36,10 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     setImageIndex(0);
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (product) trackViewItem(product);
   }, [product?.id]);
 
   if (!product || !minInfo) {
