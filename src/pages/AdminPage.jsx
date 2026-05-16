@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
 import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, FileText, CloudUpload } from 'lucide-react';
-import { getAdminPasswordForPublish } from '@/services/catalogApi';
+import { getAdminPasswordForPublish, askPublishPassword } from '@/services/catalogApi';
 import PdfSettingsAdmin from '@/components/admin/PdfSettingsAdmin';
 import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
 import Button from '@/components/ui/Button';
@@ -63,12 +63,13 @@ export default function AdminPage() {
   };
 
   const handlePublishCatalog = async () => {
-    const pass = getAdminPasswordForPublish();
+    const pass = askPublishPassword();
     if (!pass) {
-      showMsg('Yeniden giriş yapın', 'error');
+      showMsg('Yayınlama iptal edildi', 'error');
       return;
     }
     try {
+      sessionStorage.setItem('b2b_admin_pass', pass);
       const result = await store.publishCatalog(pass);
       showMsg(`${result.productCount} ürün siteye yayınlandı — müşteriler artık görebilir`);
     } catch (err) {
@@ -111,8 +112,9 @@ export default function AdminPage() {
     try {
       const { products: tyProducts, categories } = await syncAllTrendyolProducts(store.settings, setTyProgress);
       store.importTrendyolProducts(tyProducts);
-      const pass = getAdminPasswordForPublish();
+      const pass = askPublishPassword();
       if (pass) {
+        sessionStorage.setItem('b2b_admin_pass', pass);
         try {
           const pub = await store.publishCatalog(pass);
           showMsg(

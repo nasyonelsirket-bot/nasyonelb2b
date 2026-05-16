@@ -22,13 +22,16 @@ export async function publishCatalog({ products, categories, banners, settings, 
       categories,
       banners,
       settings,
-      password,
+      password: String(password || '').trim(),
     }),
   });
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `Yayınlama başarısız (${res.status})`);
+    const msg = [data.error, data.hint].filter(Boolean).join(' — ') || `Yayınlama başarısız (${res.status})`;
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
   }
   return data;
 }
@@ -39,4 +42,12 @@ export function getAdminPasswordForPublish() {
   } catch {
     return '';
   }
+}
+
+/** Yayınlama şifresi — oturum yoksa sorar */
+export function askPublishPassword() {
+  const fromSession = getAdminPasswordForPublish();
+  if (fromSession) return fromSession;
+  if (typeof window === 'undefined') return '';
+  return window.prompt('Siteye yayınlamak için admin şifrenizi girin:')?.trim() || '';
 }

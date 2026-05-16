@@ -1,8 +1,10 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 import { createRequire } from 'node:module'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const require = createRequire(import.meta.url)
 const { syncTrendyolProducts } = require('./lib/trendyolSync.cjs')
@@ -51,8 +53,93 @@ function trendyolDevProxy() {
   }
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), trendyolDevProxy()],
+function catalogDevProxy(env) {
+  const adminPass = env.ADMIN_PASSWORD || env.VITE_ADMIN_PASSWORD || 'admin123'
+  const catalogFile = path.join(process.cwd(), '.data', 'catalog.json')
+
+  return {
+    name: 'catalog-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/catalog/save', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+
+        const given = String(body.password || '').trim()
+        if (given !== String(adminPass).trim()) {
+          res.statusCode = 401
+          res.setHeader('Content-Type', 'application/json')
+          res.end(
+            JSON.stringify({
+              error: 'Yetkisiz',
+              hint: `Yerel: .env dosyasında ADMIN_PASSWORD veya VITE_ADMIN_PASSWORD = "${adminPass}" olmalı`,
+            }),
+          )
+          return
+        }
+
+        const payload = {
+          products: body.products || [],
+          categories: body.categories || [],
+          banners: body.banners || [],
+          settings: body.settings || null,
+          updatedAt: new Date().toISOString(),
+        }
+        fs.mkdirSync(path.dirname(catalogFile), { recursive: true })
+        fs.writeFileSync(catalogFile, JSON.stringify(payload))
+
+        res.setHeader('Content-Type', 'application/json')
+        res.end(
+          JSON.stringify({
+            ok: true,
+            productCount: payload.products.length,
+            updatedAt: payload.updatedAt,
+          }),
+        )
+      })
+
+      server.middlewares.use('/api/catalog', (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.url?.includes('/save')) return
+
+        res.setHeader('Content-Type', 'application/json')
+        if (!fs.existsSync(catalogFile)) {
+          res.end(JSON.stringify({ products: [], categories: [], banners: [], settings: null }))
+          return
+        }
+        res.end(fs.readFileSync(catalogFile, 'utf8'))
+      })
+    },
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
+  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env)],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -62,4 +149,5 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+}
 })
