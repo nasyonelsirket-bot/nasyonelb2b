@@ -1,7 +1,10 @@
 import { GA4_CURRENCY, isGa4TrackablePath } from './ga4Config';
+import { productFlatParams, aggregateFlatParams } from './ga4Params';
 
 const eventQueue = [];
 let initializedId = null;
+
+const ORDER_FORM_NAME = 'b2b_order_customer';
 
 function gtag(...args) {
   if (typeof window === 'undefined') return;
@@ -19,10 +22,6 @@ function flushQueue() {
   }
 }
 
-/**
- * GA4 gtag.js yükler ve yapılandırır (SPA: manuel page_view).
- * @param {string} measurementId
- */
 export function initGa4(measurementId) {
   if (typeof window === 'undefined' || !measurementId) return false;
   if (initializedId === measurementId && window.gtag) return true;
@@ -60,15 +59,14 @@ export function isGa4Ready() {
 }
 
 export function mapProductToGa4Item(product, quantity = 1) {
-  const price = Number(product?.price) || 0;
-  const qty = Math.max(1, Number(quantity) || 1);
+  const flat = productFlatParams(product, quantity);
   return {
     item_id: String(product?.id ?? product?.sku ?? 'unknown'),
-    item_name: String(product?.name ?? 'Ürün'),
-    item_category: String(product?.category ?? ''),
+    item_name: flat.product_name || 'Ürün',
+    item_category: flat.category,
     item_brand: 'Nasyonel Toys',
-    price,
-    quantity: qty,
+    price: flat.price,
+    quantity: flat.quantity,
   };
 }
 
@@ -89,8 +87,32 @@ function canTrack(pathname) {
 }
 
 /**
- * @param {{ page_path?: string, page_title?: string, page_location?: string }} params
+ * GA4 ecommerce + düz ürün parametreleri ile event gönderir.
  */
+function emitEcommerceEvent(
+  eventName,
+  { product, quantity, items, value, extra = {}, pathname } = {},
+) {
+  if (!canTrack(pathname)) return;
+
+  const flat = product ? productFlatParams(product, quantity) : aggregateFlatParams(items || []);
+  const gaItems = product
+    ? [mapProductToGa4Item(product, quantity)]
+    : mapCartItemsToGa4(items || []);
+
+  const eventValue =
+    value ??
+    (product ? flat.price * flat.quantity : cartValue(items || []));
+
+  gtag('event', eventName, {
+    currency: GA4_CURRENCY,
+    value: eventValue,
+    items: gaItems,
+    ...flat,
+    ...extra,
+  });
+}
+
 export function trackPageView(params = {}) {
   const pathname = params.page_path || (typeof window !== 'undefined' ? window.location.pathname : '/');
   if (!canTrack(pathname)) return;
@@ -99,51 +121,30 @@ export function trackPageView(params = {}) {
     page_path: params.page_path || pathname,
     page_title: params.page_title || document.title,
     page_location: params.page_location || window.location.href,
+    page_url: params.page_location || window.location.href,
   });
 }
 
-/**
- * GA4 önerilen etkinlik: view_item
- */
 export function trackViewItem(product, pathname) {
-  if (!product || !canTrack(pathname)) return;
-  const item = mapProductToGa4Item(product, 1);
-  gtag('event', 'view_item', {
-    currency: GA4_CURRENCY,
-    value: item.price,
-    items: [item],
-  });
+  if (!product) return;
+  emitEcommerceEvent('view_item', { product, quantity: 1, value: Number(product.price) || 0, pathname });
 }
 
-/**
- * GA4 önerilen etkinlik: add_to_cart
- */
 export function trackAddToCart(product, quantity = 1, pathname) {
-  if (!product || !canTrack(pathname)) return;
-  const item = mapProductToGa4Item(product, quantity);
-  gtag('event', 'add_to_cart', {
-    currency: GA4_CURRENCY,
-    value: item.price * item.quantity,
-    items: [item],
-  });
+  if (!product) return;
+  emitEcommerceEvent('add_to_cart', { product, quantity, pathname });
 }
 
-/**
- * GA4 önerilen etkinlik: begin_checkout
- */
+export function trackRemoveFromCart(product, quantity = 1, pathname) {
+  if (!product) return;
+  emitEcommerceEvent('remove_from_cart', { product, quantity, pathname });
+}
+
 export function trackBeginCheckout(items, pathname) {
-  if (!items?.length || !canTrack(pathname)) return;
-  const gaItems = mapCartItemsToGa4(items);
-  gtag('event', 'begin_checkout', {
-    currency: GA4_CURRENCY,
-    value: cartValue(items),
-    items: gaItems,
-  });
+  if (!items?.length) return;
+  emitEcommerceEvent('begin_checkout', { items, pathname });
 }
 
-/**
- * GA4 önerilen etkinlik: purchase
- */
 export function trackPurchase({
   transactionId,
   items,
@@ -152,13 +153,72 @@ export function trackPurchase({
   coupon = '',
   pathname,
 }) {
-  if (!transactionId || !items?.length || !canTrack(pathname)) return;
-  gtag('event', 'purchase', {
-    transaction_id: String(transactionId),
-    currency: GA4_CURRENCY,
-    value: Number(value) || cartValue(items),
-    shipping: Number(shipping) || 0,
-    coupon: coupon || undefined,
-    items: mapCartItemsToGa4(items),
+  if (!transactionId || !items?.length) return;
+  emitEcommerceEvent('purchase', {
+    items,
+    value,
+    pathname,
+    extra: {
+      transaction_id: String(transactionId),
+      shipping: Number(shipping) || 0,
+      coupon: coupon || undefined,
+    },
   });
+}
+
+function emitFormEvent(eventName, items, extra = {}, pathname) {
+  if (!canTrack(pathname)) return;
+  const flat = aggregateFlatParams(items || []);
+  const gaItems = mapCartItemsToGa4(items || []);
+
+  gtag('event', eventName, {
+    currency: GA4_CURRENCY,
+    value: flat.price,
+    form_name: ORDER_FORM_NAME,
+    items: gaItems,
+    ...flat,
+    ...extra,
+  });
+}
+
+/** Müşteri sipariş formu görüntülendi */
+export function trackFormView(items, pathname) {
+  if (!items?.length) return;
+  emitFormEvent('form_view', items, { form_step: 'customer_info' }, pathname);
+}
+
+/** Formda ilk etkileşim */
+export function trackFormStart(items, pathname) {
+  if (!items?.length) return;
+  emitFormEvent('form_start', items, { form_step: 'customer_info' }, pathname);
+}
+
+/** Sipariş gönder butonuna basıldı */
+export function trackFormSubmit(items, { success = false, errorMessage = '' } = {}, pathname) {
+  if (!items?.length) return;
+  emitFormEvent(
+    'form_submit',
+    items,
+    {
+      form_step: 'customer_info',
+      success,
+      error_message: errorMessage || undefined,
+    },
+    pathname,
+  );
+}
+
+/** Başarılı sipariş / lead (WhatsApp) */
+export function trackGenerateLead({ transactionId, items, value, pathname }) {
+  if (!items?.length) return;
+  emitFormEvent(
+    'generate_lead',
+    items,
+    {
+      transaction_id: transactionId ? String(transactionId) : undefined,
+      lead_source: 'whatsapp_order',
+      value: Number(value) || cartValue(items),
+    },
+    pathname,
+  );
 }

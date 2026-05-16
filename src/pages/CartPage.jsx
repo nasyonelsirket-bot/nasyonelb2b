@@ -12,7 +12,14 @@ import { getCartDiscount, DISCOUNT_THRESHOLD_TL } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { formatPrice } from '@/utils/whatsapp';
 import { submitOrderViaWhatsApp } from '@/utils/orderPdf';
-import { trackBeginCheckout, trackPurchase } from '@/lib/analytics/ga4';
+import {
+  trackBeginCheckout,
+  trackPurchase,
+  trackFormView,
+  trackFormStart,
+  trackFormSubmit,
+  trackGenerateLead,
+} from '@/lib/analytics/ga4';
 
 function formatThreshold(n) {
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(n);
@@ -53,11 +60,26 @@ export default function CartPage() {
   );
 
   const checkoutTracked = useRef(false);
+  const formViewTracked = useRef(false);
+  const formStartTracked = useRef(false);
+
   useEffect(() => {
     if (!items.length || checkoutTracked.current) return;
     checkoutTracked.current = true;
     trackBeginCheckout(items);
   }, [items]);
+
+  useEffect(() => {
+    if (!items.length || formViewTracked.current) return;
+    formViewTracked.current = true;
+    trackFormView(items);
+  }, [items]);
+
+  const handleFormStart = () => {
+    if (formStartTracked.current || !items.length) return;
+    formStartTracked.current = true;
+    trackFormStart(items);
+  };
 
   const validateCustomer = () => {
     if (!customer.companyName.trim()) return 'Firma / bayi adı zorunludur.';
@@ -72,9 +94,13 @@ export default function CartPage() {
     const err = validateCustomer();
     if (err) {
       setFormError(err);
+      trackFormSubmit(items, { success: false, errorMessage: err });
       return;
     }
-    if (!isCartValid) return;
+    if (!isCartValid) {
+      trackFormSubmit(items, { success: false, errorMessage: 'minimum_siparis' });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -95,6 +121,7 @@ export default function CartPage() {
         orderTotal,
       });
       setFormSuccess(result.message);
+      trackFormSubmit(items, { success: true });
       if (result.orderId) {
         trackPurchase({
           transactionId: result.orderId,
@@ -103,9 +130,16 @@ export default function CartPage() {
           shipping: shipping.shippingFee,
           coupon: discount.tierLabel,
         });
+        trackGenerateLead({
+          transactionId: result.orderId,
+          items,
+          value: orderTotal,
+        });
       }
     } catch (err) {
-      setFormError(err?.message || 'Sipariş gönderilemedi. Lütfen tekrar deneyin.');
+      const msg = err?.message || 'Sipariş gönderilemedi. Lütfen tekrar deneyin.';
+      setFormError(msg);
+      trackFormSubmit(items, { success: false, errorMessage: msg });
     } finally {
       setSubmitting(false);
     }
@@ -206,7 +240,10 @@ export default function CartPage() {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-brand-200 bg-white p-6 shadow-card space-y-3">
+            <div
+              className="rounded-2xl border border-brand-200 bg-white p-6 shadow-card space-y-3"
+              onFocusCapture={handleFormStart}
+            >
               <h2 className="font-display font-bold text-brand-900">Müşteri Bilgileri</h2>
               <p className="text-xs text-gray-500">Zorunlu alanları doldurmadan sipariş gönderilemez.</p>
               {[

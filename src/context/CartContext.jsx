@@ -2,7 +2,7 @@ import { createContext, useContext, useCallback, useState, useMemo, useEffect } 
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
 import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { resolveMinQuantity, isLineValid, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
-import { trackAddToCart } from '@/lib/analytics/ga4';
+import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics/ga4';
 
 const CartContext = createContext(null);
 
@@ -96,10 +96,19 @@ export function CartProvider({ children }) {
   }, []);
 
   const removeFromCart = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.id !== productId));
+    setItems((prev) => {
+      const item = prev.find((i) => i.id === productId);
+      if (item) trackRemoveFromCart(item, item.quantity);
+      return prev.filter((i) => i.id !== productId);
+    });
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems((prev) => {
+      prev.forEach((item) => trackRemoveFromCart(item, item.quantity));
+      return [];
+    });
+  }, []);
 
   const totalItems = useMemo(
     () => items.reduce((sum, i) => sum + i.quantity, 0),
