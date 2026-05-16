@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, Plus, LogOut } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import AdminToast from '@/components/admin/AdminToast';
 import { useStore } from '@/context/StoreContext';
 import { parseExcelFile } from '@/utils/excel';
 import { syncAllTrendyolProducts } from '@/services/trendyol';
@@ -42,10 +43,12 @@ export default function AdminPage() {
 
   const products = Array.isArray(store.products) ? store.products : [];
 
-  const showMsg = (text, type = 'success') => {
+  const showMsg = useCallback((text, type = 'success') => {
     setMsg(text);
     setMsgType(type);
-  };
+  }, []);
+
+  const clearMsg = useCallback(() => setMsg(''), []);
 
   useEffect(() => {
     document.title = authed ? 'Admin Panel' : 'Admin Girişi';
@@ -86,11 +89,13 @@ export default function AdminPage() {
   const handleDeleteProduct = (id, name) => {
     if (!id) return;
     if (!window.confirm(`"${name || 'Bu ürün'}" silinsin mi?`)) return;
-    store.deleteProduct(id);
-    if (editing === id) {
-      setEditing(null);
-      setForm(EMPTY_PRODUCT);
-    }
+    startTransition(() => {
+      store.deleteProduct(id);
+      if (editing === id) {
+        setEditing(null);
+        setForm(EMPTY_PRODUCT);
+      }
+    });
     showMsg('Ürün silindi');
   };
 
@@ -150,6 +155,7 @@ export default function AdminPage() {
 
   return (
     <>
+      <AdminToast message={msg} type={msgType} onClose={clearMsg} />
       <div className="min-h-screen bg-gray-100">
         <div className="bg-brand-900 text-white px-4 py-4 flex items-center justify-between">
           <h1 className="font-display text-xl font-bold">Admin Panel</h1>
@@ -157,10 +163,6 @@ export default function AdminPage() {
             <LogOut className="h-4 w-4" /> Çıkış
           </button>
         </div>
-
-        {msg && (
-          <div className={`text-center py-2 text-sm ${msgType === 'error' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>{msg}</div>
-        )}
 
         <div className="flex flex-col lg:flex-row">
           <nav className="lg:w-56 bg-white border-r border-brand-100 p-4 flex lg:flex-col gap-2 overflow-x-auto">
@@ -192,7 +194,17 @@ export default function AdminPage() {
                         required={f === 'name' || f === 'sku'}
                       />
                     ))}
-                    <input type="number" step="0.01" placeholder="Fiyat" value={form.price} onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })} className="rounded-lg border border-brand-200 px-3 py-2 text-sm" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="Fiyat"
+                      value={Number.isFinite(form.price) ? form.price : ''}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setForm({ ...form, price: Number.isFinite(v) ? v : 0 });
+                      }}
+                      className="rounded-lg border border-brand-200 px-3 py-2 text-sm"
+                    />
                     <input type="number" min="1" placeholder="Min. Sipariş Adedi" value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: parseInt(e.target.value, 10) || 1 })} className="rounded-lg border border-brand-200 px-3 py-2 text-sm" />
                   </div>
                   <textarea placeholder="Açıklama" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm h-20" />
@@ -237,15 +249,15 @@ export default function AdminPage() {
             )}
 
             {tab === 'categories' && (
-              <CategoryAdmin store={store} setMsg={setMsg} />
+              <CategoryAdmin store={store} setMsg={showMsg} />
             )}
 
             {tab === 'banners' && (
-              <BannerAdmin store={store} setMsg={setMsg} />
+              <BannerAdmin store={store} setMsg={showMsg} />
             )}
 
             {tab === 'settings' && (
-              <SettingsAdmin store={store} setMsg={setMsg} />
+              <SettingsAdmin store={store} setMsg={showMsg} />
             )}
 
             {tab === 'excel' && (
@@ -338,7 +350,9 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
   });
 
   const saveCreds = () => {
-    store.updateSettings(creds);
+    startTransition(() => {
+      store.updateSettings(creds);
+    });
     setMsg('Trendyol API bilgileri kaydedildi');
   };
 

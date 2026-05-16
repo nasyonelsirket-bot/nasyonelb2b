@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DEMO_PRODUCTS,
   DEMO_CATEGORIES,
@@ -117,34 +117,52 @@ export function StoreProvider({ children }) {
     setSettings(DEFAULT_SETTINGS);
   }, []);
 
-  return (
-    <StoreContext.Provider
-      value={{
-        products,
-        categories,
-        banners,
-        settings,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        importProducts,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        addBanner,
-        updateBanner,
-        deleteBanner,
-        updateSettings,
-        getProductById,
-        getProductsByCategory,
-        resetToDemo,
-        setProducts,
-        setCategories,
-      }}
-    >
-      {children}
-    </StoreContext.Provider>
+  const value = useMemo(
+    () => ({
+      products,
+      categories,
+      banners,
+      settings,
+      addProduct,
+      updateProduct,
+      deleteProduct,
+      importProducts,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addBanner,
+      updateBanner,
+      deleteBanner,
+      updateSettings,
+      getProductById,
+      getProductsByCategory,
+      resetToDemo,
+      setProducts,
+      setCategories,
+    }),
+    [
+      products,
+      categories,
+      banners,
+      settings,
+      addProduct,
+      updateProduct,
+      deleteProduct,
+      importProducts,
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      addBanner,
+      updateBanner,
+      deleteBanner,
+      updateSettings,
+      getProductById,
+      getProductsByCategory,
+      resetToDemo,
+    ],
   );
+
+  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
 export function useStore() {
