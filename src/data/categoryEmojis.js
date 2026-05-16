@@ -1,6 +1,7 @@
 /** Kategori emojileri — keywords ile Türkçe arama */
 export const CATEGORY_EMOJIS = [
-  { emoji: '📦', keywords: ['genel', 'kutu', 'paket', 'diğer', 'misc'] },
+  { emoji: '📦', keywords: ['genel', 'kutu', 'paket', 'diğer', 'misc', 'çeşitli'] },
+  { emoji: '🧸', keywords: ['oyuncak', 'toys', 'peluş', 'bebek', 'figür'] },
   { emoji: '🚗', keywords: ['araba', 'araç', 'otomobil', 'jeep', 'kamyon', 'tır', 'motor', 'die-cast'] },
   { emoji: '🚙', keywords: ['suv', 'off-road', '4x4'] },
   { emoji: '🏎️', keywords: ['yarış', 'formula', 'spor araba'] },

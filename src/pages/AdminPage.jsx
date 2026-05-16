@@ -217,7 +217,19 @@ function CategoryAdmin({ store, setMsg }) {
 
   return (
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
-      <h2 className="font-bold">Kategori Yönetimi</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-bold">Kategori Yönetimi</h2>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            startTransition(() => store.refreshAllCategoryEmojis());
+            setMsg('Tüm kategori emojileri güncellendi');
+          }}
+        >
+          Emojileri otomatik güncelle
+        </Button>
+      </div>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}

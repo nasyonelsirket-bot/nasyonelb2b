@@ -6,20 +6,26 @@ import {
   DEFAULT_SETTINGS,
 } from '@/data/demoProducts';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
+import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
 
 const StoreContext = createContext(null);
 
 export function StoreProvider({ children }) {
+  const migration = useMemo(() => runBrandMigration(), []);
+
   const [products, setProducts] = useState(() =>
     loadArrayFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
   );
-  const [categories, setCategories] = useState(() =>
-    loadArrayFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES),
-  );
+  const [categories, setCategories] = useState(() => {
+    if (migration?.categories?.length) return migration.categories;
+    const stored = loadArrayFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES);
+    return refreshCategoryIcons(stored);
+  });
   const [banners, setBanners] = useState(() =>
     loadArrayFromStorage(KEYS.BANNERS, DEMO_BANNERS),
   );
   const [settings, setSettings] = useState(() => {
+    if (migration?.settings) return migration.settings;
     const stored = loadFromStorage(KEYS.SETTINGS, null);
     const safe =
       stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
@@ -120,9 +126,18 @@ export function StoreProvider({ children }) {
 
   const resetToDemo = useCallback(() => {
     setProducts(DEMO_PRODUCTS);
-    setCategories(DEMO_CATEGORIES);
+    setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     setBanners(DEMO_BANNERS);
     setSettings(DEFAULT_SETTINGS);
+    try {
+      localStorage.setItem('b2b_brand_version', String(3));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const refreshAllCategoryEmojis = useCallback(() => {
+    setCategories((prev) => refreshCategoryIcons(prev, { force: true }));
   }, []);
 
   const value = useMemo(
@@ -146,6 +161,7 @@ export function StoreProvider({ children }) {
       getProductById,
       getProductsByCategory,
       resetToDemo,
+      refreshAllCategoryEmojis,
       setProducts,
       setCategories,
     }),
@@ -169,6 +185,7 @@ export function StoreProvider({ children }) {
       getProductById,
       getProductsByCategory,
       resetToDemo,
+      refreshAllCategoryEmojis,
     ],
   );
 

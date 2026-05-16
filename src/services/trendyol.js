@@ -1,3 +1,5 @@
+import { suggestEmojiForName } from '@/data/categoryEmojis';
+
 /**
  * Trendyol API entegrasyon servisi.
  * Production'da Netlify Function üzerinden çalışır.
@@ -79,7 +81,7 @@ export async function syncAllTrendyolProducts(settings, onProgress) {
         .toLowerCase()
         .replace(/[^a-z0-9ğüşıöç]+/gi, '-')
         .replace(/(^-|-$)/g, ''),
-      icon: '🛒',
+      icon: suggestEmojiForName(name),
     }),
   );
 

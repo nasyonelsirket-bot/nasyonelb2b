@@ -42,16 +42,16 @@
     background: linear-gradient(135deg, #f5b800 0%, #ffd54f 100%);
   }
   .site-logo {
-    height: 3.25rem;
+    height: 3.5rem;
     width: auto;
-    max-width: min(100%, 17.5rem);
+    max-width: min(100%, 220px);
     object-fit: contain;
     object-position: left center;
   }
   @media (min-width: 640px) {
     .site-logo {
-      height: 3.75rem;
-      max-width: 18.5rem;
+      height: 4.25rem;
+      max-width: 280px;
     }
   }
   .site-logo-footer {

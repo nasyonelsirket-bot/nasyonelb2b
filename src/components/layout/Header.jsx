@@ -11,8 +11,11 @@ const NAV = [
   { to: '/iletisim', label: 'İletişim' },
 ];
 
-function isDefaultLogo(url) {
-  return !url || url === '/logo.svg' || url.endsWith('/logo.svg');
+const DEFAULT_LOGO = '/nasyonel-logo.png?v=3';
+
+function resolveLogoUrl(url) {
+  if (!url || url.startsWith('data:')) return DEFAULT_LOGO;
+  return url;
 }
 
 export default function Header() {
@@ -21,7 +24,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const logoSrc = settings.logoUrl || '/logo.svg';
+  const logoSrc = resolveLogoUrl(settings.logoUrl);
 
   const navClass = ({ isActive }) =>
     `text-sm font-medium transition-colors pb-0.5 border-b-2 ${
@@ -43,7 +46,7 @@ export default function Header() {
             <img
               src={logoSrc}
               alt={settings.siteName || 'Nasyonel'}
-              className={`site-logo ${!isDefaultLogo(logoSrc) ? 'max-h-14 sm:max-h-16' : ''}`}
+              className="site-logo max-h-14 sm:max-h-[4.25rem] w-auto"
             />
           </Link>
 

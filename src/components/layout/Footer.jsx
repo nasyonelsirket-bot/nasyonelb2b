@@ -12,12 +12,12 @@ export default function Footer() {
           <div className="md:col-span-2">
             <img
               src={
-                !settings.logoUrl || settings.logoUrl === '/logo.svg'
-                  ? '/logo-light.svg'
+                !settings.logoUrl || settings.logoUrl.startsWith('data:')
+                  ? '/nasyonel-logo.png?v=3'
                   : settings.logoUrl
               }
               alt={settings.siteName || 'Nasyonel'}
-              className="site-logo-footer mb-4"
+              className="site-logo-footer mb-4 rounded-lg bg-white/95 px-3 py-2"
             />
             <p className="text-brand-200 text-sm max-w-md">{settings.aboutText?.slice(0, 150)}...</p>
           </div>
