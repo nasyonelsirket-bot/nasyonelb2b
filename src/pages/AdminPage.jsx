@@ -1,6 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, Plus, LogOut } from 'lucide-react';
-import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import { useStore } from '@/context/StoreContext';
 import { parseExcelFile } from '@/utils/excel';
@@ -47,6 +46,10 @@ export default function AdminPage() {
     setMsg(text);
     setMsgType(type);
   };
+
+  useEffect(() => {
+    document.title = authed ? 'Admin Panel' : 'Admin Girişi';
+  }, [authed]);
 
   const login = (e) => {
     e.preventDefault();
@@ -126,7 +129,6 @@ export default function AdminPage() {
   if (!authed) {
     return (
       <>
-        <SEO title="Admin" noindex />
         <div className="min-h-[60vh] flex items-center justify-center px-4">
           <form onSubmit={login} className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-card border border-brand-100">
             <Lock className="h-10 w-10 text-brand-600 mx-auto" />
@@ -148,7 +150,6 @@ export default function AdminPage() {
 
   return (
     <>
-      <SEO title="Admin Panel" noindex />
       <div className="min-h-screen bg-gray-100">
         <div className="bg-brand-900 text-white px-4 py-4 flex items-center justify-between">
           <h1 className="font-display text-xl font-bold">Admin Panel</h1>
