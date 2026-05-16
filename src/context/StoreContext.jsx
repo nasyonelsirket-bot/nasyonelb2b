@@ -172,7 +172,9 @@ export function StoreProvider({ children }) {
     if (!catalogReady || !isAdminSession()) return;
     saveToStorage(KEYS.BANNERS, banners);
   }, [banners, catalogReady]);
-  useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
+  useEffect(() => {
+    saveToStorage(KEYS.SETTINGS, settings);
+  }, [settings]);
 
   const productCountsByCategory = useMemo(
     () => getProductCountsByCategory(products),
