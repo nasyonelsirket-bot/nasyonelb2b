@@ -15,6 +15,11 @@ export function loadFromStorage(key, fallback) {
   }
 }
 
+export function loadArrayFromStorage(key, fallback) {
+  const data = loadFromStorage(key, fallback);
+  return Array.isArray(data) ? data : fallback;
+}
+
 export function saveToStorage(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));

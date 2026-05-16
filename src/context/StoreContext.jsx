@@ -5,19 +5,19 @@ import {
   DEMO_BANNERS,
   DEFAULT_SETTINGS,
 } from '@/data/demoProducts';
-import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
+import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
 const StoreContext = createContext(null);
 
 export function StoreProvider({ children }) {
   const [products, setProducts] = useState(() =>
-    loadFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
+    loadArrayFromStorage(KEYS.PRODUCTS, DEMO_PRODUCTS),
   );
   const [categories, setCategories] = useState(() =>
-    loadFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES),
+    loadArrayFromStorage(KEYS.CATEGORIES, DEMO_CATEGORIES),
   );
   const [banners, setBanners] = useState(() =>
-    loadFromStorage(KEYS.BANNERS, DEMO_BANNERS),
+    loadArrayFromStorage(KEYS.BANNERS, DEMO_BANNERS),
   );
   const [settings, setSettings] = useState(() => {
     const stored = loadFromStorage(KEYS.SETTINGS, null);
@@ -38,13 +38,17 @@ export function StoreProvider({ children }) {
   }, []);
 
   const deleteProduct = useCallback((id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    if (!id) return;
+    setProducts((prev) => (Array.isArray(prev) ? prev.filter((p) => p.id !== id) : []));
   }, []);
 
   const importProducts = useCallback((newProducts, newCategories) => {
     setProducts((prev) => {
-      const map = new Map(prev.map((p) => [p.sku, p]));
-      newProducts.forEach((p) => map.set(p.sku, p));
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const map = new Map(safePrev.map((p) => [p.sku || p.id, p]));
+      newProducts.forEach((p) => {
+        if (p?.sku || p?.id) map.set(p.sku || p.id, p);
+      });
       return Array.from(map.values());
     });
     if (newCategories?.length) {

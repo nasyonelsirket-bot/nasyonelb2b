@@ -5,28 +5,40 @@
 
 const API_PATH = '/api/trendyol/sync';
 
-export async function fetchTrendyolProducts(page = 0, size = 50) {
-  const isDev = import.meta.env.DEV;
-  const base = isDev ? '' : '';
-  const url = `${base}${API_PATH}?page=${page}&size=${size}`;
+function getCredentials(settings = {}) {
+  return {
+    supplierId: settings.trendyolSupplierId?.trim() || '',
+    apiKey: settings.trendyolApiKey?.trim() || '',
+    apiSecret: settings.trendyolApiSecret?.trim() || '',
+    priceDivisor: Number(settings.trendyolPriceDivisor) || 4,
+  };
+}
 
-  const response = await fetch(url);
+export async function fetchTrendyolProducts(page = 0, size = 50, settings) {
+  const credentials = getCredentials(settings);
+  const url = `${API_PATH}?page=${page}&size=${size}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
+  });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || err.hint || `Trendyol sync failed: ${response.status}`);
+    throw new Error(err.error || err.hint || `Trendyol senkronizasyonu başarısız: ${response.status}`);
   }
 
   return response.json();
 }
 
-export async function syncAllTrendyolProducts(onProgress) {
+export async function syncAllTrendyolProducts(settings, onProgress) {
   const allProducts = [];
   let page = 0;
   let totalPages = 1;
 
   while (page < totalPages) {
-    const data = await fetchTrendyolProducts(page, 50);
+    const data = await fetchTrendyolProducts(page, 50, settings);
     allProducts.push(...(data.products || []));
     totalPages = data.totalPages ?? 1;
     onProgress?.({

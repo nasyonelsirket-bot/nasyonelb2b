@@ -5,18 +5,18 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# Admin API proxy (Trendyol sync)
+# Trendyol API — SPA yönlendirmesinden ÖNCE olmalı
 [[redirects]]
   from = "/api/trendyol/sync"
   to = "/.netlify/functions/trendyol-sync"
   status = 200
   force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [[headers]]
   for = "/*"

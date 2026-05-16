@@ -37,15 +37,23 @@ export default function AdminPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_PRODUCT);
   const [msg, setMsg] = useState('');
+  const [msgType, setMsgType] = useState('success');
   const [tyLoading, setTyLoading] = useState(false);
   const [tyProgress, setTyProgress] = useState(null);
+
+  const products = Array.isArray(store.products) ? store.products : [];
+
+  const showMsg = (text, type = 'success') => {
+    setMsg(text);
+    setMsgType(type);
+  };
 
   const login = (e) => {
     e.preventDefault();
     if (password === ADMIN_PASS) {
       sessionStorage.setItem('b2b_admin', '1');
       setAuthed(true);
-    } else setMsg('Hatalı şifre');
+    } else showMsg('Hatalı şifre', 'error');
   };
 
   const logout = () => {
@@ -57,10 +65,10 @@ export default function AdminPage() {
     e.preventDefault();
     if (editing) {
       store.updateProduct(editing, form);
-      setMsg('Ürün güncellendi');
+      showMsg('Ürün güncellendi');
     } else {
       store.addProduct({ ...form, id: `p-${Date.now()}` });
-      setMsg('Ürün eklendi');
+      showMsg('Ürün eklendi');
     }
     setEditing(null);
     setForm(EMPTY_PRODUCT);
@@ -72,28 +80,45 @@ export default function AdminPage() {
     setTab('products');
   };
 
+  const handleDeleteProduct = (id, name) => {
+    if (!id) return;
+    if (!window.confirm(`"${name || 'Bu ürün'}" silinsin mi?`)) return;
+    store.deleteProduct(id);
+    if (editing === id) {
+      setEditing(null);
+      setForm(EMPTY_PRODUCT);
+    }
+    showMsg('Ürün silindi');
+  };
+
   const handleExcel = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const { products, categories } = await parseExcelFile(file);
       store.importProducts(products, categories);
-      setMsg(`${products.length} ürün içe aktarıldı`);
+      showMsg(`${products.length} ürün içe aktarıldı`);
     } catch (err) {
-      setMsg(`Excel hatası: ${err.message}`);
+      showMsg(`Excel hatası: ${err.message}`, 'error');
     }
     e.target.value = '';
   };
 
   const handleTrendyol = async () => {
+    const { trendyolSupplierId, trendyolApiKey, trendyolApiSecret } = store.settings;
+    if (!trendyolSupplierId || !trendyolApiKey || !trendyolApiSecret) {
+      showMsg('Önce Trendyol API bilgilerini kaydedin (Trendyol sekmesi)', 'error');
+      setTab('trendyol');
+      return;
+    }
     setTyLoading(true);
     setMsg('');
     try {
-      const { products, categories } = await syncAllTrendyolProducts(setTyProgress);
-      store.importProducts(products, categories);
-      setMsg(`${products.length} Trendyol ürünü senkronize edildi`);
+      const { products: tyProducts, categories } = await syncAllTrendyolProducts(store.settings, setTyProgress);
+      store.importProducts(tyProducts, categories);
+      showMsg(`${tyProducts.length} Trendyol ürünü senkronize edildi`);
     } catch (err) {
-      setMsg(`Trendyol: ${err.message}`);
+      showMsg(`Trendyol: ${err.message}`, 'error');
     }
     setTyLoading(false);
   };
@@ -133,7 +158,7 @@ export default function AdminPage() {
         </div>
 
         {msg && (
-          <div className="bg-emerald-100 text-emerald-800 text-center py-2 text-sm">{msg}</div>
+          <div className={`text-center py-2 text-sm ${msgType === 'error' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>{msg}</div>
         )}
 
         <div className="flex flex-col lg:flex-row">
@@ -142,7 +167,7 @@ export default function AdminPage() {
               <button
                 key={id}
                 type="button"
-                onClick={() => { setTab(id); setMsg(''); }}
+                onClick={() => { setTab(id); setMsg(''); setMsgType('success'); }}
                 className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium whitespace-nowrap ${tab === id ? 'bg-brand-600 text-white' : 'text-brand-700 hover:bg-brand-50'}`}
               >
                 <Icon className="h-4 w-4" /> {label}
@@ -192,15 +217,15 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {store.products.map((p) => (
-                        <tr key={p.id} className="border-t border-brand-50">
+                      {products.map((p, index) => (
+                        <tr key={p.id || `row-${index}`} className="border-t border-brand-50">
                           <td className="p-3">{p.name}</td>
                           <td className="p-3 text-center">{p.sku}</td>
                           <td className="p-3 text-center">{p.minOrder || 1}</td>
                           <td className="p-3 text-center">{p.price} ₺</td>
                           <td className="p-3 flex gap-2 justify-end">
                             <button type="button" onClick={() => startEdit(p)} className="text-brand-600 text-xs">Düzenle</button>
-                            <button type="button" onClick={() => store.deleteProduct(p.id)} className="text-red-600"><Trash2 className="h-4 w-4" /></button>
+                            <button type="button" onClick={() => handleDeleteProduct(p.id, p.name)} className="text-red-600" title="Sil"><Trash2 className="h-4 w-4" /></button>
                           </td>
                         </tr>
                       ))}
@@ -233,21 +258,13 @@ export default function AdminPage() {
             )}
 
             {tab === 'trendyol' && (
-              <div className="rounded-2xl bg-white p-8 shadow-card">
-                <h2 className="font-bold text-brand-900 mb-4">Trendyol Senkronizasyon</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  Netlify env: TRENDYOL_SUPPLIER_ID, TRENDYOL_API_KEY, TRENDYOL_API_SECRET. Fiyat otomatik /4 hesaplanır.
-                </p>
-                {tyProgress && (
-                  <p className="text-sm text-brand-600 mb-2">
-                    Sayfa {tyProgress.page}/{tyProgress.totalPages} — {tyProgress.count} ürün
-                  </p>
-                )}
-                <Button variant="primary" onClick={handleTrendyol} disabled={tyLoading}>
-                  <RefreshCw className={`h-4 w-4 ${tyLoading ? 'animate-spin' : ''}`} />
-                  {tyLoading ? 'Senkronize ediliyor...' : 'Trendyol Ürünlerini Çek'}
-                </Button>
-              </div>
+              <TrendyolAdmin
+                store={store}
+                setMsg={showMsg}
+                tyLoading={tyLoading}
+                tyProgress={tyProgress}
+                onSync={handleTrendyol}
+              />
             )}
           </main>
         </div>
@@ -305,6 +322,65 @@ function BannerAdmin({ store, setMsg }) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
+  const [creds, setCreds] = useState({
+    trendyolSupplierId: store.settings.trendyolSupplierId || '',
+    trendyolApiKey: store.settings.trendyolApiKey || '',
+    trendyolApiSecret: store.settings.trendyolApiSecret || '',
+    trendyolPriceDivisor: store.settings.trendyolPriceDivisor || '4',
+  });
+
+  const saveCreds = () => {
+    store.updateSettings(creds);
+    setMsg('Trendyol API bilgileri kaydedildi');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
+        <h2 className="font-bold text-brand-900">Trendyol API Ayarları</h2>
+        <p className="text-sm text-gray-600">
+          Trendyol Satıcı Paneli → Entegrasyonlar bölümünden API bilgilerinizi alın.
+        </p>
+        {[
+          ['trendyolSupplierId', 'Satıcı ID (Supplier ID)', 'text'],
+          ['trendyolApiKey', 'API Key', 'text'],
+          ['trendyolApiSecret', 'API Secret', 'password'],
+          ['trendyolPriceDivisor', 'Fiyat Bölücü (örn: 4 = fiyat/4)', 'number'],
+        ].map(([key, label, type]) => (
+          <div key={key}>
+            <label className="text-xs text-gray-500">{label}</label>
+            <input
+              type={type}
+              value={creds[key] || ''}
+              onChange={(e) => setCreds({ ...creds, [key]: e.target.value })}
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm mt-1"
+              placeholder={label}
+            />
+          </div>
+        ))}
+        <Button variant="primary" onClick={saveCreds}>API Bilgilerini Kaydet</Button>
+      </div>
+
+      <div className="rounded-2xl bg-white p-8 shadow-card">
+        <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Onaylı ve satışta olan ürünleriniz çekilir. Toptan fiyat = Trendyol fiyatı ÷ bölücü.
+        </p>
+        {tyProgress && (
+          <p className="text-sm text-brand-600 mb-2">
+            Sayfa {tyProgress.page}/{tyProgress.totalPages} — {tyProgress.count} ürün
+          </p>
+        )}
+        <Button variant="primary" onClick={onSync} disabled={tyLoading}>
+          <RefreshCw className={`h-4 w-4 ${tyLoading ? 'animate-spin' : ''}`} />
+          {tyLoading ? 'Senkronize ediliyor...' : 'Trendyol Ürünlerini Çek'}
+        </Button>
+      </div>
     </div>
   );
 }

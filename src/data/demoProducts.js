@@ -186,4 +186,8 @@ export const DEFAULT_SETTINGS = {
   contactAddress: 'İstanbul, Türkiye',
   aboutText:
     'ToyWholesale B2B, 15 yılı aşkın tecrübesiyle oyuncak sektöründe toptan satış yapan güvenilir bir tedarikçidir. 500+ ürün çeşidi, hızlı sevkiyat ve WhatsApp üzerinden kolay sipariş imkânı sunuyoruz.',
+  trendyolSupplierId: '',
+  trendyolApiKey: '',
+  trendyolApiSecret: '',
+  trendyolPriceDivisor: '4',
 };
