@@ -124,23 +124,24 @@ export function buildOrderSubmitWhatsAppMessage({
   orderTotal,
   itemCount = 0,
 }) {
-  const lines = [
+  return [
     'Merhaba,',
     '',
-    `Web sitenizden (*${siteName}*) yapmış olduğum siparişim:`,
+    `Web sitenizden (${siteName}) yapmış olduğum siparişim:`,
     '',
-    `🏢 *Firma:* ${customer.companyName || '-'}`,
-    customer.contactName ? `👤 *Yetkili:* ${customer.contactName}` : null,
-    `📞 *Telefon:* ${customer.phone || '-'}`,
-    itemCount ? `📦 *Kalem:* ${itemCount} ürün` : null,
-    orderTotal != null ? `💰 *Ödenecek:* ${formatPrice(orderTotal)}` : null,
+    `Firma: ${customer.companyName || '-'}`,
+    customer.contactName ? `Yetkili: ${customer.contactName}` : '',
+    `Tel: ${customer.phone || '-'}`,
+    itemCount ? `Ürün: ${itemCount} kalem` : '',
+    orderTotal != null ? `Tutar: ${formatPrice(orderTotal)}` : '',
     '',
-    '📎 *Sipariş formu (PDF):*',
+    'Sipariş formu (PDF):',
     pdfUrl,
     '',
-    'Sipariş onayınızı rica ederim. Teşekkürler.',
-  ];
-  return lines.filter(Boolean).join('\n');
+    'Onayınızı rica ederim. Teşekkürler.',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function openWhatsAppWithMessage(phone, message) {

@@ -8,7 +8,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["lib/**"]
+  included_files = ["lib/**", "lib/fonts/**"]
 
 # Trendyol API — SPA yönlendirmesinden ÖNCE olmalı
 [[redirects]]

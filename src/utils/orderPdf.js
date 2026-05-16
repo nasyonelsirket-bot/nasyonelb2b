@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatPrice, buildOrderSubmitWhatsAppMessage, openWhatsAppWithMessage } from '@/utils/whatsapp';
-import { uploadOrderPdf } from '@/services/orderApi';
+import { uploadOrderForPdfLink } from '@/services/orderApi';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { registerPdfFonts, setPdfFont, PDF_FONT } from '@/utils/pdfFont';
@@ -62,7 +62,7 @@ export async function generateOrderPdf({
   orderTotal,
 }) {
   const cfg = mergePdfSettings(rawPdfSettings);
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: false, putOnlyUsedFonts: true });
   await registerPdfFonts(doc);
 
   const primary = hexToRgb(cfg.primaryColor);
@@ -156,6 +156,7 @@ export async function generateOrderPdf({
         fontStyle: 'normal',
         fontSize: Number(cfg.fontSizeBody) || 11,
         cellPadding: 3,
+        overflow: 'linebreak',
         lineColor: [220, 225, 235],
         lineWidth: 0.1,
         textColor: [35, 35, 35],
@@ -166,6 +167,7 @@ export async function generateOrderPdf({
         fillColor: primary,
         textColor: 255,
         cellPadding: 3,
+        overflow: 'linebreak',
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       margin: { left: marginL, right: marginL },
@@ -232,7 +234,7 @@ function cleanWhatsAppPhone(phone) {
 }
 
 /**
- * PDF sunucuya yüklenir (müşteriye açılmaz), WhatsApp'ta işletmeye linkli mesaj açılır.
+ * Sipariş sunucuya kaydedilir, PDF linki WhatsApp mesajına eklenir (PDF telefonda üretilmez).
  */
 export async function submitOrderViaWhatsApp({
   phone,
@@ -250,7 +252,12 @@ export async function submitOrderViaWhatsApp({
     throw new Error('WhatsApp numarası ayarlarda tanımlı değil');
   }
 
-  const pdf = await generateOrderPdf({
+  const safeName = String(customer?.companyName || 'siparis')
+    .replace(/[^\w\sğüşıöçĞÜŞİÖÇ-]/gi, '')
+    .trim()
+    .slice(0, 40) || 'siparis';
+
+  const { url: pdfUrl } = await uploadOrderForPdfLink({
     siteName,
     siteLogoUrl,
     pdfSettings,
@@ -259,9 +266,8 @@ export async function submitOrderViaWhatsApp({
     discount,
     shipping,
     orderTotal,
+    fileName: `Siparis-${safeName}-${Date.now()}.pdf`,
   });
-
-  const { url: pdfUrl } = await uploadOrderPdf(pdf.blob, pdf.fileName, customer);
 
   const message = buildOrderSubmitWhatsAppMessage({
     siteName,

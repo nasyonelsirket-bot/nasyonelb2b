@@ -39,8 +39,8 @@ export async function registerPdfFonts(doc) {
   const { regular, bold } = await loadFonts();
   doc.addFileToVFS(VFS_REGULAR, regular);
   doc.addFileToVFS(VFS_BOLD, bold);
-  doc.addFont(VFS_REGULAR, FONT_REGULAR, 'normal');
-  doc.addFont(VFS_BOLD, FONT_BOLD, 'normal');
+  doc.addFont(VFS_REGULAR, FONT_REGULAR, 'normal', undefined, 'Identity-H');
+  doc.addFont(VFS_BOLD, FONT_BOLD, 'normal', undefined, 'Identity-H');
   doc.setFont(FONT_REGULAR, 'normal');
   return { regular: FONT_REGULAR, bold: FONT_BOLD };
 }

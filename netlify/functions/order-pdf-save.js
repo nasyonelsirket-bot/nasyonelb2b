@@ -1,5 +1,5 @@
 /**
- * Sipariş PDF'ini sunucuya yükler, paylaşılabilir link döner.
+ * Sipariş verisini kaydeder, PDF linki döner (PDF sunucuda üretilir).
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
@@ -9,8 +9,6 @@ const HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
-
-const MAX_BYTES = 4 * 1024 * 1024;
 
 function siteBaseUrl(event) {
   if (process.env.URL) return String(process.env.URL).replace(/\/$/, '');
@@ -34,42 +32,33 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Geçersiz JSON' }) };
   }
 
-  const pdfBase64 = String(body.pdfBase64 || '').trim();
-  if (!pdfBase64) {
-    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'PDF verisi yok' }) };
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (!items.length) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş boş' }) };
   }
 
-  let buffer;
-  try {
-    buffer = Buffer.from(pdfBase64, 'base64');
-  } catch {
-    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'PDF kodlaması geçersiz' }) };
-  }
-
-  if (!buffer.length || buffer.length > MAX_BYTES) {
-    return {
-      statusCode: 400,
-      headers: HEADERS,
-      body: JSON.stringify({ error: 'PDF çok büyük veya boş' }),
-    };
+  const customer = body.customer && typeof body.customer === 'object' ? body.customer : {};
+  if (!String(customer.companyName || '').trim()) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Firma adı gerekli' }) };
   }
 
   const id = crypto.randomBytes(10).toString('hex');
-  const fileName = String(body.fileName || 'siparis.pdf').slice(0, 120);
-  const customer = body.customer && typeof body.customer === 'object' ? body.customer : {};
+  const payload = {
+    siteName: body.siteName || 'Nasyonel Toys',
+    siteLogoUrl: body.siteLogoUrl || '',
+    pdfSettings: body.pdfSettings || null,
+    customer,
+    items,
+    discount: body.discount || null,
+    shipping: body.shipping || null,
+    orderTotal: body.orderTotal,
+    fileName: String(body.fileName || 'siparis.pdf').slice(0, 120),
+    createdAt: new Date().toISOString(),
+  };
 
   try {
     const store = getOrderStore(event);
-    await Promise.all([
-      store.set(`pdf-${id}`, buffer, {
-        metadata: { contentType: 'application/pdf', fileName },
-      }),
-      store.setJSON(`meta-${id}`, {
-        fileName,
-        customer,
-        createdAt: new Date().toISOString(),
-      }),
-    ]);
+    await store.setJSON(`order-${id}`, payload);
 
     const base = siteBaseUrl(event);
     const url = `${base}/api/order-pdf?id=${id}`;
@@ -85,8 +74,8 @@ exports.handler = async (event) => {
       statusCode: 500,
       headers: HEADERS,
       body: JSON.stringify({
-        error: err.message || 'PDF kaydedilemedi',
-        hint: 'Netlify Blobs etkin olmalı (deploy sonrası deneyin).',
+        error: err.message || 'Sipariş kaydedilemedi',
+        hint: 'Netlify Blobs etkin olmalı.',
       }),
     };
   }

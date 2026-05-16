@@ -9,6 +9,7 @@ import crypto from 'node:crypto'
 
 const require = createRequire(import.meta.url)
 const { syncTrendyolProducts } = require('./lib/trendyolSync.cjs')
+const { generateOrderPdfBuffer } = require('./lib/orderPdfServer.cjs')
 
 function trendyolDevProxy() {
   return {
@@ -167,21 +168,22 @@ function orderPdfDevProxy() {
           return
         }
 
-        const pdfBase64 = String(body.pdfBase64 || '')
-        if (!pdfBase64) {
+        const items = Array.isArray(body.items) ? body.items : []
+        if (!items.length) {
           res.statusCode = 400
           res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify({ error: 'PDF verisi yok' }))
+          res.end(JSON.stringify({ error: 'Sipariş boş' }))
           return
         }
 
         const id = crypto.randomBytes(10).toString('hex')
+        const payload = {
+          ...body,
+          items,
+          createdAt: new Date().toISOString(),
+        }
         fs.mkdirSync(ordersDir, { recursive: true })
-        fs.writeFileSync(path.join(ordersDir, `${id}.pdf`), Buffer.from(pdfBase64, 'base64'))
-        fs.writeFileSync(
-          path.join(ordersDir, `${id}.json`),
-          JSON.stringify({ fileName: body.fileName, customer: body.customer }),
-        )
+        fs.writeFileSync(path.join(ordersDir, `${id}.json`), JSON.stringify(payload))
 
         const host = req.headers.host || 'localhost:5173'
         const url = `http://${host}/api/order-pdf?id=${id}`
@@ -205,15 +207,17 @@ function orderPdfDevProxy() {
           return
         }
 
-        const filePath = path.join(ordersDir, `${id}.pdf`)
-        if (!fs.existsSync(filePath)) {
+        const jsonPath = path.join(ordersDir, `${id}.json`)
+        if (!fs.existsSync(jsonPath)) {
           res.statusCode = 404
           res.end('Bulunamadı')
           return
         }
 
+        const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+        const pdfBuffer = generateOrderPdfBuffer(order)
         res.setHeader('Content-Type', 'application/pdf')
-        res.end(fs.readFileSync(filePath))
+        res.end(pdfBuffer)
       })
     },
   }
