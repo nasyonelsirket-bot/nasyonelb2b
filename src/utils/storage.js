@@ -22,13 +22,31 @@ export function loadArrayFromStorage(key, fallback) {
   return Array.isArray(data) ? data : fallback;
 }
 
+/** Mobilde şişmiş önbelleği atla */
+export function loadProductsCache() {
+  try {
+    const raw = localStorage.getItem(KEYS.PRODUCTS);
+    if (!raw || raw.length > 1_500_000) return [];
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 export function saveToStorage(key, data) {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    const payload = JSON.stringify(data);
+    if (payload.length > 1_500_000) return false;
+    localStorage.setItem(key, payload);
     return true;
   } catch {
     return false;
   }
+}
+
+export function saveCatalogMeta(meta) {
+  return saveToStorage(KEYS.CATALOG_META, meta);
 }
 
 export { KEYS };

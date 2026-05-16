@@ -61,7 +61,8 @@ export default function HeroBanner() {
         {/* padding-bottom ile sabit yükseklik — mobilde aspect-ratio + absolute çocuk çökmesini önler */}
         <div className="hero-banner-frame relative w-full">
           {active.map((banner, i) => {
-            const isActive = i === index;
+            if (i !== index) return null;
+            const isActive = true;
             const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
             const link = banner.link?.trim() || '';
 

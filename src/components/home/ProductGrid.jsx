@@ -1,14 +1,28 @@
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/product/ProductCard';
 import KdvNotice from '@/components/ui/KdvNotice';
+import Button from '@/components/ui/Button';
+
+const PAGE_SIZE = 24;
 
 export default function ProductGrid({ products, title, subtitle }) {
-  if (!products?.length) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const list = Array.isArray(products) ? products : [];
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [list.length]);
+
+  if (!list.length) {
     return (
       <div className="text-center py-16 text-gray-500">
         <p>Ürün bulunamadı.</p>
       </div>
     );
   }
+
+  const visible = list.slice(0, visibleCount);
+  const hasMore = visibleCount < list.length;
 
   return (
     <section id="urunler" className="py-6 sm:py-10 scroll-mt-24">
@@ -23,10 +37,23 @@ export default function ProductGrid({ products, title, subtitle }) {
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((p) => (
+          {visible.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>
+        {hasMore && (
+          <div className="mt-8 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="min-h-[48px] touch-manipulation"
+              onClick={() => setVisibleCount((n) => Math.min(n + PAGE_SIZE, list.length))}
+            >
+              Daha fazla göster ({list.length - visibleCount} kaldı)
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -25,6 +25,7 @@ function PageLoader() {
 export default function App() {
   return (
     <HelmetProvider>
+      <ErrorBoundary>
       <StoreProvider>
         <CartProvider>
           <BrowserRouter>
@@ -42,6 +43,7 @@ export default function App() {
           </BrowserRouter>
         </CartProvider>
       </StoreProvider>
+      </ErrorBoundary>
     </HelmetProvider>
   );
 }

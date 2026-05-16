@@ -5,7 +5,14 @@ import {
   DEMO_BANNERS,
   DEFAULT_SETTINGS,
 } from '@/data/demoProducts';
-import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
+import {
+  loadFromStorage,
+  loadArrayFromStorage,
+  loadProductsCache,
+  saveToStorage,
+  saveCatalogMeta,
+  KEYS,
+} from '@/utils/storage';
 import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { fetchPublishedCatalog, publishCatalog as publishCatalogApi } from '@/services/catalogApi';
@@ -39,6 +46,7 @@ export function StoreProvider({ children }) {
   const migration = useMemo(() => runBrandMigration(), []);
 
   const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogLoadError, setCatalogLoadError] = useState(null);
   const [catalogSource, setCatalogSource] = useState('local');
   const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(null);
   const [publishing, setPublishing] = useState(false);
@@ -64,10 +72,7 @@ export function StoreProvider({ children }) {
     setCatalogSource('server');
     const updatedAt = remote.updatedAt || new Date().toISOString();
     setCatalogUpdatedAt(updatedAt);
-    saveToStorage(KEYS.PRODUCTS, remote.products);
-    saveToStorage(KEYS.CATEGORIES, remote.categories || []);
-    if (remote.banners?.length) saveToStorage(KEYS.BANNERS, remote.banners);
-    saveToStorage(KEYS.CATALOG_META, {
+    saveCatalogMeta({
       updatedAt,
       productCount: remote.products.length,
     });
@@ -76,7 +81,7 @@ export function StoreProvider({ children }) {
 
   const applyCachedCatalog = useCallback(() => {
     const meta = loadFromStorage(KEYS.CATALOG_META, null);
-    const cachedProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
+    const cachedProducts = loadProductsCache();
     if (!meta?.updatedAt || !cachedProducts.length) return false;
     setProducts(cachedProducts);
     const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
@@ -110,22 +115,35 @@ export function StoreProvider({ children }) {
   }, []);
 
   const loadPublishedCatalog = useCallback(async () => {
-    const remote = await fetchPublishedCatalog();
-    if (applyRemoteCatalog(remote)) return;
-    if (applyCachedCatalog()) return;
-    if (applyLocalAdminCatalog()) return;
-    setProducts(DEMO_PRODUCTS);
-    setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
-    setBanners(DEMO_BANNERS);
-    setCatalogSource('local');
+    setCatalogLoadError(null);
+    try {
+      const remote = await fetchPublishedCatalog();
+      if (applyRemoteCatalog(remote)) return;
+      if (applyCachedCatalog()) return;
+      if (applyLocalAdminCatalog()) return;
+      setProducts(DEMO_PRODUCTS);
+      setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
+      setBanners(DEMO_BANNERS);
+      setCatalogSource('local');
+    } catch (err) {
+      console.error('Katalog yüklenemedi:', err);
+      setCatalogLoadError(err?.message || 'Katalog yüklenemedi');
+      if (applyCachedCatalog()) return;
+      if (applyLocalAdminCatalog()) return;
+      setProducts(DEMO_PRODUCTS);
+      setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
+    }
   }, [applyRemoteCatalog, applyCachedCatalog, applyLocalAdminCatalog]);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      await loadPublishedCatalog();
-      if (!cancelled) setCatalogReady(true);
+      try {
+        await loadPublishedCatalog();
+      } finally {
+        if (!cancelled) setCatalogReady(true);
+      }
     })();
 
     return () => {
@@ -134,23 +152,24 @@ export function StoreProvider({ children }) {
   }, [loadPublishedCatalog]);
 
   useEffect(() => {
+    if (!catalogReady) return;
     const onVisible = () => {
       if (document.visibilityState === 'visible') loadPublishedCatalog();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [loadPublishedCatalog]);
+  }, [loadPublishedCatalog, catalogReady]);
 
   useEffect(() => {
-    if (!catalogReady) return;
+    if (!catalogReady || !isAdminSession()) return;
     saveToStorage(KEYS.PRODUCTS, products);
   }, [products, catalogReady]);
   useEffect(() => {
-    if (!catalogReady) return;
+    if (!catalogReady || !isAdminSession()) return;
     saveToStorage(KEYS.CATEGORIES, categories);
   }, [categories, catalogReady]);
   useEffect(() => {
-    if (!catalogReady) return;
+    if (!catalogReady || !isAdminSession()) return;
     saveToStorage(KEYS.BANNERS, banners);
   }, [banners, catalogReady]);
   useEffect(() => saveToStorage(KEYS.SETTINGS, settings), [settings]);
@@ -305,7 +324,7 @@ export function StoreProvider({ children }) {
         const updatedAt = result.updatedAt || new Date().toISOString();
         setCatalogSource('server');
         setCatalogUpdatedAt(updatedAt);
-        saveToStorage(KEYS.CATALOG_META, {
+        saveCatalogMeta({
           updatedAt,
           productCount: list.length,
         });
@@ -349,9 +368,11 @@ export function StoreProvider({ children }) {
       setProducts,
       setCategories,
       catalogReady,
+      catalogLoadError,
       catalogSource,
       catalogUpdatedAt,
       publishing,
+      loadPublishedCatalog,
     }),
     [
       products,
@@ -360,9 +381,11 @@ export function StoreProvider({ children }) {
       banners,
       settings,
       catalogReady,
+      catalogLoadError,
       catalogSource,
       catalogUpdatedAt,
       publishing,
+      loadPublishedCatalog,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -387,8 +410,12 @@ export function StoreProvider({ children }) {
 
   if (!catalogReady) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center bg-brand-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600" aria-label="Yükleniyor" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-brand-50 px-4 text-center">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600"
+          aria-hidden
+        />
+        <p className="mt-4 text-sm font-medium text-brand-800">Katalog yükleniyor…</p>
       </div>
     );
   }
