@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
@@ -19,8 +19,11 @@ export default function ProductCard({ product }) {
   const minInfo = useMemo(() => getMinOrderInfo(product, minLineValue), [product, minLineValue]);
   const [qty, setQty] = useState(minInfo.minQty);
 
-  const handleAdd = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    setQty((q) => Math.max(q, minInfo.minQty));
+  }, [minInfo.minQty, product.id]);
+
+  const handleAdd = () => {
     addToCart(product, Math.max(qty, minInfo.minQty));
   };
 
@@ -70,7 +73,12 @@ export default function ProductCard({ product }) {
           />
         </div>
 
-        <Button type="button" variant="primary" className="mt-3 w-full" onClick={handleAdd}>
+        <Button
+          type="button"
+          variant="primary"
+          className="mt-3 w-full min-h-[48px] touch-manipulation text-base"
+          onClick={handleAdd}
+        >
           <ShoppingCart className="h-4 w-4" />
           Sepete Ekle
         </Button>

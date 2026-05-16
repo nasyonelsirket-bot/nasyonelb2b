@@ -22,9 +22,12 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
   body {
     @apply bg-brand-50 text-gray-900 antialiased;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
   }
 }
 
@@ -83,10 +86,24 @@
     display: none;
   }
 
+  /* Banner — mobilde görünür yükseklik (12:5) */
+  .hero-banner-frame {
+    padding-bottom: 41.667%;
+    min-height: 150px;
+  }
+  @media (min-width: 640px) {
+    .hero-banner-frame {
+      min-height: 200px;
+    }
+  }
+
   /* Ürün görselleri — kırpma yok, Trendyol oranı (~3:4) */
   .product-media {
     aspect-ratio: 3 / 4;
     background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .product-media--square {
@@ -125,11 +142,17 @@
 
   .hero-slide-active {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
   }
 
   .hero-slide-idle {
     opacity: 0;
+    visibility: hidden;
+  }
+
+  .touch-manipulation {
+    touch-action: manipulation;
   }
 
   .hero-slide-img {

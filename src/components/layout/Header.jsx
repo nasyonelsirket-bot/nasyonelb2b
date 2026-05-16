@@ -6,11 +6,14 @@ import { useCart } from '@/context/CartContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 
 const NAV = [
-  { to: '/', label: 'Ana Sayfa' },
-  { to: '/kategoriler', label: 'Kategoriler' },
-  { to: '/hakkimizda', label: 'Hakkımızda' },
-  { to: '/iletisim', label: 'İletişim' },
+  { to: '/', label: 'Ana Sayfa', end: true },
+  { to: '/kategoriler', label: 'Kategoriler', end: false },
+  { to: '/hakkimizda', label: 'Hakkımızda', end: false },
+  { to: '/iletisim', label: 'İletişim', end: false },
 ];
+
+const mobileNavClass =
+  'block py-3 px-1 text-base font-medium border-b border-brand-50 text-gray-700 hover:text-brand-900';
 
 export default function Header() {
   const { settings } = useStore();
@@ -51,7 +54,7 @@ export default function Header() {
 
           <nav className="hidden lg:flex items-center gap-7">
             {NAV.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navClass} end={item.to === '/'}>
+              <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>
                 {item.label}
               </NavLink>
             ))}
@@ -115,14 +118,23 @@ export default function Header() {
         </div>
 
         {mobileOpen && (
-          <nav className="lg:hidden border-t border-brand-100 py-3 flex flex-col gap-2 pb-4">
+          <nav className="lg:hidden border-t border-brand-100 py-2 flex flex-col pb-4">
+            <a
+              href="/#urunler"
+              className={mobileNavClass}
+              onClick={() => setMobileOpen(false)}
+            >
+              Tüm Ürünler
+            </a>
             {NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={navClass}
+                className={({ isActive }) =>
+                  `${mobileNavClass} ${isActive ? 'text-brand-900 border-accent-gold' : ''}`
+                }
                 onClick={() => setMobileOpen(false)}
-                end={item.to === '/'}
+                end={item.end}
               >
                 {item.label}
               </NavLink>

@@ -1,6 +1,6 @@
-import { createContext, useContext, useCallback, useState, useMemo } from 'react';
+import { createContext, useContext, useCallback, useState, useMemo, useEffect } from 'react';
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
-import { loadFromStorage, KEYS } from '@/utils/storage';
+import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { resolveMinQuantity, isLineValid, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 
 const CartContext = createContext(null);
@@ -15,9 +15,22 @@ function getMinLineValue() {
   }
 }
 
+function loadCartItems() {
+  try {
+    const raw = loadFromStorage(KEYS.CART, []);
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(loadCartItems);
   const [cartAnimating, setCartAnimating] = useState(false);
+
+  useEffect(() => {
+    saveToStorage(KEYS.CART, items);
+  }, [items]);
 
   const triggerAnimation = useCallback(() => {
     setCartAnimating(true);

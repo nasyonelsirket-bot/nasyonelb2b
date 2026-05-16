@@ -6,7 +6,7 @@ import { CartProvider } from '@/context/CartContext';
 import Layout from '@/components/layout/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
-const HomePage = lazy(() => import('@/pages/HomePage'));
+import HomePage from '@/pages/HomePage';
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
@@ -30,14 +30,7 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route element={<Layout />}>
-                <Route
-                  index
-                  element={
-                    <Suspense fallback={<PageLoader />}>
-                      <HomePage />
-                    </Suspense>
-                  }
-                />
+                <Route index element={<HomePage />} />
                 <Route path="kategoriler" element={<Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense>} />
                 <Route path="urun/:id" element={<Suspense fallback={<PageLoader />}><ProductDetailPage /></Suspense>} />
                 <Route path="sepet" element={<Suspense fallback={<PageLoader />}><CartPage /></Suspense>} />

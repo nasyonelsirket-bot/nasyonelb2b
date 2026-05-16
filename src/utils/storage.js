@@ -3,6 +3,7 @@ const KEYS = {
   CATEGORIES: 'b2b_categories',
   BANNERS: 'b2b_banners',
   SETTINGS: 'b2b_settings',
+  CART: 'b2b_cart',
 };
 
 export function loadFromStorage(key, fallback) {

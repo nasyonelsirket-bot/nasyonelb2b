@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Package, Truck, Shield, Headphones } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -29,6 +29,15 @@ export default function HomePage() {
         p.category.toLowerCase().includes(q),
     );
   }, [products, q]);
+
+  useEffect(() => {
+    if (window.location.hash === '#urunler') {
+      const el = document.getElementById('urunler');
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
+    }
+  }, [filtered.length]);
 
   return (
     <>
