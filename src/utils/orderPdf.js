@@ -1,6 +1,8 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatPrice } from '@/utils/whatsapp';
+import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
+import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 
 function safeName(text) {
   return String(text || 'siparis')
@@ -9,100 +11,176 @@ function safeName(text) {
     .slice(0, 40) || 'siparis';
 }
 
-export function generateOrderPdf({
+function hexToRgb(hex) {
+  const h = String(hex || '#0a1f4d').replace('#', '');
+  if (h.length !== 6) return [10, 31, 77];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+function loadImageForPdf(url) {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        const format = dataUrl.includes('image/jpeg') ? 'JPEG' : 'PNG';
+        resolve({ dataUrl, format, w: canvas.width, h: canvas.height });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function pdfImageFormat(dataUrl) {
+  if (dataUrl?.includes('image/jpeg') || dataUrl?.includes('image/jpg')) return 'JPEG';
+  return 'PNG';
+}
+
+export async function generateOrderPdf({
   siteName = 'Nasyonel Toys',
+  siteLogoUrl,
+  pdfSettings: rawPdfSettings,
   customer,
   items,
   discount,
   shipping,
   orderTotal,
 }) {
+  const cfg = mergePdfSettings(rawPdfSettings);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const dateStr = new Date().toLocaleString('tr-TR');
-  let y = 18;
+  const primary = hexToRgb(cfg.primaryColor);
+  const marginL = Number(cfg.marginLeftMm) || 14;
+  const gap = Number(cfg.sectionGapMm) || 6;
+  let y = Number(cfg.marginTopMm) || 14;
+  const pageW = doc.internal.pageSize.getWidth();
+  const contentW = pageW - marginL * 2;
 
-  doc.setFontSize(18);
-  doc.setTextColor(10, 31, 77);
-  doc.text(siteName, 14, y);
-  y += 8;
-  doc.setFontSize(11);
-  doc.setTextColor(60, 60, 60);
-  doc.text('Sipariş Formu', 14, y);
-  y += 6;
-  doc.setFontSize(9);
-  doc.text(`Tarih: ${dateStr}`, 14, y);
-  y += 10;
+  const displayTitle = (cfg.headerTitle || '').trim() || siteName;
+  const logoSrc = resolveLogoUrl((cfg.logoUrl || '').trim() || siteLogoUrl);
+  const logoImg = cfg.showLogo ? await loadImageForPdf(logoSrc) : null;
 
-  doc.setFontSize(11);
-  doc.setTextColor(10, 31, 77);
-  doc.text('Müşteri Bilgileri', 14, y);
-  y += 6;
-  doc.setFontSize(10);
-  doc.setTextColor(40, 40, 40);
-  const lines = [
-    `Firma / Bayi: ${customer.companyName}`,
-    `Yetkili: ${customer.contactName || '-'}`,
-    `Telefon: ${customer.phone}`,
-    `Adres: ${customer.address}`,
-  ];
-  lines.forEach((line) => {
-    const wrapped = doc.splitTextToSize(line, 182);
-    doc.text(wrapped, 14, y);
-    y += wrapped.length * 5;
-  });
-  y += 4;
+  if (logoImg) {
+    const lw = Number(cfg.logoWidthMm) || 45;
+    const lh = Number(cfg.logoHeightMm) || 18;
+    doc.addImage(logoImg.dataUrl, pdfImageFormat(logoImg.dataUrl), marginL, y, lw, lh);
+    y += lh + 2;
+  }
 
-  doc.setFontSize(11);
-  doc.setTextColor(10, 31, 77);
-  doc.text('Sipariş', 14, y);
-  y += 2;
+  doc.setFontSize(Number(cfg.fontSizeTitle) || 17);
+  doc.setTextColor(...primary);
+  doc.text(displayTitle, marginL, y);
+  y += gap + 2;
 
-  const tableBody = items.map((item) => [
-    item.name,
-    item.sku || '-',
-    formatPrice(item.price),
-    String(item.quantity),
-    formatPrice(item.price * item.quantity),
-  ]);
+  if (cfg.docTitle?.trim()) {
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    doc.setTextColor(60, 60, 60);
+    doc.text(cfg.docTitle.trim(), marginL, y);
+    y += gap;
+  }
 
-  autoTable(doc, {
-    startY: y,
-    head: [['Ürün', 'Stok Kodu', 'Birim Fiyat', 'Adet', 'Satır Toplam']],
-    body: tableBody,
-    styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [10, 31, 77], textColor: 255 },
-    margin: { left: 14, right: 14 },
-  });
+  if (cfg.showDate) {
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    doc.text(`Tarih: ${new Date().toLocaleString('tr-TR')}`, marginL, y);
+    y += gap + 2;
+  }
 
-  y = doc.lastAutoTable.finalY + 10;
+  if (cfg.showCustomer) {
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    doc.setTextColor(...primary);
+    doc.text('Müşteri Bilgileri', marginL, y);
+    y += gap - 1;
 
-  doc.setFontSize(11);
-  doc.setTextColor(10, 31, 77);
-  doc.text('Sipariş Özeti', 14, y);
-  y += 7;
+    doc.setFontSize(Number(cfg.fontSizeBody) || 10);
+    doc.setTextColor(40, 40, 40);
+    const labels = cfg.customerLabels;
+    const rows = [
+      [labels.companyName, customer.companyName],
+      [labels.contactName, customer.contactName || '-'],
+      [labels.phone, customer.phone],
+      [labels.address, customer.address],
+    ];
+    rows.forEach(([label, value]) => {
+      const line = `${label}: ${value}`;
+      const wrapped = doc.splitTextToSize(line, contentW);
+      doc.text(wrapped, marginL, y);
+      y += wrapped.length * 5;
+    });
+    y += 2;
+  }
 
-  doc.setFontSize(10);
-  doc.setTextColor(40, 40, 40);
-  const summary = [
-    `Ara toplam: ${formatPrice(discount.subtotal)}`,
-    `İskonto: ${discount.tierLabel} (-${formatPrice(discount.discountAmount)})`,
-    shipping.eligible
-      ? 'Kargo: Bedava'
-      : `Kargo: ${formatPrice(shipping.shippingFee)}`,
-    `Ödenecek tutar: ${formatPrice(orderTotal)}`,
-  ];
-  summary.forEach((line) => {
-    doc.text(line, 14, y);
-    y += 6;
-  });
+  if (items?.length) {
+    const head = [
+      'Ürün',
+      ...(cfg.showSkuColumn ? ['Stok Kodu'] : []),
+      'Birim Fiyat',
+      'Adet',
+      'Satır Toplam',
+    ];
+    const tableBody = items.map((item) => {
+      const row = [item.name];
+      if (cfg.showSkuColumn) row.push(item.sku || '-');
+      row.push(formatPrice(item.price), String(item.quantity), formatPrice(item.price * item.quantity));
+      return row;
+    });
 
-  y += 4;
-  doc.setFontSize(9);
-  doc.setTextColor(120, 80, 0);
-  doc.text('* Tüm fiyatlara KDV dahil değildir.', 14, y);
-  y += 5;
-  doc.setTextColor(80, 80, 80);
-  doc.text('Sipariş onayı için lütfen yanıtlayınız. Teşekkürler.', 14, y);
+    autoTable(doc, {
+      startY: y,
+      head: [head],
+      body: tableBody,
+      styles: { fontSize: Number(cfg.fontSizeBody) || 10, cellPadding: 2 },
+      headStyles: { fillColor: primary, textColor: 255 },
+      margin: { left: marginL, right: marginL },
+    });
+    y = doc.lastAutoTable.finalY + gap + 2;
+  }
+
+  if (cfg.showSummary) {
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    doc.setTextColor(...primary);
+    doc.text('Sipariş Özeti', marginL, y);
+    y += gap + 1;
+
+    doc.setFontSize(Number(cfg.fontSizeBody) || 10);
+    doc.setTextColor(40, 40, 40);
+    const summary = [
+      `Ara toplam: ${formatPrice(discount.subtotal)}`,
+      `İskonto: ${discount.tierLabel} (-${formatPrice(discount.discountAmount)})`,
+      shipping.eligible ? 'Kargo: Bedava' : `Kargo: ${formatPrice(shipping.shippingFee)}`,
+      `Ödenecek tutar: ${formatPrice(orderTotal)}`,
+    ];
+    summary.forEach((line) => {
+      doc.text(line, marginL, y);
+      y += 5;
+    });
+    y += 2;
+  }
+
+  if (cfg.showKdvNote && cfg.kdvText?.trim()) {
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    doc.setTextColor(120, 80, 0);
+    doc.text(cfg.kdvText.trim(), marginL, y);
+    y += 5;
+  }
+
+  if (cfg.showFooter && cfg.footerText?.trim()) {
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    doc.setTextColor(80, 80, 80);
+    const wrapped = doc.splitTextToSize(cfg.footerText.trim(), contentW);
+    doc.text(wrapped, marginL, y);
+  }
 
   const fileName = `Siparis-${safeName(customer.companyName)}-${Date.now()}.pdf`;
   return { doc, fileName, blob: doc.output('blob') };
@@ -128,14 +206,18 @@ export function openWhatsAppWithPdf(phone, customer, siteName) {
 export async function submitOrderViaWhatsApp({
   phone,
   siteName,
+  siteLogoUrl,
+  pdfSettings,
   customer,
   items,
   discount,
   shipping,
   orderTotal,
 }) {
-  const pdf = generateOrderPdf({
+  const pdf = await generateOrderPdf({
     siteName,
+    siteLogoUrl,
+    pdfSettings,
     customer,
     items,
     discount,
@@ -155,7 +237,7 @@ export async function submitOrderViaWhatsApp({
       });
       return { shared: true };
     } catch {
-      /* fallback to download + wa */
+      /* fallback */
     }
   }
 

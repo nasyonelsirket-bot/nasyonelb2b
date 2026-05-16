@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, FileText } from 'lucide-react';
+import PdfSettingsAdmin from '@/components/admin/PdfSettingsAdmin';
+import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
 import Button from '@/components/ui/Button';
 import AdminToast from '@/components/admin/AdminToast';
 import ProductsAdmin from '@/components/admin/ProductsAdmin';
@@ -18,6 +20,7 @@ const TABS = [
   { id: 'categories', label: 'Kategoriler', icon: FolderOpen },
   { id: 'banners', label: 'Bannerlar', icon: Image },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
+  { id: 'pdf', label: 'PDF', icon: FileText },
   { id: 'excel', label: 'Excel', icon: Upload },
   { id: 'trendyol', label: 'Trendyol', icon: RefreshCw },
 ];
@@ -137,7 +140,7 @@ export default function AdminPage() {
             ))}
           </nav>
 
-          <main className="flex-1 p-6 max-w-5xl">
+          <main className="flex-1 p-4 sm:p-6 max-w-5xl w-full min-w-0">
             {tab === 'products' && (
               <ProductsAdmin store={store} showMsg={showMsg} />
             )}
@@ -152,6 +155,10 @@ export default function AdminPage() {
 
             {tab === 'settings' && (
               <SettingsAdmin store={store} setMsg={showMsg} />
+            )}
+
+            {tab === 'pdf' && (
+              <PdfSettingsAdmin store={store} setMsg={showMsg} />
             )}
 
             {tab === 'excel' && (
@@ -359,10 +366,10 @@ function BannerAdmin({ store, setMsg }) {
       </p>
       <ImageDropzone
         label="Banner görseli (zorunlu)"
-        hint="Önerilen: 1400×600 · mobilde 4:3, masaüstünde geniş format"
+        hint={`Zorunlu ölçü: ${bannerSpecText()} — kırpılmaz, tam görünür`}
         value={b.image}
         onChange={(url) => setB({ ...b, image: url })}
-        onFile={(file) => processImageFile(file, { maxWidth: 1600, maxHeight: 720, quality: 0.88 })}
+        onFile={(file) => processImageFile(file, { maxWidth: 1920, maxHeight: 800, quality: 0.9 })}
         aspect="video"
       />
       <details className="rounded-lg border border-brand-100 bg-brand-50/50 p-3">
@@ -380,7 +387,7 @@ function BannerAdmin({ store, setMsg }) {
         {banners.map((banner) => (
           <li key={banner.id} className="flex gap-3 items-center border-b border-brand-50 py-3">
             {banner.image && (
-              <img src={banner.image} alt="" className="h-14 w-24 rounded object-cover shrink-0" />
+              <img src={banner.image} alt="" className="h-14 w-28 rounded object-contain bg-brand-950 shrink-0" />
             )}
             <span className="flex-1 text-sm font-medium truncate">
               {banner.title?.trim() || 'Başlıksız banner'}
@@ -471,7 +478,7 @@ function SettingsAdmin({ store, setMsg }) {
       <h2 className="font-bold">Site Ayarları</h2>
       <ImageDropzone
         label="Site logosu"
-        hint="PNG veya SVG önerilir — şeffaf arka plan, logo tam görünsün"
+        hint={`${logoSpecText()} — şeffaf PNG, beyaz kutu/çerçeve eklemeyin`}
         value={s.logoUrl}
         onChange={(url) => setS({ ...s, logoUrl: url })}
         onFile={(file) =>

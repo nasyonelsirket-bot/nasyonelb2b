@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
 import { APP_VERSION } from '@/constants/appVersion';
+import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 
 function footerAboutText(settings) {
   const raw = String(settings?.aboutText || '').trim();
@@ -25,11 +26,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
             <img
-              src={
-                !settings.logoUrl || settings.logoUrl.startsWith('data:')
-                  ? '/nasyonel-logo.png?v=3'
-                  : settings.logoUrl
-              }
+              src={resolveLogoUrl(settings.logoUrl)}
               alt={siteName}
               className="site-logo-footer mb-4"
             />

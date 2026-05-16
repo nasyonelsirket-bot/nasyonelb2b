@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import Button from '@/components/ui/Button';
+import { BANNER_SPEC } from '@/constants/mediaSpecs';
 
 const AUTO_MS = 5500;
 const SWIPE_THRESHOLD = 48;
@@ -49,7 +50,7 @@ export default function HeroBanner() {
 
   return (
     <section
-      className="hero-carousel relative mx-3 mt-4 sm:mx-6 sm:mt-6 lg:mx-auto lg:max-w-7xl lg:px-8"
+      className="hero-carousel relative mx-2 mt-3 sm:mx-6 sm:mt-6 lg:mx-auto lg:max-w-7xl lg:px-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={onTouchStart}
@@ -58,7 +59,10 @@ export default function HeroBanner() {
       aria-roledescription="carousel"
     >
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg bg-brand-950">
-        <div className="relative min-h-[180px] sm:min-h-[240px] md:min-h-[280px] flex items-center justify-center" aria-live="polite">
+        <div
+          className="relative w-full aspect-[12/5] max-h-[min(50vh,420px)] sm:max-h-[min(55vh,480px)]"
+          aria-live="polite"
+        >
           {active.map((banner, i) => {
             const isActive = i === index;
             const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
@@ -68,9 +72,7 @@ export default function HeroBanner() {
                 <img
                   src={banner.image}
                   alt={banner.title?.trim() || `Banner ${i + 1}`}
-                  className={`hero-banner-img max-w-full max-h-[50vh] w-auto h-auto object-contain mx-auto block ${
-                    isActive ? 'hero-slide-img-active' : ''
-                  }`}
+                  className="absolute inset-0 w-full h-full object-contain object-center"
                   loading={i === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   draggable={false}
@@ -78,17 +80,17 @@ export default function HeroBanner() {
                 {hasText && (
                   <>
                     <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40 pointer-events-none" />
-                    <div className="absolute inset-0 flex flex-col justify-center px-5 sm:px-10 lg:px-14 max-w-xl pointer-events-none">
+                    <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-10 lg:px-14 max-w-xl pointer-events-none">
                       {banner.title?.trim() && (
-                        <h2 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
+                        <h2 className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
                           {banner.title}
                         </h2>
                       )}
                       {banner.subtitle?.trim() && (
-                        <p className="mt-2 text-sm sm:text-lg text-brand-100/95 line-clamp-2">{banner.subtitle}</p>
+                        <p className="mt-1 sm:mt-2 text-xs sm:text-lg text-brand-100/95 line-clamp-2">{banner.subtitle}</p>
                       )}
                       {link && banner.title?.trim() && (
-                        <div className="mt-4 pointer-events-auto">
+                        <div className="mt-3 sm:mt-4 pointer-events-auto">
                           <Link to={link}>
                             <Button variant="gold" size="md" className="sm:size-lg">
                               Keşfet <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -105,13 +107,13 @@ export default function HeroBanner() {
             return (
               <div
                 key={banner.id}
-                className={`hero-slide absolute inset-0 flex items-center justify-center p-2 sm:p-4 ${
+                className={`hero-slide absolute inset-0 ${
                   isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'
                 }`}
                 aria-hidden={!isActive}
               >
                 {link && !hasText ? (
-                  <Link to={link} className="flex w-full h-full items-center justify-center" tabIndex={isActive ? 0 : -1}>
+                  <Link to={link} className="block w-full h-full" tabIndex={isActive ? 0 : -1}>
                     {slide}
                   </Link>
                 ) : (
@@ -127,7 +129,7 @@ export default function HeroBanner() {
             <button
               type="button"
               onClick={() => go(-1)}
-              className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/40 p-1.5 text-white backdrop-blur-sm transition hover:bg-brand-950/60 sm:left-4 sm:p-2"
+              className="absolute left-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/50 p-2 text-white backdrop-blur-sm transition hover:bg-brand-950/70 sm:left-4"
               aria-label="Önceki banner"
             >
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -135,12 +137,12 @@ export default function HeroBanner() {
             <button
               type="button"
               onClick={() => go(1)}
-              className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/40 p-1.5 text-white backdrop-blur-sm transition hover:bg-brand-950/60 sm:right-4 sm:p-2"
+              className="absolute right-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/50 p-2 text-white backdrop-blur-sm transition hover:bg-brand-950/70 sm:right-4"
               aria-label="Sonraki banner"
             >
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
+            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
               {active.map((banner, i) => (
                 <button
                   key={banner.id}
@@ -159,6 +161,9 @@ export default function HeroBanner() {
           </>
         )}
       </div>
+      <p className="sr-only">
+        Önerilen banner boyutu: {BANNER_SPEC.width}×{BANNER_SPEC.height} piksel
+      </p>
     </section>
   );
 }

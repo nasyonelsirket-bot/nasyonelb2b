@@ -7,6 +7,7 @@ import {
 } from '@/data/demoProducts';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
+import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import {
   buildCategoriesFromProducts,
   getProductCountsByCategory,
@@ -34,7 +35,9 @@ export function StoreProvider({ children }) {
     const stored = loadFromStorage(KEYS.SETTINGS, null);
     const safe =
       stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
-    return { ...DEFAULT_SETTINGS, ...safe };
+    const merged = { ...DEFAULT_SETTINGS, ...safe };
+    merged.pdfSettings = mergePdfSettings(merged.pdfSettings);
+    return merged;
   });
 
   useEffect(() => saveToStorage(KEYS.PRODUCTS, products), [products]);

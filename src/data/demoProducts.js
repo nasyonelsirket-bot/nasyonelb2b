@@ -1,3 +1,5 @@
+import { DEFAULT_PDF_SETTINGS } from '@/data/pdfSettingsDefaults';
+
 export const DEMO_CATEGORIES = [
   { id: 'cat-1', name: 'Oyuncak Arabalar', slug: 'oyuncak-arabalar', icon: '🚗' },
   { id: 'cat-2', name: 'Bebek & Figür', slug: 'bebek-figur', icon: '🧸' },
@@ -192,4 +194,5 @@ export const DEFAULT_SETTINGS = {
   trendyolApiSecret: '',
   trendyolPriceDivisor: '4',
   minOrderLineValue: 2000,
+  pdfSettings: DEFAULT_PDF_SETTINGS,
 };

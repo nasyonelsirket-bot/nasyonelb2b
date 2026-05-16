@@ -1,14 +1,15 @@
 import { DEFAULT_SETTINGS, DEMO_CATEGORIES } from '@/data/demoProducts';
+import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 6;
+export const BRAND_VERSION = 7;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
   if (!logoUrl) return true;
-  if (logoUrl.startsWith('data:')) return true;
+  if (logoUrl.startsWith('data:')) return false;
   if (logoUrl.endsWith('/logo.svg') && !logoUrl.includes('?')) return true;
   return false;
 }
@@ -68,6 +69,7 @@ export function runBrandMigration() {
       settings.aboutText = DEFAULT_SETTINGS.aboutText;
     }
     settings.minOrderLineValue = Number(settings.minOrderLineValue) || DEFAULT_SETTINGS.minOrderLineValue || 2000;
+    settings.pdfSettings = mergePdfSettings(settings.pdfSettings || DEFAULT_SETTINGS.pdfSettings);
 
     const storedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     const categories = refreshCategoryIcons(

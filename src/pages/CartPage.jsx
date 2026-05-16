@@ -71,6 +71,8 @@ export default function CartPage() {
       const result = await submitOrderViaWhatsApp({
         phone: settings.whatsappNumber,
         siteName: settings.siteName || 'Nasyonel Toys',
+        siteLogoUrl: settings.logoUrl,
+        pdfSettings: settings.pdfSettings,
         customer: {
           companyName: customer.companyName.trim(),
           contactName: customer.contactName.trim(),
@@ -109,8 +111,8 @@ export default function CartPage() {
   return (
     <>
       <SEO title="Sepet" path="/sepet" noindex />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="font-display text-3xl font-bold text-brand-900">Sepetim</h1>
+      <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900">Sepetim</h1>
         <p className="text-sm text-brand-600 mt-1">
           Ürün başına min. {formatPrice(minLineValue)} · {formatThreshold(DISCOUNT_THRESHOLD_TL)} altı %5, üzeri %10 iskonto
         </p>
@@ -147,12 +149,13 @@ export default function CartPage() {
               const minInfo = getMinOrderInfo(item, minLineValue);
               const lineTotal = item.price * item.quantity;
               return (
-                <div key={item.id} className="flex gap-4 rounded-2xl border border-brand-100 bg-white p-4 shadow-card">
-                  <div className="product-media product-media--thumb rounded-lg border border-brand-100">
+                <div key={item.id} className="flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-2xl border border-brand-100 bg-white p-3 sm:p-4 shadow-card">
+                  <div className="flex gap-3 flex-1 min-w-0">
+                  <div className="product-media product-media--thumb rounded-lg border border-brand-100 shrink-0">
                     <img src={item.image} alt="" className="product-media-img p-1" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-brand-900">{item.name}</h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-brand-900 text-sm sm:text-base">{item.name}</h3>
                     <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                     <p className="text-brand-700 font-bold mt-1">{formatPrice(item.price)} / adet</p>
                     <p className="text-xs text-brand-600 mt-1">{minInfo.label}</p>
@@ -169,7 +172,12 @@ export default function CartPage() {
                       />
                     </div>
                   </div>
-                  <button type="button" onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 p-2">
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(item.id)}
+                    className="self-end sm:self-start text-red-500 hover:text-red-700 p-2"
+                  >
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
