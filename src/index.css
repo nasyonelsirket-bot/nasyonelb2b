@@ -130,6 +130,41 @@
     padding: 0.5rem;
   }
 
+  /* Mobil ürün grid — Trendyol tarzı 2 sütun, kompakt kart */
+  @media (max-width: 639px) {
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .product-grid .product-card {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .product-grid .product-media--card {
+      aspect-ratio: 1 / 1;
+    }
+
+    .product-grid .product-media--card .product-media-img,
+    .product-grid .product-card-img {
+      padding: 0.25rem;
+    }
+
+    .product-card-qty button {
+      height: 2rem;
+      width: 2rem;
+    }
+    .product-card-qty input {
+      height: 2rem;
+      min-width: 2.5rem;
+      font-size: 0.75rem;
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+  }
+
   .product-media--detail .product-media-img {
     padding: 1rem;
   }
