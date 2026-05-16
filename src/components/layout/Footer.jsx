@@ -48,7 +48,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300">
-          © {new Date().getFullYear()} {settings.siteName}. Tüm hakları saklıdır. B2B Toptan Katalog
+          © {new Date().getFullYear()} Nasyonel Toys. Tüm hakları saklıdır.
         </div>
       </div>
     </footer>

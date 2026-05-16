@@ -7,6 +7,7 @@ import {
 } from '@/data/demoProducts';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { runBrandMigration, refreshCategoryIcons } from '@/utils/brandMigration';
+import { buildCategoriesFromProducts } from '@/utils/categories';
 
 const StoreContext = createContext(null);
 
@@ -97,6 +98,28 @@ export function StoreProvider({ children }) {
     setCategories((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
+  const deleteCategories = useCallback((ids) => {
+    const idSet = new Set((ids || []).filter(Boolean));
+    if (!idSet.size) return;
+    setCategories((prev) => (Array.isArray(prev) ? prev : []).filter((c) => !idSet.has(c.id)));
+  }, []);
+
+  const importTrendyolProducts = useCallback((newProducts) => {
+    const safeProducts = Array.isArray(newProducts) ? newProducts : [];
+    const syncedCategories = buildCategoriesFromProducts(safeProducts);
+
+    setProducts((prev) => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const map = new Map(safePrev.map((p) => [p.sku || p.id, p]));
+      safeProducts.forEach((p) => {
+        if (p?.sku || p?.id) map.set(p.sku || p.id, p);
+      });
+      return Array.from(map.values());
+    });
+
+    setCategories(refreshCategoryIcons(syncedCategories, { force: true }));
+  }, []);
+
   const addBanner = useCallback((banner) => {
     setBanners((prev) => [...prev, { ...banner, id: banner.id || `banner-${Date.now()}` }]);
   }, []);
@@ -130,7 +153,7 @@ export function StoreProvider({ children }) {
     setBanners(DEMO_BANNERS);
     setSettings(DEFAULT_SETTINGS);
     try {
-      localStorage.setItem('b2b_brand_version', String(3));
+      localStorage.setItem('b2b_brand_version', String(4));
     } catch {
       /* ignore */
     }
@@ -154,6 +177,8 @@ export function StoreProvider({ children }) {
       addCategory,
       updateCategory,
       deleteCategory,
+      deleteCategories,
+      importTrendyolProducts,
       addBanner,
       updateBanner,
       deleteBanner,
@@ -178,6 +203,8 @@ export function StoreProvider({ children }) {
       addCategory,
       updateCategory,
       deleteCategory,
+      deleteCategories,
+      importTrendyolProducts,
       addBanner,
       updateBanner,
       deleteBanner,

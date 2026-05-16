@@ -80,8 +80,10 @@ export default function AdminPage() {
     setMsg('');
     try {
       const { products: tyProducts, categories } = await syncAllTrendyolProducts(store.settings, setTyProgress);
-      store.importProducts(tyProducts, categories);
-      showMsg(`${tyProducts.length} Trendyol ürünü senkronize edildi`);
+      store.importTrendyolProducts(tyProducts);
+      showMsg(
+        `${tyProducts.length} ürün çekildi, ${categories.length} kategoriye ayrıldı (emojiler atandı)`,
+      );
     } catch (err) {
       showMsg(`Trendyol: ${err.message}`, 'error');
     }
@@ -183,7 +185,34 @@ function CategoryAdmin({ store, setMsg }) {
   const [icon, setIcon] = useState('📦');
   const [editingId, setEditingId] = useState(null);
   const [editIcon, setEditIcon] = useState('📦');
+  const [selected, setSelected] = useState(() => new Set());
   const categories = Array.isArray(store.categories) ? store.categories : [];
+
+  const toggleSelect = (id) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === categories.length) setSelected(new Set());
+    else setSelected(new Set(categories.map((c) => c.id).filter(Boolean)));
+  };
+
+  const handleBulkDelete = () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!window.confirm(`${ids.length} kategori silinsin mi? Bu kategorideki ürünler silinmez.`)) return;
+    startTransition(() => {
+      store.deleteCategories(ids);
+      if (editingId && ids.includes(editingId)) setEditingId(null);
+    });
+    setSelected(new Set());
+    setMsg(`${ids.length} kategori silindi`);
+  };
 
   const slugify = (text) =>
     text
@@ -219,16 +248,24 @@ function CategoryAdmin({ store, setMsg }) {
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-bold">Kategori Yönetimi</h2>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => {
-            startTransition(() => store.refreshAllCategoryEmojis());
-            setMsg('Tüm kategori emojileri güncellendi');
-          }}
-        >
-          Emojileri otomatik güncelle
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {selected.size > 0 && (
+            <Button type="button" variant="danger" onClick={handleBulkDelete}>
+              <Trash2 className="h-4 w-4" />
+              Seçilenleri Sil ({selected.size})
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              startTransition(() => store.refreshAllCategoryEmojis());
+              setMsg('Tüm kategori emojileri güncellendi');
+            }}
+          >
+            Emojileri otomatik güncelle
+          </Button>
+        </div>
       </div>
       <input
         value={name}
@@ -241,18 +278,35 @@ function CategoryAdmin({ store, setMsg }) {
         Kategori Ekle
       </Button>
 
+      {categories.length > 0 && (
+        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selected.size === categories.length}
+            onChange={toggleSelectAll}
+          />
+          Tümünü seç ({categories.length} kategori)
+        </label>
+      )}
+
       <ul className="space-y-3 pt-2 border-t border-brand-100">
         {categories.map((c) => (
           <li key={c.id} className="border-b border-brand-50 pb-3 last:border-0">
             <div className="flex justify-between items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.has(c.id)}
+                onChange={() => toggleSelect(c.id)}
+                className="shrink-0"
+              />
               <button
                 type="button"
                 onClick={() => (editingId === c.id ? setEditingId(null) : startEditIcon(c))}
-                className="flex items-center gap-2 text-left hover:text-brand-600"
+                className="flex flex-1 items-center gap-2 text-left hover:text-brand-600 min-w-0"
                 title="Emojiyi değiştir"
               >
-                <span className="text-xl">{c.icon || '📦'}</span>
-                <span className="font-medium">{c.name}</span>
+                <span className="text-xl shrink-0">{c.icon || '📦'}</span>
+                <span className="font-medium truncate">{c.name}</span>
               </button>
               <button type="button" onClick={() => store.deleteCategory(c.id)} className="text-red-600 shrink-0">
                 <Trash2 className="h-4 w-4" />

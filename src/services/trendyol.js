@@ -1,4 +1,4 @@
-import { suggestEmojiForName } from '@/data/categoryEmojis';
+import { buildCategoriesFromProducts } from '@/utils/categories';
 
 /**
  * Trendyol API entegrasyon servisi.
@@ -73,17 +73,7 @@ export async function syncAllTrendyolProducts(settings, onProgress) {
     if (!data.products?.length) break;
   }
 
-  const categories = [...new Set(allProducts.map((p) => p.category))].map(
-    (name, i) => ({
-      id: `cat-ty-${i}`,
-      name,
-      slug: name
-        .toLowerCase()
-        .replace(/[^a-z0-9ğüşıöç]+/gi, '-')
-        .replace(/(^-|-$)/g, ''),
-      icon: suggestEmojiForName(name),
-    }),
-  );
+  const categories = buildCategoriesFromProducts(allProducts);
 
   return { products: allProducts, categories };
 }

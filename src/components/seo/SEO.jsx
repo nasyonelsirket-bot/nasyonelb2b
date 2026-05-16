@@ -10,7 +10,7 @@ export default function SEO({
   noindex = false,
 }) {
   const { settings } = useStore();
-  const siteName = settings.siteName || 'ToyWholesale B2B';
+  const siteName = settings.siteName || 'Nasyonel Toys';
   const siteUrl = settings.siteUrl || import.meta.env.VITE_SITE_URL || '';
   const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - ${settings.tagline}`;
   const desc = description || settings.tagline;

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
 import { useStore } from '@/context/StoreContext';
@@ -14,35 +14,89 @@ export default function CategoriesPage() {
     return products.filter((p) => p.category === cat);
   }, [products, cat]);
 
+  const grouped = useMemo(() => {
+    if (cat) return null;
+    const cats = Array.isArray(categories) ? categories : [];
+    const byName = new Map();
+    products.forEach((p) => {
+      const key = p.category || 'Genel';
+      if (!byName.has(key)) byName.set(key, []);
+      byName.get(key).push(p);
+    });
+
+    if (cats.length) {
+      return cats
+        .map((c) => ({
+          category: c,
+          items: byName.get(c.name) || [],
+        }))
+        .filter((g) => g.items.length > 0);
+    }
+
+    return [...byName.entries()]
+      .sort(([a], [b]) => a.localeCompare(b, 'tr'))
+      .map(([name, items]) => ({
+        category: { name, icon: '📦' },
+        items,
+      }));
+  }, [cat, categories, products]);
+
   return (
     <>
-      <SEO title="Kategoriler" description="Oyuncak kategorileri - B2B toptan fiyatlar" path="/kategoriler" />
+      <SEO title="Kategoriler" description="Nasyonel Toys oyuncak kategorileri - B2B toptan fiyatlar" path="/kategoriler" />
       <div className="bg-brand-900 text-white py-12">
         <div className="mx-auto max-w-7xl px-4">
           <h1 className="font-display text-3xl font-bold">Kategoriler</h1>
           <p className="mt-2 text-brand-200">
-            {cat ? cat : 'Tüm ürün kategorilerimizi keşfedin'}
+            {cat ? cat : 'Ürünler kategorilere göre listelenir'}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
-            <a
-              href="/kategoriler"
-              className={`rounded-full px-4 py-1.5 text-sm font-medium ${!cat ? 'bg-white text-brand-900' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
+            <Link
+              to="/kategoriler"
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${!cat ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
             >
               Tümü
-            </a>
-            {categories.map((c) => (
-              <a
+            </Link>
+            {(Array.isArray(categories) ? categories : []).map((c) => (
+              <Link
                 key={c.id}
-                href={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium ${cat === c.name ? 'bg-white text-brand-900' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
+                to={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
+                className={`rounded-full px-4 py-1.5 text-sm font-medium ${cat === c.name ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
               >
                 {c.icon} {c.name}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
       </div>
-      <ProductGrid products={filtered} title={cat || 'Tüm Ürünler'} />
+
+      {cat ? (
+        <ProductGrid products={filtered} title={cat} />
+      ) : (
+        <div className="mx-auto max-w-7xl px-4 py-10 space-y-12">
+          {grouped?.map(({ category, items }) => (
+            <section key={category.name}>
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <h2 className="font-display text-xl font-bold text-brand-900 flex items-center gap-2">
+                  <span className="text-2xl">{category.icon || '📦'}</span>
+                  {category.name}
+                  <span className="text-sm font-normal text-gray-500">({items.length} ürün)</span>
+                </h2>
+                <Link
+                  to={`/kategoriler?cat=${encodeURIComponent(category.name)}`}
+                  className="text-sm font-medium text-brand-700 hover:text-accent-gold-dark"
+                >
+                  Tümünü gör →
+                </Link>
+              </div>
+              <ProductGrid products={items.slice(0, 8)} title="" subtitle="" />
+            </section>
+          ))}
+          {!grouped?.length && (
+            <p className="text-center text-gray-500 py-12">Henüz ürün yok. Trendyol’dan ürün çekin.</p>
+          )}
+        </div>
+      )}
     </>
   );
 }

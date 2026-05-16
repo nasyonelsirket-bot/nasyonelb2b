@@ -1,8 +1,9 @@
 import { DEFAULT_SETTINGS, DEMO_CATEGORIES } from '@/data/demoProducts';
+import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 3;
+export const BRAND_VERSION = 4;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
@@ -40,11 +41,24 @@ export function runBrandMigration() {
     if (shouldResetLogo(settings.logoUrl)) {
       settings.logoUrl = '/nasyonel-logo.png?v=3';
     }
-    if (!settings.siteName || settings.siteName.includes('ToyWholesale')) {
+    if (
+      !settings.siteName ||
+      settings.siteName.includes('ToyWholesale') ||
+      settings.siteName.includes('B2B')
+    ) {
       settings.siteName = DEFAULT_SETTINGS.siteName;
     }
     if (!settings.tagline || settings.tagline.includes('ToyWholesale')) {
       settings.tagline = DEFAULT_SETTINGS.tagline;
+    }
+    if (
+      !settings.contactAddress ||
+      settings.contactAddress === 'İstanbul, Türkiye' ||
+      settings.contactEmail?.includes('toywholesale')
+    ) {
+      settings.contactAddress = DEFAULT_SETTINGS.contactAddress;
+      settings.contactMapQuery = DEFAULT_SETTINGS.contactMapQuery;
+      settings.contactEmail = DEFAULT_SETTINGS.contactEmail;
     }
 
     const storedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);

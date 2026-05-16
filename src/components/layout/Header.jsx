@@ -36,7 +36,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
       <div className="bg-brand-950 text-brand-100 text-center text-xs py-2 px-4">
-        <span className="text-accent-gold font-semibold">B2B Toptan Sipariş</span>
+        <span className="text-accent-gold font-semibold">Nasyonel Toys</span>
         {' '}— WhatsApp ile hızlı sipariş | Minimum sipariş ürün bazlı uygulanır
       </div>
 

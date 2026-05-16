@@ -174,16 +174,17 @@ export const DEMO_PRODUCTS = [
 ];
 
 export const DEFAULT_SETTINGS = {
-  siteName: 'Nasyonel Toys B2B',
+  siteName: 'Nasyonel Toys',
   tagline: 'Hayaller Oyunla Başlar — Toptan Oyuncak Katalog',
   logoUrl: '/nasyonel-logo.png?v=3',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
   gaId: import.meta.env.VITE_GA_ID || '',
   siteUrl: import.meta.env.VITE_SITE_URL || 'https://your-site.netlify.app',
-  contactEmail: 'info@toywholesale.com',
+  contactEmail: 'info@nasyoneltoys.com',
   contactPhone: '+90 555 123 45 67',
-  contactAddress: 'İstanbul, Türkiye',
+  contactAddress: 'Oruçreis, Giyimkent 17. Sk. 35/a, 34000 Esenler/İstanbul',
+  contactMapQuery: 'Oruçreis, Giyimkent 17. Sk. 35/a, Esenler İstanbul',
   aboutText:
     'Nasyonel Grup, 2018 yılından bu yana üretim, tedarik ve e-ticaret alanlarında büyüyen; Nasyonel Toys, Elysane ve Nasyonel Home markalarını bünyesinde barındıran güçlü bir marka yapılanmasıdır.',
   trendyolSupplierId: '',

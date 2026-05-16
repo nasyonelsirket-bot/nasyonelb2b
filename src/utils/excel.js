@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { buildCategoriesFromProducts } from '@/utils/categories';
 
 const COLUMN_MAP = {
   'ürün adı': 'name',
@@ -75,17 +76,10 @@ export function parseExcelFile(file) {
           })
           .filter(Boolean);
 
-        const categories = [...new Set(products.map((p) => p.category))].map(
-          (name, i) => ({
-            id: `cat-excel-${i}`,
-            name,
-            slug: name
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/(^-|-$)/g, ''),
-            icon: '📦',
-          }),
-        );
+        const categories = buildCategoriesFromProducts(products).map((c, i) => ({
+          ...c,
+          id: `cat-excel-${i}`,
+        }));
 
         resolve({ products, categories });
       } catch (err) {
