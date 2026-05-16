@@ -29,6 +29,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/order-pdf/save"
+  to = "/.netlify/functions/order-pdf-save"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/order-pdf"
+  to = "/.netlify/functions/order-pdf-get"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"

@@ -86,11 +86,7 @@ export default function CartPage() {
         shipping,
         orderTotal,
       });
-      if (result.mode === 'cancelled') {
-        setFormError(result.message);
-      } else {
-        setFormSuccess(result.message);
-      }
+      setFormSuccess(result.message);
     } catch (err) {
       setFormError(err?.message || 'Sipariş gönderilemedi. Lütfen tekrar deneyin.');
     } finally {
@@ -292,10 +288,10 @@ export default function CartPage() {
                 disabled={!isCartValid || submitting}
               >
                 <MessageCircle className="h-5 w-5" />
-                {submitting ? 'Hazırlanıyor...' : 'WhatsApp ile Sipariş Gönder'}
+                {submitting ? 'Sipariş hazırlanıyor...' : 'WhatsApp ile Sipariş Gönder'}
               </Button>
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Sipariş, ayarlardaki işletme WhatsApp numarasına iletilir. PDF tarayıcıda açılmaz; mobilde PDF ekli, masaüstünde metin olarak gider.
+                PDF tarayıcıda açılmaz; WhatsApp&apos;ta işletme numaranıza hazır mesaj ve PDF linki gider.
               </p>
             </div>
           </div>

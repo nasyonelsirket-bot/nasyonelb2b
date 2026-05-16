@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatPrice, buildWhatsAppOrderMessage, openWhatsAppToBusiness } from '@/utils/whatsapp';
+import { formatPrice, buildOrderSubmitWhatsAppMessage, openWhatsAppWithMessage } from '@/utils/whatsapp';
+import { uploadOrderPdf } from '@/services/orderApi';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { registerPdfFonts, setPdfFont, PDF_FONT } from '@/utils/pdfFont';
@@ -231,9 +232,7 @@ function cleanWhatsAppPhone(phone) {
 }
 
 /**
- * PDF müşteriye indirilmez/gösterilmez.
- * Mobil: PDF ekli paylaşım → WhatsApp'ta işletme sohbetine gönderin.
- * Masaüstü: işletme numarasına dolu sipariş metni açılır (PDF eklenemez).
+ * PDF sunucuya yüklenir (müşteriye açılmaz), WhatsApp'ta işletmeye linkli mesaj açılır.
  */
 export async function submitOrderViaWhatsApp({
   phone,
@@ -251,15 +250,6 @@ export async function submitOrderViaWhatsApp({
     throw new Error('WhatsApp numarası ayarlarda tanımlı değil');
   }
 
-  const orderMessage = buildWhatsAppOrderMessage(items, {
-    siteName,
-    customer,
-    discount,
-    shipping,
-    orderTotal,
-    withPdfNote: true,
-  });
-
   const pdf = await generateOrderPdf({
     siteName,
     siteLogoUrl,
@@ -271,37 +261,22 @@ export async function submitOrderViaWhatsApp({
     orderTotal,
   });
 
-  const pdfFile = new File([pdf.blob], pdf.fileName, { type: 'application/pdf' });
+  const { url: pdfUrl } = await uploadOrderPdf(pdf.blob, pdf.fileName, customer);
 
-  if (navigator.canShare?.({ files: [pdfFile] })) {
-    try {
-      await navigator.share({
-        title: `${siteName} — Yeni sipariş`,
-        text: orderMessage,
-        files: [pdfFile],
-      });
-      return {
-        mode: 'share',
-        message:
-          'WhatsApp açıldı. PDF ekli mesajı işletmeye göndermek için *Gönder*\'e basın.',
-      };
-    } catch (err) {
-      if (err?.name === 'AbortError') {
-        return { mode: 'cancelled', message: 'Gönderim iptal edildi.' };
-      }
-    }
-  }
-
-  openWhatsAppToBusiness(businessPhone, items, {
+  const message = buildOrderSubmitWhatsAppMessage({
     siteName,
     customer,
-    discount,
-    shipping,
+    pdfUrl,
     orderTotal,
+    itemCount: items?.length || 0,
   });
+
+  openWhatsAppWithMessage(businessPhone, message);
+
   return {
     mode: 'whatsapp',
+    pdfUrl,
     message:
-      'WhatsApp işletme sohbetiniz açıldı. Sipariş özeti hazır — *Gönder*\'e basın. (Bu cihazda PDF otomatik eklenemez; mobilde PDF ekli gönderim kullanılır.)',
+      'WhatsApp açıldı. Hazır mesajdaki PDF linki ile siparişiniz iletilecek — Gönder\'e basın.',
   };
 }

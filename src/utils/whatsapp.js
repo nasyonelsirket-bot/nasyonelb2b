@@ -87,9 +87,6 @@ export function buildWhatsAppOrderMessage(cartItems, options = {}) {
     discount.upsellMessage ? `💡 _${discount.upsellMessage}_` : null,
     `🚚 *Kargo:* ${shipping.eligible ? '*Bedava* ✓' : formatPrice(shipping.shippingFee)}`,
     `✅ *ÖDENECEK TUTAR:* *${formatPrice(orderTotal)}*`,
-    options.withPdfNote
-      ? '\n📎 *Sipariş formu (PDF) bu mesaja eklenmiştir.*'
-      : null,
     '',
     '━━━━━━━━ *KARGO* ━━━━━━━━━━━━━━━━━',
     `• ${formatPrice(shipping.threshold)} altı: *${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo*`,
@@ -117,6 +114,39 @@ export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
   const cleanPhone = String(phone).replace(/\D/g, '');
   const message = encodeURIComponent(buildWhatsAppOrderMessage(cartItems, options));
   return `https://wa.me/${cleanPhone}?text=${message}`;
+}
+
+/** PDF linkli kısa sipariş mesajı — WhatsApp karakter sınırına uygun */
+export function buildOrderSubmitWhatsAppMessage({
+  siteName = 'Nasyonel Toys',
+  customer = {},
+  pdfUrl,
+  orderTotal,
+  itemCount = 0,
+}) {
+  const lines = [
+    'Merhaba,',
+    '',
+    `Web sitenizden (*${siteName}*) yapmış olduğum siparişim:`,
+    '',
+    `🏢 *Firma:* ${customer.companyName || '-'}`,
+    customer.contactName ? `👤 *Yetkili:* ${customer.contactName}` : null,
+    `📞 *Telefon:* ${customer.phone || '-'}`,
+    itemCount ? `📦 *Kalem:* ${itemCount} ürün` : null,
+    orderTotal != null ? `💰 *Ödenecek:* ${formatPrice(orderTotal)}` : null,
+    '',
+    '📎 *Sipariş formu (PDF):*',
+    pdfUrl,
+    '',
+    'Sipariş onayınızı rica ederim. Teşekkürler.',
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
+export function openWhatsAppWithMessage(phone, message) {
+  const cleanPhone = String(phone).replace(/\D/g, '');
+  if (!cleanPhone) throw new Error('WhatsApp numarası tanımlı değil');
+  window.location.href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
 export function openWhatsAppToBusiness(phone, cartItems, options = {}) {

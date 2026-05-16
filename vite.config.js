@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { createRequire } from 'node:module'
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 
 const require = createRequire(import.meta.url)
 const { syncTrendyolProducts } = require('./lib/trendyolSync.cjs')
@@ -136,10 +137,92 @@ function catalogDevProxy(env) {
   }
 }
 
+function orderPdfDevProxy() {
+  const ordersDir = path.join(process.cwd(), '.data', 'orders')
+
+  return {
+    name: 'order-pdf-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/order-pdf/save', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+
+        const pdfBase64 = String(body.pdfBase64 || '')
+        if (!pdfBase64) {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'PDF verisi yok' }))
+          return
+        }
+
+        const id = crypto.randomBytes(10).toString('hex')
+        fs.mkdirSync(ordersDir, { recursive: true })
+        fs.writeFileSync(path.join(ordersDir, `${id}.pdf`), Buffer.from(pdfBase64, 'base64'))
+        fs.writeFileSync(
+          path.join(ordersDir, `${id}.json`),
+          JSON.stringify({ fileName: body.fileName, customer: body.customer }),
+        )
+
+        const host = req.headers.host || 'localhost:5173'
+        const url = `http://${host}/api/order-pdf?id=${id}`
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ ok: true, id, url }))
+      })
+
+      server.middlewares.use('/api/order-pdf', (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.url?.includes('/save')) return
+
+        const url = new URL(req.url, 'http://localhost')
+        const id = url.searchParams.get('id')
+        if (!id) {
+          res.statusCode = 400
+          res.end('id gerekli')
+          return
+        }
+
+        const filePath = path.join(ordersDir, `${id}.pdf`)
+        if (!fs.existsSync(filePath)) {
+          res.statusCode = 404
+          res.end('Bulunamadı')
+          return
+        }
+
+        res.setHeader('Content-Type', 'application/pdf')
+        res.end(fs.readFileSync(filePath))
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env)],
+  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env), orderPdfDevProxy()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
