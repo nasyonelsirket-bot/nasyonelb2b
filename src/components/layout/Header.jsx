@@ -40,8 +40,8 @@ export default function Header() {
       </div>
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="flex min-h-[3.75rem] sm:min-h-[4.5rem] items-center justify-between gap-2 sm:gap-4 py-2">
-          <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[42%] sm:max-w-[38%] md:max-w-none py-0.5">
+        <div className="flex min-h-[4.25rem] sm:min-h-[5.5rem] items-center justify-between gap-2 sm:gap-4 py-2">
+          <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[52%] sm:max-w-[48%] md:max-w-none py-0.5">
             <img
               src={logoSrc}
               alt={settings.siteName || 'Nasyonel'}
