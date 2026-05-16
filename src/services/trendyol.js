@@ -17,16 +17,21 @@ function getCredentials(settings = {}) {
 async function parseErrorResponse(response) {
   const text = await response.text();
   if (text.trim().startsWith('<')) {
+    if (/cloudflare|you have been blocked/i.test(text)) {
+      return 'Trendyol güvenlik duvarı engelledi. Deploy sonrası tekrar deneyin; API bilgilerinizi Trendyol panelinden kontrol edin.';
+    }
     return 'API yanıt vermedi (sunucu HTML döndü). Netlify deploy ve /api/trendyol/sync yönlendirmesini kontrol edin.';
   }
   try {
     const data = JSON.parse(text);
+    if (data.error) return data.error;
+    if (data.hint) return data.hint;
     if (data.details && typeof data.details === 'string' && data.details.length < 200) {
-      return `${data.error || 'Hata'}: ${data.details}`;
+      return data.details;
     }
-    return data.error || data.hint || data.message || text;
+    return data.message || text.slice(0, 300);
   } catch {
-    return text || `HTTP ${response.status}`;
+    return text.slice(0, 300) || `HTTP ${response.status}`;
   }
 }
 

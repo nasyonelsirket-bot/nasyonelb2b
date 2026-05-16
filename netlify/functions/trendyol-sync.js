@@ -38,9 +38,17 @@ exports.handler = async (event) => {
       priceDivisor: bodyCreds.priceDivisor ?? process.env.TRENDYOL_PRICE_DIVISOR ?? 4,
     };
 
+    const clientIp =
+      event.headers['client-ip'] ||
+      event.headers['x-nf-client-connection-ip'] ||
+      (event.headers['x-forwarded-for'] || '').split(',')[0]?.trim() ||
+      '127.0.0.1';
+
     const result = await syncTrendyolProducts(credentials, {
       page: params.page || '0',
       size: params.size || '50',
+      onSale: params.onSale,
+      clientIp,
     });
 
     return {
