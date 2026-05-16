@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { formatPrice } from '@/utils/whatsapp';
 import { mergePdfSettings } from '@/data/pdfSettingsDefaults';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
+import { registerPdfFonts, setPdfFont, PDF_FONT } from '@/utils/pdfFont';
 
 function safeName(text) {
   return String(text || 'siparis')
@@ -61,7 +62,10 @@ export async function generateOrderPdf({
 }) {
   const cfg = mergePdfSettings(rawPdfSettings);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  await registerPdfFonts(doc);
+
   const primary = hexToRgb(cfg.primaryColor);
+  const lineH = 5.2;
   const marginL = Number(cfg.marginLeftMm) || 14;
   const gap = Number(cfg.sectionGapMm) || 6;
   let y = Number(cfg.marginTopMm) || 14;
@@ -79,31 +83,37 @@ export async function generateOrderPdf({
     y += lh + 2;
   }
 
-  doc.setFontSize(Number(cfg.fontSizeTitle) || 17);
+  setPdfFont(doc, 'bold');
+  doc.setFontSize(Number(cfg.fontSizeTitle) || 18);
   doc.setTextColor(...primary);
   doc.text(displayTitle, marginL, y);
   y += gap + 2;
 
   if (cfg.docTitle?.trim()) {
-    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 12);
     doc.setTextColor(60, 60, 60);
     doc.text(cfg.docTitle.trim(), marginL, y);
     y += gap;
   }
 
   if (cfg.showDate) {
-    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 10);
+    doc.setTextColor(90, 90, 90);
     doc.text(`Tarih: ${new Date().toLocaleString('tr-TR')}`, marginL, y);
     y += gap + 2;
   }
 
   if (cfg.showCustomer) {
-    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    setPdfFont(doc, 'bold');
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 12);
     doc.setTextColor(...primary);
     doc.text('Müşteri Bilgileri', marginL, y);
     y += gap - 1;
 
-    doc.setFontSize(Number(cfg.fontSizeBody) || 10);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeBody) || 11);
     doc.setTextColor(40, 40, 40);
     const labels = cfg.customerLabels;
     const rows = [
@@ -116,7 +126,7 @@ export async function generateOrderPdf({
       const line = `${label}: ${value}`;
       const wrapped = doc.splitTextToSize(line, contentW);
       doc.text(wrapped, marginL, y);
-      y += wrapped.length * 5;
+      y += wrapped.length * lineH;
     });
     y += 2;
   }
@@ -140,20 +150,37 @@ export async function generateOrderPdf({
       startY: y,
       head: [head],
       body: tableBody,
-      styles: { fontSize: Number(cfg.fontSizeBody) || 10, cellPadding: 2 },
-      headStyles: { fillColor: primary, textColor: 255 },
+      styles: {
+        font: PDF_FONT.regular,
+        fontStyle: 'normal',
+        fontSize: Number(cfg.fontSizeBody) || 11,
+        cellPadding: 3,
+        lineColor: [220, 225, 235],
+        lineWidth: 0.1,
+        textColor: [35, 35, 35],
+      },
+      headStyles: {
+        font: PDF_FONT.bold,
+        fontStyle: 'normal',
+        fillColor: primary,
+        textColor: 255,
+        cellPadding: 3,
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
       margin: { left: marginL, right: marginL },
     });
     y = doc.lastAutoTable.finalY + gap + 2;
   }
 
   if (cfg.showSummary) {
-    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 11);
+    setPdfFont(doc, 'bold');
+    doc.setFontSize(Number(cfg.fontSizeSubtitle) || 12);
     doc.setTextColor(...primary);
     doc.text('Sipariş Özeti', marginL, y);
     y += gap + 1;
 
-    doc.setFontSize(Number(cfg.fontSizeBody) || 10);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeBody) || 11);
     doc.setTextColor(40, 40, 40);
     const summary = [
       `Ara toplam: ${formatPrice(discount.subtotal)}`,
@@ -161,22 +188,26 @@ export async function generateOrderPdf({
       shipping.eligible ? 'Kargo: Bedava' : `Kargo: ${formatPrice(shipping.shippingFee)}`,
       `Ödenecek tutar: ${formatPrice(orderTotal)}`,
     ];
-    summary.forEach((line) => {
+    summary.forEach((line, i) => {
+      if (i === summary.length - 1) setPdfFont(doc, 'bold');
       doc.text(line, marginL, y);
-      y += 5;
+      if (i === summary.length - 1) setPdfFont(doc, 'normal');
+      y += lineH;
     });
     y += 2;
   }
 
   if (cfg.showKdvNote && cfg.kdvText?.trim()) {
-    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 10);
     doc.setTextColor(120, 80, 0);
     doc.text(cfg.kdvText.trim(), marginL, y);
-    y += 5;
+    y += lineH;
   }
 
   if (cfg.showFooter && cfg.footerText?.trim()) {
-    doc.setFontSize(Number(cfg.fontSizeSmall) || 9);
+    setPdfFont(doc, 'normal');
+    doc.setFontSize(Number(cfg.fontSizeSmall) || 10);
     doc.setTextColor(80, 80, 80);
     const wrapped = doc.splitTextToSize(cfg.footerText.trim(), contentW);
     doc.text(wrapped, marginL, y);
