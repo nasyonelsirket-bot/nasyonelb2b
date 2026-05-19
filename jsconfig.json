@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "compilerOptions": {
     "baseUrl": ".",
@@ -8,14 +7,3 @@
   },
   "include": ["src"]
 }
-=======
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  },
-  "include": ["src"]
-}
->>>>>>> 4d1702da50b32d1e25ef371646e044a4b268a938
