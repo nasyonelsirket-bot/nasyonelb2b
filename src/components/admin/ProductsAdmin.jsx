@@ -1,4 +1,4 @@
-import { useState, useMemo, startTransition } from 'react';
+import { useState, useMemo, useEffect, useRef, startTransition } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ImageDropzone from '@/components/admin/ImageDropzone';
@@ -304,7 +304,9 @@ export default function ProductsAdmin({ store, showMsg }) {
         </form>
       )}
 
-      <div className="rounded-2xl bg-white shadow-card overflow-hidden">
+      <div
+        className={`rounded-2xl bg-white shadow-card ${editingId ? 'overflow-visible' : 'overflow-hidden'}`}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-brand-50">
@@ -382,6 +384,15 @@ function ProductRow({
   onDelete,
 }) {
   const isEditing = editingId === p.id;
+  const seoSectionRef = useRef(null);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    const t = setTimeout(() => {
+      seoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [isEditing]);
 
   return (
     <>
@@ -427,18 +438,24 @@ function ProductRow({
       </tr>
       {isEditing && (
         <tr className="bg-brand-50/30">
-          <td colSpan={7} className="p-4">
-            <form onSubmit={onSaveEdit} className="space-y-3 border border-brand-200 rounded-xl bg-white p-4">
+          <td colSpan={7} className="p-4 overflow-visible">
+            <form onSubmit={onSaveEdit} className="space-y-4 border border-brand-200 rounded-xl bg-white p-4 sm:p-5">
               <h4 className="font-semibold text-brand-900 text-sm">Ürünü düzenle — {p.name}</h4>
               <ProductFormFields form={editForm} setForm={setEditForm} />
-              <ProductSeoFields
-                form={editForm}
-                setForm={setEditForm}
-                products={products}
-                excludeProductId={p.id}
-                siteUrl={siteUrl}
-                siteName={siteName}
-              />
+              <div
+                ref={seoSectionRef}
+                id="product-seo-settings"
+                className="scroll-mt-4 border-t border-brand-100 pt-4"
+              >
+                <ProductSeoFields
+                  form={editForm}
+                  setForm={setEditForm}
+                  products={products}
+                  excludeProductId={p.id}
+                  siteUrl={siteUrl}
+                  siteName={siteName}
+                />
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" variant="primary">Güncelle</Button>
                 <Button type="button" variant="secondary" onClick={onCloseEdit}>İptal</Button>
