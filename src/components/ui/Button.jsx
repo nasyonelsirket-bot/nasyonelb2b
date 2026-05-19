@@ -14,6 +14,7 @@ export default function Button({
       'border-2 border-brand-600 text-brand-700 hover:bg-brand-600 hover:text-white',
     ghost: 'text-brand-700 hover:bg-brand-50',
     gold: 'bg-accent-gold text-brand-950 hover:bg-accent-gold-light shadow-md shadow-accent-gold/35',
+    yellow: 'bg-yellow-400 text-brand-950 hover:bg-yellow-500 shadow-md shadow-yellow-400/35',
     whatsapp: 'bg-[#25D366] text-white hover:bg-[#20bd5a] shadow-md',
     danger: 'bg-red-600 text-white hover:bg-red-700',
   };

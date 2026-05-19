@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
+import InstagramIcon from '@/components/ui/InstagramIcon';
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '@/constants/siteLinks';
 import { useStore } from '@/context/StoreContext';
 import { DEFAULT_SETTINGS } from '@/data/demoProducts';
 import { APP_VERSION } from '@/constants/appVersion';
@@ -60,7 +62,17 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300 space-y-1">
+        <div className="mt-10 border-t border-brand-700/50 pt-6 text-center text-sm text-brand-300 space-y-3">
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-white transition hover:bg-white/20"
+            aria-label={`Instagram: @${INSTAGRAM_HANDLE}`}
+          >
+            <InstagramIcon className="h-5 w-5 shrink-0" />
+            <span className="font-medium">@{INSTAGRAM_HANDLE}</span>
+          </a>
           <p>© {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.</p>
           <p className="text-xs text-brand-400">Site sürümü: {APP_VERSION}</p>
         </div>

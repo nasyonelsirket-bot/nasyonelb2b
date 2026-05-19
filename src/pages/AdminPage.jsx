@@ -440,7 +440,7 @@ function BannerAdmin({ store, setMsg }) {
         <div className="mt-3 space-y-2">
           <input placeholder="Başlık (boş bırakılabilir)" value={b.title} onChange={(e) => setB({ ...b, title: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
           <input placeholder="Alt başlık" value={b.subtitle} onChange={(e) => setB({ ...b, subtitle: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
-          <input placeholder="Tıklanınca gidilecek link (örn: /kategoriler)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
+          <input placeholder="Tıklanınca gidilecek link (örn: /#urunler)" value={b.link} onChange={(e) => setB({ ...b, link: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" />
         </div>
       </details>
       <Button variant="primary" onClick={add} disabled={!b.image?.trim()}>

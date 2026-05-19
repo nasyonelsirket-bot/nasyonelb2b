@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
-import Button from '@/components/ui/Button';
+import { PRODUCTS_SECTION_PATH } from '@/constants/siteLinks';
 
 const AUTO_MS = 5500;
 const SWIPE_THRESHOLD = 48;
@@ -58,13 +58,11 @@ export default function HeroBanner() {
       aria-roledescription="carousel"
     >
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg bg-brand-950">
-        {/* padding-bottom ile sabit yükseklik — mobilde aspect-ratio + absolute çocuk çökmesini önler */}
         <div className="hero-banner-frame relative w-full">
           {active.map((banner, i) => {
             if (i !== index) return null;
             const isActive = true;
             const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
-            const link = banner.link?.trim() || '';
 
             const slideContent = (
               <>
@@ -90,15 +88,6 @@ export default function HeroBanner() {
                           {banner.subtitle}
                         </p>
                       )}
-                      {link && banner.title?.trim() && (
-                        <div className="mt-3 sm:mt-4 pointer-events-auto">
-                          <Link to={link}>
-                            <Button variant="gold" size="md" className="sm:size-lg min-h-[44px]">
-                              Keşfet <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                            </Button>
-                          </Link>
-                        </div>
-                      )}
                     </div>
                   </>
                 )}
@@ -111,55 +100,56 @@ export default function HeroBanner() {
                 className={`hero-slide absolute inset-0 ${isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'}`}
                 aria-hidden={!isActive}
               >
-                {link && !hasText ? (
-                  <Link to={link} className="block w-full h-full touch-manipulation" tabIndex={isActive ? 0 : -1}>
-                    {slideContent}
-                  </Link>
-                ) : (
-                  slideContent
-                )}
+                <Link
+                  to={PRODUCTS_SECTION_PATH}
+                  className="block w-full h-full touch-manipulation cursor-pointer"
+                  tabIndex={isActive ? 0 : -1}
+                  aria-label={banner.title?.trim() ? `${banner.title} — ürünlere git` : 'Ürünlere git'}
+                >
+                  {slideContent}
+                </Link>
               </div>
             );
           })}
         </div>
-
-        {count > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => go(-1)}
-              className="absolute left-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/60 p-2.5 text-white backdrop-blur-sm touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center sm:left-4"
-              aria-label="Önceki banner"
-            >
-              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-            </button>
-            <button
-              type="button"
-              onClick={() => go(1)}
-              className="absolute right-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/60 p-2.5 text-white backdrop-blur-sm touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center sm:right-4"
-              aria-label="Sonraki banner"
-            >
-              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
-              {active.map((banner, i) => (
-                <button
-                  key={banner.id}
-                  type="button"
-                  onClick={() => setIndex(i)}
-                  className={`rounded-full transition-all duration-300 touch-manipulation ${
-                    i === index
-                      ? 'h-2.5 w-7 sm:w-8 bg-accent-gold shadow-sm'
-                      : 'h-2.5 w-2.5 bg-white/60 hover:bg-white/90'
-                  }`}
-                  aria-label={`Banner ${i + 1}`}
-                  aria-current={i === index ? 'true' : undefined}
-                />
-              ))}
-            </div>
-          </>
-        )}
       </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            className="absolute left-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/60 p-2.5 text-white backdrop-blur-sm touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center sm:left-4"
+            aria-label="Önceki banner"
+          >
+            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            className="absolute right-1.5 top-1/2 z-20 -translate-y-1/2 rounded-full bg-brand-950/60 p-2.5 text-white backdrop-blur-sm touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center sm:right-4"
+            aria-label="Sonraki banner"
+          >
+            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+          </button>
+          <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1.5 sm:bottom-4 sm:gap-2">
+            {active.map((banner, i) => (
+              <button
+                key={banner.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                className={`rounded-full transition-all duration-300 touch-manipulation ${
+                  i === index
+                    ? 'h-2.5 w-7 sm:w-8 bg-accent-gold shadow-sm'
+                    : 'h-2.5 w-2.5 bg-white/60 hover:bg-white/90'
+                }`}
+                aria-label={`Banner ${i + 1}`}
+                aria-current={i === index ? 'true' : undefined}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

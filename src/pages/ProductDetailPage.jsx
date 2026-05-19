@@ -111,7 +111,7 @@ export default function ProductDetailPage() {
             </div>
 
             <Button
-              variant="primary"
+              variant="yellow"
               size="lg"
               className="mt-6"
               onClick={() => addToCart(product, Math.max(qty, minInfo.minQty))}

@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { Package, Truck, Shield, Headphones } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
@@ -17,6 +17,7 @@ const FEATURES = [
 export default function HomePage() {
   const { products } = useStore();
   const [params] = useSearchParams();
+  const { hash } = useLocation();
   const q = params.get('q')?.toLowerCase();
 
   const filtered = useMemo(() => {
@@ -31,13 +32,13 @@ export default function HomePage() {
   }, [products, q]);
 
   useEffect(() => {
-    if (window.location.hash === '#urunler') {
+    if (hash === '#urunler') {
       const el = document.getElementById('urunler');
       if (el) {
         setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
       }
     }
-  }, [filtered.length]);
+  }, [hash, filtered.length]);
 
   return (
     <>

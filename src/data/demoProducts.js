@@ -15,7 +15,7 @@ export const DEMO_BANNERS = [
     title: '',
     subtitle: '',
     image: 'https://images.unsplash.com/photo-1558060379-ef192627cc42?w=1600&q=85',
-    link: '/kategoriler',
+    link: '/#urunler',
     active: true,
   },
   {
@@ -23,7 +23,7 @@ export const DEMO_BANNERS = [
     title: '',
     subtitle: '',
     image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1600&q=85',
-    link: '/kategoriler',
+    link: '/#urunler',
     active: true,
   },
 ];

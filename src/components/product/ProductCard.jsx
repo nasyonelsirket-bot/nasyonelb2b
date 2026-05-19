@@ -78,7 +78,7 @@ export default function ProductCard({ product }) {
 
         <Button
           type="button"
-          variant="primary"
+          variant="yellow"
           className="mt-1.5 h-8 w-full touch-manipulation gap-1 px-2 text-[10px] sm:mt-3 sm:min-h-[48px] sm:text-base sm:px-5"
           onClick={handleAdd}
         >
