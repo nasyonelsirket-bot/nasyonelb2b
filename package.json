@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "B2B oyuncak katalog sitesi - Netlify static deploy",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "node scripts/generate-catalog-auth.cjs && node scripts/inline-order-fonts.cjs && vite build",
