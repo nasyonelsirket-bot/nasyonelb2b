@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Package, Truck, Shield, Headphones } from 'lucide-react';
@@ -73,3 +74,80 @@ export default function HomePage() {
     </>
   );
 }
+=======
+import { useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Package, Truck, Shield, Headphones } from 'lucide-react';
+import SEO from '@/components/seo/SEO';
+import HeroBanner from '@/components/home/HeroBanner';
+import CategorySlider from '@/components/home/CategorySlider';
+import ProductGrid from '@/components/home/ProductGrid';
+import { useStore } from '@/context/StoreContext';
+
+const FEATURES = [
+  { icon: Package, title: '500+ Ürün', desc: 'Geniş oyuncak kataloğu' },
+  { icon: Truck, title: 'Hızlı Sevkiyat', desc: 'Türkiye geneli teslimat' },
+  { icon: Shield, title: 'Güvenilir B2B', desc: '15+ yıl tecrübe' },
+  { icon: Headphones, title: 'WhatsApp Destek', desc: 'Anında sipariş' },
+];
+
+export default function HomePage() {
+  const { products } = useStore();
+  const [params] = useSearchParams();
+  const q = params.get('q')?.toLowerCase();
+
+  const filtered = useMemo(() => {
+    const list = Array.isArray(products) ? products : [];
+    if (!q) return list;
+    return list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q),
+    );
+  }, [products, q]);
+
+  useEffect(() => {
+    if (window.location.hash === '#urunler') {
+      const el = document.getElementById('urunler');
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
+    }
+  }, [filtered.length]);
+
+  return (
+    <>
+      <SEO
+        title="Ana Sayfa"
+        description="B2B oyuncak toptan katalog. Toplu sipariş, WhatsApp sipariş, bayi fiyatları."
+        path="/"
+      />
+      <HeroBanner />
+      <CategorySlider />
+
+      <section className="border-y border-brand-100 bg-white py-6 sm:py-8">
+        <div className="mx-auto max-w-7xl px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          {FEATURES.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex items-center gap-3 sm:gap-4">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-accent-gold shadow-md shadow-brand-900/15">
+                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-brand-900 text-sm sm:text-base">{title}</p>
+                <p className="text-xs sm:text-sm text-gray-500">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <ProductGrid
+        products={filtered}
+        title={q ? `Arama: "${q}"` : 'Tüm Ürünler'}
+        subtitle={`${filtered.length} ürün listeleniyor`}
+      />
+    </>
+  );
+}
+>>>>>>> 4d1702da50b32d1e25ef371646e044a4b268a938

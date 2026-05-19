@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [build]
   command = "npm ci && npm run build"
   publish = "dist"
@@ -74,3 +75,81 @@
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+=======
+[build]
+  command = "npm ci && npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["lib/**", "lib/fonts/**"]
+
+# Trendyol API — SPA yönlendirmesinden ÖNCE olmalı
+[[redirects]]
+  from = "/api/trendyol/sync"
+  to = "/.netlify/functions/trendyol-sync"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/catalog"
+  to = "/.netlify/functions/catalog-get"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/catalog/save"
+  to = "/.netlify/functions/catalog-save"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/order-pdf/save"
+  to = "/.netlify/functions/order-pdf-save"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/order-pdf"
+  to = "/.netlify/functions/order-pdf-get"
+  status = 200
+  force = true
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+>>>>>>> 4d1702da50b32d1e25ef371646e044a4b268a938

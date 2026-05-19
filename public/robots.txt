@@ -1,6 +1,15 @@
+<<<<<<< HEAD
 User-agent: *
 Allow: /
 
 Sitemap: https://your-site.netlify.app/sitemap.xml
 
 Disallow: /admin
+=======
+User-agent: *
+Allow: /
+
+Sitemap: https://your-site.netlify.app/sitemap.xml
+
+Disallow: /admin
+>>>>>>> 4d1702da50b32d1e25ef371646e044a4b268a938
