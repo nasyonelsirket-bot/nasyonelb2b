@@ -22,6 +22,7 @@ import {
   getProductCountsByCategory,
   sortCategoriesBySearchPopularity,
 } from '@/utils/categories';
+import { migrateProductsSeo, normalizeProductSeoFields } from '@/utils/productSeo';
 
 const StoreContext = createContext(null);
 
@@ -61,7 +62,7 @@ export function StoreProvider({ children }) {
 
   const applyRemoteCatalog = useCallback((remote) => {
     if (!remote?.products?.length) return false;
-    setProducts(remote.products);
+    setProducts(migrateProductsSeo(remote.products));
     setCategories(
       refreshCategoryIcons(
         remote.categories?.length ? remote.categories : buildCategoriesFromProducts(remote.products),
@@ -83,7 +84,7 @@ export function StoreProvider({ children }) {
     const meta = loadFromStorage(KEYS.CATALOG_META, null);
     const cachedProducts = loadProductsCache();
     if (!meta?.updatedAt || !cachedProducts.length) return false;
-    setProducts(cachedProducts);
+    setProducts(migrateProductsSeo(cachedProducts));
     const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     setCategories(
       refreshCategoryIcons(
@@ -101,7 +102,7 @@ export function StoreProvider({ children }) {
     if (!isAdminSession()) return false;
     const localProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
     if (!localProducts.length) return false;
-    setProducts(localProducts);
+    setProducts(migrateProductsSeo(localProducts));
     const localCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     setCategories(
       refreshCategoryIcons(
@@ -121,7 +122,7 @@ export function StoreProvider({ children }) {
       if (applyRemoteCatalog(remote)) return;
       if (applyCachedCatalog()) return;
       if (applyLocalAdminCatalog()) return;
-      setProducts(DEMO_PRODUCTS);
+      setProducts(migrateProductsSeo(DEMO_PRODUCTS));
       setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
       setBanners(DEMO_BANNERS);
       setCatalogSource('local');
@@ -130,7 +131,7 @@ export function StoreProvider({ children }) {
       setCatalogLoadError(err?.message || 'Katalog yüklenemedi');
       if (applyCachedCatalog()) return;
       if (applyLocalAdminCatalog()) return;
-      setProducts(DEMO_PRODUCTS);
+      setProducts(migrateProductsSeo(DEMO_PRODUCTS));
       setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     }
   }, [applyRemoteCatalog, applyCachedCatalog, applyLocalAdminCatalog]);
@@ -187,16 +188,21 @@ export function StoreProvider({ children }) {
   );
 
   const addProduct = useCallback((product) => {
-    setProducts((prev) => [
-      ...(Array.isArray(prev) ? prev : []),
-      { ...product, id: product.id || `p-${Date.now()}` },
-    ]);
+    setProducts((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      const normalized = normalizeProductSeoFields(product, list);
+      return [...list, { ...normalized, id: normalized.id || `p-${Date.now()}` }];
+    });
   }, []);
 
   const updateProduct = useCallback((id, updates) => {
-    setProducts((prev) =>
-      (Array.isArray(prev) ? prev : []).map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    );
+    setProducts((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      return list.map((p) => {
+        if (p.id !== id) return p;
+        return normalizeProductSeoFields({ ...p, ...updates }, list, id);
+      });
+    });
   }, []);
 
   const deleteProduct = useCallback((id) => {
@@ -219,7 +225,7 @@ export function StoreProvider({ children }) {
       newProducts.forEach((p) => {
         if (p?.sku || p?.id) map.set(p.sku || p.id, p);
       });
-      return Array.from(map.values());
+      return migrateProductsSeo(Array.from(map.values()));
     });
     if (newCategories?.length) {
       setCategories((prev) => {
@@ -262,7 +268,7 @@ export function StoreProvider({ children }) {
       safeProducts.forEach((p) => {
         if (p?.sku || p?.id) map.set(p.sku || p.id, p);
       });
-      return Array.from(map.values());
+      return migrateProductsSeo(Array.from(map.values()));
     });
 
     setCategories(refreshCategoryIcons(syncedCategories, { force: true }));
@@ -289,6 +295,15 @@ export function StoreProvider({ children }) {
     [products],
   );
 
+  const getProductByIdOrSlug = useCallback(
+    (param) => {
+      const list = Array.isArray(products) ? products : [];
+      if (!param) return undefined;
+      return list.find((p) => p.id === param) || list.find((p) => p.slug === param);
+    },
+    [products],
+  );
+
   const getProductsByCategory = useCallback(
     (categoryName) =>
       (Array.isArray(products) ? products : []).filter((p) => p.category === categoryName),
@@ -296,7 +311,7 @@ export function StoreProvider({ children }) {
   );
 
   const resetToDemo = useCallback(() => {
-    setProducts(DEMO_PRODUCTS);
+    setProducts(migrateProductsSeo(DEMO_PRODUCTS));
     setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     setBanners(DEMO_BANNERS);
     setSettings({ ...DEFAULT_SETTINGS, pdfSettings: mergePdfSettings(DEFAULT_SETTINGS.pdfSettings) });
@@ -363,6 +378,7 @@ export function StoreProvider({ children }) {
       deleteBanner,
       updateSettings,
       getProductById,
+      getProductByIdOrSlug,
       getProductsByCategory,
       resetToDemo,
       publishCatalog,
@@ -403,6 +419,7 @@ export function StoreProvider({ children }) {
       deleteBanner,
       updateSettings,
       getProductById,
+      getProductByIdOrSlug,
       getProductsByCategory,
       resetToDemo,
       publishCatalog,

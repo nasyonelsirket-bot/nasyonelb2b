@@ -99,8 +99,9 @@ function catalogDevProxy(env) {
           return
         }
 
+        const { sanitizeProductsSeo } = require('./lib/productSeo.cjs')
         const payload = {
-          products: body.products || [],
+          products: sanitizeProductsSeo(body.products || []),
           categories: body.categories || [],
           banners: body.banners || [],
           settings: body.settings || null,

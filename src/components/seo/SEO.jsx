@@ -3,19 +3,27 @@ import { useStore } from '@/context/StoreContext';
 
 export default function SEO({
   title,
+  metaTitle,
   description,
   image,
   path = '',
+  canonical: canonicalOverride,
   type = 'website',
   noindex = false,
+  skipOrganizationSchema = false,
 }) {
   const { settings } = useStore();
   const siteName = settings.siteName || 'Nasyonel Toys';
   const siteUrl = settings.siteUrl || import.meta.env.VITE_SITE_URL || '';
-  const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - ${settings.tagline}`;
+  const fullTitle =
+    metaTitle?.trim() ||
+    (title ? `${title} | ${siteName}` : `${siteName} - ${settings.tagline}`);
   const desc = description || settings.tagline;
   const ogImage = image || `${siteUrl}/logo.svg`;
-  const canonical = `${siteUrl.replace(/\/$/, '')}${path}`;
+  const base = siteUrl.replace(/\/$/, '');
+  const canonical =
+    canonicalOverride?.trim() ||
+    (base ? `${base}${path}` : path);
 
   const schema = {
     '@context': 'https://schema.org',
@@ -52,7 +60,7 @@ export default function SEO({
       <meta name="twitter:description" content={desc} />
       <meta name="twitter:image" content={ogImage} />
 
-      {!noindex && (
+      {!noindex && !skipOrganizationSchema && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}

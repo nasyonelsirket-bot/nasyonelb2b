@@ -11,6 +11,7 @@ import KdvNotice from '@/components/ui/KdvNotice';
 import { getMinOrderInfo, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 import { getPrimaryImage } from '@/utils/productImage';
 import { formatPrice } from '@/utils/whatsapp';
+import { getProductLink } from '@/utils/productSeo';
 
 export default function ProductCard({ product }) {
   const { settings } = useStore();
@@ -29,7 +30,7 @@ export default function ProductCard({ product }) {
 
   return (
     <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-shadow sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1 sm:hover:shadow-card-hover">
-      <Link to={`/urun/${product.id}`} className="relative block min-w-0">
+      <Link to={getProductLink(product)} className="relative block min-w-0">
         <ProductImage
           src={getPrimaryImage(product)}
           alt={product.name}
@@ -46,7 +47,7 @@ export default function ProductCard({ product }) {
 
       <div className="flex min-w-0 flex-1 flex-col p-2 sm:p-4">
         <p className="hidden text-xs font-medium text-brand-500 line-clamp-1 sm:block">{product.category}</p>
-        <Link to={`/urun/${product.id}`} className="min-w-0">
+        <Link to={getProductLink(product)} className="min-w-0">
           <h3 className="mt-0 font-display text-[11px] font-bold leading-snug text-brand-900 line-clamp-2 sm:mt-1 sm:text-sm sm:leading-normal hover:text-brand-600">
             {product.name}
           </h3>

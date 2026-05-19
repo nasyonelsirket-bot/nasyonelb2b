@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
-import SEO from '@/components/seo/SEO';
+import ProductSEO from '@/components/seo/ProductSEO';
 import ProductSchema from '@/components/seo/ProductSchema';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -14,12 +14,14 @@ import { formatPrice } from '@/utils/whatsapp';
 import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
 import { trackViewItem } from '@/lib/analytics/ga4';
+import { getProductPath } from '@/utils/productSeo';
 
 export default function ProductDetailPage() {
-  const { id } = useParams();
-  const { getProductById, settings } = useStore();
+  const { id: idOrSlug } = useParams();
+  const navigate = useNavigate();
+  const { getProductByIdOrSlug, settings } = useStore();
   const { addToCart } = useCart();
-  const product = getProductById(id);
+  const product = getProductByIdOrSlug(idOrSlug);
   const minLineValue = Number(settings.minOrderLineValue) || DEFAULT_MIN_LINE_VALUE_TL;
   const minInfo = useMemo(
     () => (product ? getMinOrderInfo(product, minLineValue) : null),
@@ -42,6 +44,15 @@ export default function ProductDetailPage() {
     if (product) trackViewItem(product);
   }, [product?.id]);
 
+  /** Slug varsa SEO URL’ye yönlendir (eski /urun/id linkleri) */
+  useEffect(() => {
+    if (!product?.slug || !idOrSlug) return;
+    if (idOrSlug === product.slug) return;
+    if (idOrSlug === product.id) {
+      navigate(getProductPath(product), { replace: true });
+    }
+  }, [product, idOrSlug, navigate]);
+
   if (!product || !minInfo) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center">
@@ -53,7 +64,7 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <SEO title={product.name} description={product.description} image={product.image} path={`/urun/${id}`} type="product" />
+      <ProductSEO product={product} />
       <ProductSchema product={product} />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

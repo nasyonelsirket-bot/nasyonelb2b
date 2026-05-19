@@ -2,7 +2,9 @@ import { useState, useMemo, startTransition } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ImageDropzone from '@/components/admin/ImageDropzone';
+import ProductSeoFields from '@/components/admin/ProductSeoFields';
 import { processImageFile } from '@/utils/imageUpload';
+import { validateProductSeoForm } from '@/utils/productSeo';
 
 const EMPTY_PRODUCT = {
   name: '',
@@ -12,6 +14,10 @@ const EMPTY_PRODUCT = {
   image: '',
   description: '',
   minOrder: 1,
+  slug: '',
+  meta_title: '',
+  meta_description: '',
+  canonical_url: '',
 };
 
 function ProductFormFields({ form, setForm }) {
@@ -94,6 +100,8 @@ function normalizeSearch(value) {
 
 export default function ProductsAdmin({ store, showMsg }) {
   const products = Array.isArray(store.products) ? store.products : [];
+  const siteUrl = store.settings?.siteUrl || import.meta.env.VITE_SITE_URL || '';
+  const siteName = store.settings?.siteName || 'Nasyonel Toys';
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState(EMPTY_PRODUCT);
   const [editingId, setEditingId] = useState(null);
@@ -191,17 +199,35 @@ export default function ProductsAdmin({ store, showMsg }) {
 
   const saveEdit = (e) => {
     e.preventDefault();
+    const { errors, warnings, ok } = validateProductSeoForm(editForm, products, editingId);
+    if (!ok) {
+      showMsg(errors[0]);
+      return;
+    }
     startTransition(() => store.updateProduct(editingId, editForm));
     setEditingId(null);
-    showMsg('Ürün güncellendi');
+    showMsg(
+      warnings.length
+        ? `Ürün güncellendi. ${warnings[0]}`
+        : 'Ürün güncellendi',
+    );
   };
 
   const addProduct = (e) => {
     e.preventDefault();
+    const { errors, warnings, ok } = validateProductSeoForm(addForm, products, null);
+    if (!ok) {
+      showMsg(errors[0]);
+      return;
+    }
     startTransition(() => store.addProduct({ ...addForm, id: `p-${Date.now()}` }));
     setAddForm(EMPTY_PRODUCT);
     setShowAdd(false);
-    showMsg('Ürün eklendi');
+    showMsg(
+      warnings.length
+        ? `Ürün eklendi. ${warnings[0]}`
+        : 'Ürün eklendi',
+    );
   };
 
   return (
@@ -264,6 +290,13 @@ export default function ProductsAdmin({ store, showMsg }) {
         <form onSubmit={addProduct} className="rounded-2xl bg-white p-5 shadow-card border border-brand-100 space-y-3">
           <h3 className="font-semibold text-brand-900 text-sm">Yeni ürün ekle</h3>
           <ProductFormFields form={addForm} setForm={setAddForm} />
+          <ProductSeoFields
+            form={addForm}
+            setForm={setAddForm}
+            products={products}
+            siteUrl={siteUrl}
+            siteName={siteName}
+          />
           <div className="flex gap-2">
             <Button type="submit" variant="primary">Kaydet</Button>
             <Button type="button" variant="secondary" onClick={() => setShowAdd(false)}>İptal</Button>
@@ -304,6 +337,9 @@ export default function ProductsAdmin({ store, showMsg }) {
                   editForm={editForm}
                   setEditForm={setEditForm}
                   selected={selected}
+                  products={products}
+                  siteUrl={siteUrl}
+                  siteName={siteName}
                   onToggleSelect={toggleSelect}
                   onStartEdit={startEdit}
                   onCloseEdit={() => setEditingId(null)}
@@ -336,6 +372,9 @@ function ProductRow({
   editForm,
   setEditForm,
   selected,
+  products,
+  siteUrl,
+  siteName,
   onToggleSelect,
   onStartEdit,
   onCloseEdit,
@@ -392,6 +431,14 @@ function ProductRow({
             <form onSubmit={onSaveEdit} className="space-y-3 border border-brand-200 rounded-xl bg-white p-4">
               <h4 className="font-semibold text-brand-900 text-sm">Ürünü düzenle — {p.name}</h4>
               <ProductFormFields form={editForm} setForm={setEditForm} />
+              <ProductSeoFields
+                form={editForm}
+                setForm={setEditForm}
+                products={products}
+                excludeProductId={p.id}
+                siteUrl={siteUrl}
+                siteName={siteName}
+              />
               <div className="flex gap-2">
                 <Button type="submit" variant="primary">Güncelle</Button>
                 <Button type="button" variant="secondary" onClick={onCloseEdit}>İptal</Button>
