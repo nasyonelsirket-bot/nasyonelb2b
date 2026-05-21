@@ -17,6 +17,9 @@ function loadCartItems() {
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadCartItems);
   const [cartAnimating, setCartAnimating] = useState(false);
+  const [addedToast, setAddedToast] = useState(null);
+
+  const dismissAddedToast = useCallback(() => setAddedToast(null), []);
 
   useEffect(() => {
     saveToStorage(KEYS.CART, items);
@@ -26,6 +29,19 @@ export function CartProvider({ children }) {
     setCartAnimating(true);
     setTimeout(() => setCartAnimating(false), 500);
   }, []);
+
+  const notifyAddedToCart = useCallback(
+    (product, quantity) => {
+      if (!product?.id) return;
+      setAddedToast({
+        product: { ...product },
+        quantity: Math.max(1, quantity || 1),
+        at: Date.now(),
+      });
+      triggerAnimation();
+    },
+    [triggerAnimation],
+  );
 
   const addToCart = useCallback(
     (product, quantity = 1) => {
@@ -40,9 +56,9 @@ export function CartProvider({ children }) {
         return [...prev, { ...product, quantity: qty }];
       });
       trackAddToCart(product, qty);
-      triggerAnimation();
+      notifyAddedToCart(product, qty);
     },
-    [triggerAnimation],
+    [notifyAddedToCart],
   );
 
   const addUpsellToCart = useCallback(
@@ -69,9 +85,9 @@ export function CartProvider({ children }) {
         return [...prev, { ...product, quantity: qty, ...lineExtras }];
       });
       trackAddToCart(product, qty);
-      triggerAnimation();
+      notifyAddedToCart(product, qty);
     },
-    [triggerAnimation],
+    [notifyAddedToCart],
   );
 
   const setQuantity = useCallback((productId, quantity) => {
@@ -131,6 +147,8 @@ export function CartProvider({ children }) {
       value={{
         items,
         cartAnimating,
+        addedToast,
+        dismissAddedToast,
         addToCart,
         addUpsellToCart,
         setQuantity,
