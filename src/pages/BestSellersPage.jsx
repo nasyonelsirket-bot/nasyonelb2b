@@ -2,12 +2,25 @@ import { useMemo } from 'react';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
 import { useStore } from '@/context/StoreContext';
-import { getBestSellerProducts, hasTrendyolSalesData } from '@/utils/productBestseller';
+import { hasTrendyolSalesData } from '@/utils/productBestseller';
+import {
+  resolveHomepageSection,
+  normalizeHomepageSlots,
+  countPinnedInSection,
+} from '@/utils/homepagePlacements';
 
 export default function BestSellersPage() {
-  const { products } = useStore();
+  const { products, settings } = useStore();
   const catalog = useMemo(() => (Array.isArray(products) ? products : []), [products]);
-  const bestSellers = useMemo(() => getBestSellerProducts(catalog, 200), [catalog]);
+  const homepageSlots = useMemo(
+    () => normalizeHomepageSlots(settings?.homepageSlots),
+    [settings?.homepageSlots],
+  );
+  const pinnedCount = countPinnedInSection(homepageSlots, 'bestsellers');
+  const bestSellers = useMemo(
+    () => resolveHomepageSection(catalog, homepageSlots, 'bestsellers', 200),
+    [catalog, homepageSlots],
+  );
   const hasSales = useMemo(() => hasTrendyolSalesData(catalog), [catalog]);
 
   return (
@@ -22,9 +35,11 @@ export default function BestSellersPage() {
           products={bestSellers}
           title="En Çok Satanlar"
           subtitle={
-            hasSales
-              ? `${bestSellers.length} ürün — son 15 gün satış sıralaması (iptal/iade hariç)`
-              : `${bestSellers.length} ürün — popülerlik sıralaması`
+            pinnedCount > 0
+              ? `${bestSellers.length} ürün — ${pinnedCount} editör seçimi + satış sıralaması`
+              : hasSales
+                ? `${bestSellers.length} ürün — son 15 gün satış sıralaması (iptal/iade hariç)`
+                : `${bestSellers.length} ürün — popülerlik sıralaması`
           }
           defaultSort="bestseller"
           showSort={false}

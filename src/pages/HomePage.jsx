@@ -6,17 +6,21 @@ import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
 import { useStore } from '@/context/StoreContext';
-import { hasProductDiscount, getDiscountPercent } from '@/utils/productPricing';
+import { hasTrendyolSalesData } from '@/utils/productBestseller';
 import {
-  getBestSellerProducts,
-  filterEducationalProducts,
-  hasTrendyolSalesData,
-} from '@/utils/productBestseller';
+  resolveHomepageSection,
+  normalizeHomepageSlots,
+  countPinnedInSection,
+} from '@/utils/homepagePlacements';
 
 const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sss'];
 
 export default function HomePage() {
-  const { products } = useStore();
+  const { products, settings } = useStore();
+  const homepageSlots = useMemo(
+    () => normalizeHomepageSlots(settings?.homepageSlots),
+    [settings?.homepageSlots],
+  );
   const [params] = useSearchParams();
   const { hash } = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -37,23 +41,22 @@ export default function HomePage() {
     );
   }, [catalog, q]);
 
-  const bestSellers = useMemo(() => getBestSellerProducts(catalog, 16), [catalog]);
+  const pinnedBestsellers = countPinnedInSection(homepageSlots, 'bestsellers');
+  const bestSellers = useMemo(
+    () => resolveHomepageSection(catalog, homepageSlots, 'bestsellers', 16),
+    [catalog, homepageSlots],
+  );
   const hasOrderSales = useMemo(() => hasTrendyolSalesData(catalog), [catalog]);
 
-  const dealProducts = useMemo(() => {
-    return catalog
-      .filter((p) => hasProductDiscount(p))
-      .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a))
-      .slice(0, 12);
-  }, [catalog]);
+  const dealProducts = useMemo(
+    () => resolveHomepageSection(catalog, homepageSlots, 'deals', 12),
+    [catalog, homepageSlots],
+  );
 
-  const educationalProducts = useMemo(() => {
-    const edu = filterEducationalProducts(catalog, 12);
-    if (edu.length >= 4) return edu;
-    return getBestSellerProducts(catalog, 12).filter((p) =>
-      `${p.name} ${p.category}`.toLowerCase().match(/egitici|eğitici|zeka|puzzle|ahşap|montessori/i),
-    );
-  }, [catalog]);
+  const educationalProducts = useMemo(
+    () => resolveHomepageSection(catalog, homepageSlots, 'educational', 12),
+    [catalog, homepageSlots],
+  );
 
   useEffect(() => {
     const id = hash.replace('#', '');
@@ -81,9 +84,11 @@ export default function HomePage() {
             products={bestSellers}
             title="En Çok Satanlar"
             subtitle={
-              hasOrderSales
-                ? 'Son 15 günde en çok tercih edilen ürünler (iptal/iade hariç)'
-                : 'Müşterilerimizin en çok tercih ettiği ürünler'
+              pinnedBestsellers > 0
+                ? `Editör seçimi + ${hasOrderSales ? 'Trendyol satış sıralaması' : 'popüler ürünler'}`
+                : hasOrderSales
+                  ? 'Son 15 günde en çok tercih edilen ürünler (iptal/iade hariç)'
+                  : 'Müşterilerimizin en çok tercih ettiği ürünler'
             }
             badge="Popüler"
             seeAllHref="/en-cok-satanlar"

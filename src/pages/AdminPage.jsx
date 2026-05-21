@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, CloudUpload, ClipboardList } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, CloudUpload, ClipboardList, LayoutGrid } from 'lucide-react';
+import HomepagePlacementAdmin from '@/components/admin/HomepagePlacementAdmin';
 import OrdersAdmin from '@/components/admin/OrdersAdmin';
 import { getAdminPasswordForPublish, askPublishPassword } from '@/services/catalogApi';
 import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
@@ -20,6 +21,7 @@ const TABS = [
   { id: 'products', label: 'Ürünler', icon: Package },
   { id: 'categories', label: 'Kategoriler', icon: FolderOpen },
   { id: 'banners', label: 'Bannerlar', icon: Image },
+  { id: 'placement', label: 'Yerleşim', icon: LayoutGrid },
   { id: 'orders', label: 'Siparişler', icon: ClipboardList },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
   { id: 'excel', label: 'Excel', icon: Upload },
@@ -221,6 +223,10 @@ export default function AdminPage() {
 
             {tab === 'banners' && (
               <BannerAdmin store={store} setMsg={showMsg} />
+            )}
+
+            {tab === 'placement' && (
+              <HomepagePlacementAdmin store={store} showMsg={showMsg} />
             )}
 
             {tab === 'orders' && (

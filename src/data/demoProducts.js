@@ -198,4 +198,10 @@ export const DEFAULT_SETTINGS = {
   storeBankName: '',
   storeIban: '',
   pdfSettings: DEFAULT_PDF_SETTINGS,
+  /** Ana sayfa bölümlerine sabitlenen ürün id listeleri (sıra = görünüm sırası) */
+  homepageSlots: {
+    bestsellers: [],
+    educational: [],
+    deals: [],
+  },
 };

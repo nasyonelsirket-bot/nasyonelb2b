@@ -18,5 +18,6 @@ export function mergePublishedSettings(local, published) {
     trendyolSupplierId: local.trendyolSupplierId || published.trendyolSupplierId || '',
     trendyolPriceDivisor: local.trendyolPriceDivisor || published.trendyolPriceDivisor || '4',
     pdfSettings: local.pdfSettings || published.pdfSettings,
+    homepageSlots: published.homepageSlots || local.homepageSlots,
   };
 }
