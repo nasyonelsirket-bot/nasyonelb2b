@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import KdvNotice from '@/components/ui/KdvNotice';
 import { getPrimaryImage } from '@/utils/productImage';
 import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
+import { getTrendyolUnitsSold } from '@/utils/productBestseller';
 import { getProductLink } from '@/utils/productSeo';
 
 export default function ProductCard({ product }) {
@@ -16,6 +17,7 @@ export default function ProductCard({ product }) {
   const [qty, setQty] = useState(1);
   const onSale = hasProductDiscount(product);
   const pct = getDiscountPercent(product);
+  const unitsSold = getTrendyolUnitsSold(product);
 
   const handleAdd = () => {
     addToCart(product, Math.max(1, qty));
@@ -25,9 +27,16 @@ export default function ProductCard({ product }) {
     <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-all duration-300 sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1.5 sm:hover:shadow-card-hover">
       <Link to={getProductLink(product)} className="relative block min-w-0">
         {product.isBestSeller && (
-          <span className="absolute right-2 top-2 z-10 inline-flex items-center gap-0.5 rounded-md bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md sm:text-[10px]">
-            <Flame className="h-3 w-3" />
-            Çok Satan
+          <span className="absolute right-2 top-2 z-10 inline-flex flex-col items-end gap-0.5">
+            <span className="inline-flex items-center gap-0.5 rounded-md bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md sm:text-[10px]">
+              <Flame className="h-3 w-3" />
+              Çok Satan
+            </span>
+            {unitsSold > 0 && (
+              <span className="rounded-md bg-brand-900/90 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                {unitsSold} satış
+              </span>
+            )}
           </span>
         )}
         {onSale && (

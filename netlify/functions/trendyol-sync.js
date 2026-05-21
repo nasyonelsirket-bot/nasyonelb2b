@@ -1,9 +1,10 @@
 /**
  * Trendyol API proxy - Netlify Serverless Function
- * Kimlik bilgileri: Netlify env veya POST body (admin panelinden)
+ * ?mode=page  → tek sayfa ürün (eski)
+ * ?mode=full  → tüm ürünler + sipariş API satış adetleri (en çok satanlar)
  */
 
-const { syncTrendyolProducts } = require('../../lib/trendyolSync.cjs');
+const { syncTrendyolProducts, syncTrendyolCatalogWithSales } = require('../../lib/trendyolSync.cjs');
 
 exports.handler = async (event) => {
   const headers = {
@@ -36,6 +37,7 @@ exports.handler = async (event) => {
       apiKey: bodyCreds.apiKey || process.env.TRENDYOL_API_KEY,
       apiSecret: bodyCreds.apiSecret || process.env.TRENDYOL_API_SECRET,
       priceDivisor: bodyCreds.priceDivisor ?? process.env.TRENDYOL_PRICE_DIVISOR ?? 2,
+      storeFrontCode: bodyCreds.storeFrontCode || process.env.TRENDYOL_STORE_FRONT_CODE || 'TR',
     };
 
     const clientIp =
@@ -44,12 +46,20 @@ exports.handler = async (event) => {
       (event.headers['x-forwarded-for'] || '').split(',')[0]?.trim() ||
       '127.0.0.1';
 
-    const result = await syncTrendyolProducts(credentials, {
-      page: params.page || '0',
-      size: params.size || '50',
-      onSale: params.onSale,
-      clientIp,
-    });
+    const fullSync = params.mode === 'full' || bodyCreds.fullSync === true;
+
+    const result = fullSync
+      ? await syncTrendyolCatalogWithSales(credentials, {
+          size: params.size || '50',
+          salesDays: params.salesDays || 30,
+          clientIp,
+        })
+      : await syncTrendyolProducts(credentials, {
+          page: params.page || '0',
+          size: params.size || '50',
+          onSale: params.onSale,
+          clientIp,
+        });
 
     return {
       statusCode: 200,

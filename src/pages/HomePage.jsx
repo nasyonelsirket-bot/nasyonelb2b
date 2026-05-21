@@ -21,6 +21,7 @@ import {
   filterEducationalProducts,
   filterMarkalyaProducts,
   sortByBestSellers,
+  hasTrendyolSalesData,
 } from '@/utils/productBestseller';
 
 const FEATURES = [
@@ -57,6 +58,7 @@ export default function HomePage() {
   }, [catalog, q]);
 
   const bestSellers = useMemo(() => getBestSellerProducts(catalog, 16), [catalog]);
+  const hasOrderSales = useMemo(() => hasTrendyolSalesData(catalog), [catalog]);
 
   const dealProducts = useMemo(() => {
     return catalog
@@ -105,7 +107,11 @@ export default function HomePage() {
           <ProductStrip
             products={bestSellers}
             title="En Çok Satanlar"
-            subtitle="Trendyol mağazamızda en çok tercih edilen ürünler — popülerlik skoruna göre sıralı"
+            subtitle={
+              hasOrderSales
+                ? 'Sizin Trendyol siparişlerinize göre — son 30 günde en çok satan ürünler'
+                : 'Trendyol senkronu sonrası sipariş verisine göre sıralanır (Admin → Trendyol → Ürünleri Çek)'
+            }
             badge="Trendyol"
             seeAllHref="/#urunler"
             accent="orange"

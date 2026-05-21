@@ -110,26 +110,33 @@ export default function AdminPage() {
     setTyLoading(true);
     setMsg('');
     try {
-      const { products: tyProducts, categories } = await syncAllTrendyolProducts(store.settings, setTyProgress);
+      const { products: tyProducts, sales } = await syncAllTrendyolProducts(store.settings, setTyProgress);
       store.importTrendyolProducts(tyProducts);
+      const soldCount = tyProducts.filter((p) => Number(p.trendyolUnitsSold) > 0).length;
+      const salesNote = sales
+        ? ` · Sipariş API: ${soldCount} çok satan (son ${sales.periodDays || 30} gün, ${sales.totalUnitsSold || 0} adet)`
+        : '';
       const pass = askPublishPassword();
       if (pass) {
         sessionStorage.setItem('b2b_admin_pass', pass);
         try {
           const pub = await store.publishCatalog(pass);
           showMsg(
-            `${tyProducts.length} ürün çekildi ve siteye yayınlandı (${pub.productCount} ürün canlı)`,
+            `${tyProducts.length} ürün çekildi ve siteye yayınlandı (${pub.productCount} canlı)${salesNote}`,
           );
         } catch (pubErr) {
           showMsg(
-            `${tyProducts.length} ürün çekildi ancak yayınlanamadı: ${pubErr.message}. Ayarlar → Siteye Yayınla deneyin.`,
+            `${tyProducts.length} ürün çekildi ancak yayınlanamadı: ${pubErr.message}. Ayarlar → Siteye Yayınla deneyin.${salesNote}`,
             'error',
           );
         }
       } else {
         showMsg(
-          `${tyProducts.length} ürün çekildi — siteye yayınlamak için Ayarlar → Siteye Yayınla`,
+          `${tyProducts.length} ürün çekildi — Siteye Yayınla ile canlıya alın${salesNote}`,
         );
+      }
+      if (sales?.error) {
+        showMsg(`Satış verisi uyarısı: ${sales.error}`, 'error');
       }
     } catch (err) {
       showMsg(`Trendyol: ${err.message}`, 'error');
@@ -511,12 +518,16 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
       <div className="rounded-2xl bg-white p-8 shadow-card">
         <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Satış fiyatı = Trendyol fiyatı ÷ bölücü (varsayılan 2). Liste fiyatı Trendyol fiyatı; sitede %50 indirim görünür.
-          Mevcut ürünler için görselleri güncellemek üzere yeniden senkronize edin.
+          Ürünler Trendyol Ürün API&apos;den, <strong>en çok satanlar</strong> ise Trendyol{' '}
+          <strong>Sipariş API</strong>&apos;den (son 30 gün sipariş adetleri) hesaplanır. Satış fiyatı =
+          Trendyol fiyatı ÷ bölücü (varsayılan 2).
         </p>
         {tyProgress && (
           <p className="text-sm text-brand-600 mb-2">
-            Sayfa {tyProgress.page}/{tyProgress.totalPages} — {tyProgress.count} ürün
+            {tyProgress.message ||
+              (tyProgress.sales
+                ? `${tyProgress.count} ürün · ${tyProgress.sales.productsWithSales || 0} çok satan`
+                : `Sayfa ${tyProgress.page}/${tyProgress.totalPages} — ${tyProgress.count} ürün`)}
           </p>
         )}
         <Button variant="primary" onClick={onSync} disabled={tyLoading}>

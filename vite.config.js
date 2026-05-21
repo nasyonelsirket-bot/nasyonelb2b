@@ -8,7 +8,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 
 const require = createRequire(import.meta.url)
-const { syncTrendyolProducts } = require('./lib/trendyolSync.cjs')
+const { syncTrendyolProducts, syncTrendyolCatalogWithSales } = require('./lib/trendyolSync.cjs')
 const { generateOrderPdfBuffer } = require('./lib/orderPdfServer.cjs')
 
 function trendyolDevProxy() {
@@ -25,6 +25,7 @@ function trendyolDevProxy() {
         const url = new URL(req.url, 'http://localhost')
         const page = url.searchParams.get('page') || '0'
         const size = url.searchParams.get('size') || '50'
+        const mode = url.searchParams.get('mode') || 'page'
 
         let body = {}
         if (req.method === 'POST') {
@@ -38,7 +39,10 @@ function trendyolDevProxy() {
         }
 
         try {
-          const result = await syncTrendyolProducts(body, { page, size })
+          const result =
+            mode === 'full'
+              ? await syncTrendyolCatalogWithSales(body, { size })
+              : await syncTrendyolProducts(body, { page, size })
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(result))
         } catch (err) {

@@ -55,25 +55,34 @@ export async function fetchTrendyolProducts(page = 0, size = 50, settings) {
   return response.json();
 }
 
+/** Tek seferde: tüm ürünler + Trendyol Sipariş API satış adetleri */
 export async function syncAllTrendyolProducts(settings, onProgress) {
-  const allProducts = [];
-  let page = 0;
-  let totalPages = 1;
+  const credentials = getCredentials(settings);
+  const url = `${API_PATH}?mode=full&size=50`;
 
-  while (page < totalPages) {
-    const data = await fetchTrendyolProducts(page, 50, settings);
-    allProducts.push(...(data.products || []));
-    totalPages = data.totalPages ?? 1;
-    onProgress?.({
-      page: page + 1,
-      totalPages,
-      count: allProducts.length,
-    });
-    page += 1;
-    if (!data.products?.length) break;
+  onProgress?.({ phase: 'sync', message: 'Ürünler ve sipariş satışları çekiliyor...' });
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...credentials, fullSync: true }),
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorResponse(response);
+    throw new Error(message);
   }
 
-  const categories = buildCategoriesFromProducts(allProducts);
+  const data = await response.json();
+  const products = data.products || [];
 
-  return { products: allProducts, categories };
+  onProgress?.({
+    phase: 'done',
+    count: products.length,
+    sales: data.sales,
+  });
+
+  const categories = buildCategoriesFromProducts(products);
+
+  return { products, categories, sales: data.sales };
 }
