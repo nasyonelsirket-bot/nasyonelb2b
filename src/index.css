@@ -86,6 +86,26 @@
     display: none;
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-strip-track {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .product-strip-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-mt-32 {
+    scroll-margin-top: 8rem;
+  }
+
   /* Banner — mobilde görünür yükseklik (12:5) */
   .hero-banner-frame {
     padding-bottom: 41.667%;

@@ -1,20 +1,58 @@
+export const ABOUT_HERO = {
+  title: 'Markalya ile Eğitici Oyuncak Dünyası',
+  subtitle:
+    'Çocukların öğrenirken eğlendiği, güvenli ve kaliteli Markalya oyuncakları — Nasyonel Toys online mağazasında.',
+};
+
 export const ABOUT_PARAGRAPHS = [
-  'Nasyonel Grup, 2018 yılından bu yana farklı sektörlerde faaliyet gösteren, üretim, tedarik ve e-ticaret alanlarında büyümeye devam eden güçlü bir marka yapılanmasıdır. Grup bünyesinde oyuncak sektöründe faaliyet gösteren Nasyonel Toys, kozmetik alanında faaliyet gösteren Elysane ve züccaciye sektöründe hizmet veren Nasyonel Home markaları yer almaktadır.',
-  'Kurucumuz Ali Ulusal tarafından temelleri atılan şirketimiz, ilk yıllarında fason üretim modeliyle ticaret hayatına başlamış; kısa sürede sektörel tecrübesini geliştirerek kendi üretim altyapısını oluşturmuştur. Bugün gelinen noktada Nasyonel Grup, üretimden tedarike, e-ticaretten toptan satış organizasyonuna kadar geniş bir operasyon ağına sahip kurumsal bir yapı hâline gelmiştir.',
-  'Özellikle Nasyonel Toys markamız ile oyuncak sektöründe Türkiye’nin gelişen trendlerini yakından takip ederek çocukların ilgisini çeken, eğlenceli, kaliteli ve güvenli ürünleri müşterilerimizle buluşturuyoruz. Aktif üretici ağımız ve güçlü tedarik zincirimiz sayesinde bugün 1500’den fazla ürün çeşidiyle hizmet vermekteyiz. Ürün portföyümüzde ahşap oyuncaklardan eğitici oyuncaklara, trend ürünlerden çocuk gelişimini destekleyen ürün gruplarına kadar geniş bir kategori yer almaktadır.',
-  'Markamız; kendi üretim gücünün yanında ithal ürün tedariği, fason üretim ve özel üretim çözümleriyle de sektörde aktif rol almaktadır. Plastik oyuncak gruplarında profesyonel üretici iş ortaklarıyla çalışırken, özellikle ahşap oyuncak üretiminde kendi üretim kültürümüzü ve kalite anlayışımızı ön plana çıkarmaktayız.',
-  'Ahşap üretimine olan bağlılığımızın temelinde aileden gelen üretim geleneği bulunmaktadır. Kurucumuzun babası Mehmet Ulusal’ın yıllardır ahşap ve mobilya üretimi alanındaki tecrübesi, markamızın ahşap işçiliğine verdiği değerin temel taşlarından biri olmuştur. Bu birikim sayesinde doğal malzeme kullanımı, dayanıklılık ve kaliteli işçilik anlayışı üretim süreçlerimizin merkezinde yer almaktadır.',
-  'Bugün Nasyonel Grup; Türkiye genelindeki güçlü satış ağı, e-ticaret operasyonları, toptan satış organizasyonu ve ihracat faaliyetleriyle büyümeye devam etmektedir. Marketlerden süpermarket zincirlerine, online pazaryerlerinden kurumsal satış noktalarına kadar birçok farklı kanalda aktif olarak hizmet vermekteyiz. Türkiye’nin yanı sıra belirli ülkelere gerçekleştirdiğimiz ihracat faaliyetleriyle markamızı uluslararası pazarda da büyütmeyi hedefliyoruz.',
-  '50’den fazla personelimizle birlikte kalite, güven, uygun fiyat politikası ve hızlı teslimat anlayışını bir araya getirerek müşterilerimize sürdürülebilir hizmet sunuyoruz. Teknolojiyi, üretim gücünü ve müşteri memnuniyetini odağına alan şirket yapımız sayesinde her geçen gün daha fazla kullanıcıya ulaşmanın gururunu yaşıyoruz.',
+  'Nasyonel Toys, Markalya markasıyla çocukların hayal gücünü, motor becerilerini ve öğrenme merakını destekleyen eğitici oyuncakları ailelerle buluşturan online oyuncak mağazasıdır. Amacımız; sadece oyun değil, gelişime katkı sunan ürünlerle güvenilir bir alışveriş deneyimi yaşatmaktır.',
+  'Markalya koleksiyonumuzda ahşap eğitici setler, montessori materyalleri, zeka ve dikkat geliştiren puzzle’lar, STEM odaklı yapı setleri ve yaş grubuna uygun öğrenme oyuncakları yer alır. Her ürün seçiminde güvenlik standartları, dayanıklılık ve çocuğun yaşına uygunluk kriterlerimizin önünde gelir.',
+  'Eğitici oyuncakların faydasına inanıyoruz: el-göz koordinasyonu, problem çözme, yaratıcılık, sosyal beceriler ve öz güven… Markalya ürünleri, bu becerileri doğal ve eğlenceli bir oyun akışı içinde desteklemek için tasarlanır veya özenle seçilir.',
+  'Trendyol mağazamızdaki en çok tercih edilen ürünleri sitemizde de öne çıkarıyoruz; böylece aileler pazaryerinde sevilen, kanıtlanmış fırsatları doğrudan bizden, hızlı WhatsApp siparişi ve şeffaf fiyatlarla alabiliyor. 750 TL üzeri siparişlerde kargo bedava; havale ile ek %10 indirim sunuyoruz.',
+  'Markalya oyuncaklarında doğal malzeme, yumuşak formlar, canlı renkler ve uzun ömürlü kullanım ön plandadır. Bebek ve okul öncesi dönemden, ilkokul çağına kadar geniş bir yaş aralığına hitap eden kategorilerle her çocuğa uygun bir seçenek sunmayı hedefliyoruz.',
+  'Sipariş sürecimiz sade: sepetinizi oluşturun, teslimat bilgilerinizi girin, ödeme yönteminizi seçin ve WhatsApp üzerinden siparişinizi tamamlayın. Müşteri hizmetlerimiz sorularınızda yanınızda; doğru ürünü seçmeniz için kategori ve ürün açıklamalarımızı anlaşılır tutuyoruz.',
+];
+
+export const ABOUT_HIGHLIGHTS = [
+  {
+    title: 'Markalya Güvencesi',
+    desc: 'Markamıza özel eğitici oyuncak seçkisi; kalite kontrol ve güvenli malzeme odağı.',
+    icon: '✨',
+  },
+  {
+    title: 'Eğitici Odak',
+    desc: 'Montessori, zeka oyunları, ahşap setler ve yaş uyumlu öğrenme ürünleri.',
+    icon: '🧩',
+  },
+  {
+    title: 'Aile Dostu Alışveriş',
+    desc: '750 TL üzeri kargo bedava, net fiyat, WhatsApp ile hızlı sipariş onayı.',
+    icon: '🛒',
+  },
+  {
+    title: 'Trendyol Popülerleri',
+    desc: 'Pazaryerinde çok satan ürünler sitede “En Çok Satanlar” bölümünde.',
+    icon: '🔥',
+  },
 ];
 
 export const ABOUT_SLOGAN =
-  '“Hayaller Oyunla Başlar” sloganıyla hareket eden Nasyonel Toys, çocukların hayal dünyasını geliştiren, eğlenceli ve güvenilir ürünler üretmeye; Nasyonel Grup ise farklı sektörlerde güçlü markalar oluşturmaya kararlılıkla devam etmektedir.';
+  '“Oyunla öğren, Markalya ile büyü.” — Eğitici oyuncaklarda güvenilir adresiniz Nasyonel Toys.';
 
 export const ABOUT_STATS = [
-  { n: '1500+', l: 'Ürün Çeşidi' },
-  { n: '50+', l: 'Personel' },
-  { n: '2018', l: "Kuruluş Yılı" },
+  { n: '1500+', l: 'Oyuncak Çeşidi' },
+  { n: 'Markalya', l: 'Eğitici Marka' },
+  { n: '%50', l: 'Fırsat İndirimi' },
 ];
 
-export const ABOUT_SEO_DESCRIPTION = ABOUT_PARAGRAPHS[0];
+export const ABOUT_CATEGORIES_FOCUS = [
+  'Ahşap Eğitici Setler',
+  'Montessori Materyalleri',
+  'Zeka & Puzzle',
+  'STEM Yapı Setleri',
+  'Bebek Gelişim Oyuncakları',
+  'Yaratıcı Sanat Setleri',
+];
+
+export const ABOUT_SEO_DESCRIPTION =
+  'Nasyonel Toys — Markalya eğitici oyuncaklar, montessori ve zeka oyunları. Trendyol çok satanlar, kargo bedava, WhatsApp sipariş.';

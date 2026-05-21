@@ -37,9 +37,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
-      <div className="bg-brand-950 text-brand-100 text-center text-[11px] sm:text-xs py-1.5 sm:py-2 px-3">
-        <span className="text-accent-gold font-semibold">Nasyonel Toys</span>
-        {' '}— 750 TL üzeri kargo bedava · WhatsApp sipariş
+      <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white text-center text-[11px] sm:text-xs py-1.5 sm:py-2 px-3 font-medium">
+        <span className="font-bold">750 TL üzeri KARGO BEDAVA</span>
+        {' · '}
+        <span className="hidden sm:inline">Markalya eğitici oyuncaklar · </span>
+        Trendyol çok satanlar burada
       </div>
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">

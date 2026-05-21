@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Eye } from 'lucide-react';
+import { ShoppingCart, Eye, Flame } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ProductPriceDisplay from '@/components/product/ProductPriceDisplay';
 import QuantityControls from '@/components/product/QuantityControls';
@@ -24,6 +24,12 @@ export default function ProductCard({ product }) {
   return (
     <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-all duration-300 sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1.5 sm:hover:shadow-card-hover">
       <Link to={getProductLink(product)} className="relative block min-w-0">
+        {product.isBestSeller && (
+          <span className="absolute right-2 top-2 z-10 inline-flex items-center gap-0.5 rounded-md bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md sm:text-[10px]">
+            <Flame className="h-3 w-3" />
+            Çok Satan
+          </span>
+        )}
         {onSale && (
           <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md animate-pulse-soft sm:text-xs">
             %{pct}

@@ -18,6 +18,8 @@ import Button from '@/components/ui/Button';
 import KdvNotice from '@/components/ui/KdvNotice';
 import QuantityControls from '@/components/product/QuantityControls';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
+import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
+import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
 import { getCartDiscount, PAYMENT_IBAN, PAYMENT_COD } from '@/utils/cartDiscount';
@@ -167,7 +169,7 @@ export default function CartPage() {
           city: customer.city.trim(),
           district: customer.district.trim(),
         },
-        items,
+        items: mapItemsForOrder(items),
         discount,
         shipping,
         orderTotal,
@@ -255,7 +257,8 @@ export default function CartPage() {
             {step === 1 && (
               <div className="space-y-4 animate-slide-up">
                 {items.map((item) => {
-                  const lineTotal = item.price * item.quantity;
+                  const unit = getEffectiveUnitPrice(item);
+                  const lineTotal = unit * item.quantity;
                   return (
                     <div
                       key={item.id}
@@ -269,7 +272,12 @@ export default function CartPage() {
                           <h3 className="font-semibold text-brand-900">{item.name}</h3>
                           <p className="text-sm text-gray-500">SKU: {item.sku}</p>
                           <p className="text-brand-700 font-bold mt-1">
-                            {formatPrice(item.price)} / adet
+                            {formatPrice(unit)} / adet
+                            {item.upsellPromo && (
+                              <span className="text-xs font-normal text-red-600 ml-1">
+                                (%{item.upsellPromo === 'bundle5' ? 5 : 8} öneri indirimi)
+                              </span>
+                            )}
                           </p>
                           <p className="text-sm font-semibold text-brand-800">
                             {formatPrice(lineTotal)}
@@ -347,6 +355,8 @@ export default function CartPage() {
 
             {step === 3 && (
               <div className="space-y-4 animate-slide-up">
+                <CartUpsellPanel />
+
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme Yöntemi
                 </h2>
@@ -420,7 +430,10 @@ export default function CartPage() {
           </div>
 
           <div className="space-y-4">
+            {step === 1 && !shipping.eligible && <CartUpsellPanel compact />}
+
             <OrderSummary
+              items={items}
               discount={discount}
               shipping={shipping}
               orderTotal={orderTotal}
@@ -464,7 +477,9 @@ export default function CartPage() {
   );
 }
 
-function OrderSummary({ discount, shipping, orderTotal }) {
+function OrderSummary({ items, discount, shipping, orderTotal }) {
+  const upsellSave = getUpsellSavings(items);
+
   return (
     <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card sticky top-24">
       <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
@@ -475,6 +490,11 @@ function OrderSummary({ discount, shipping, orderTotal }) {
           <dt>Ara toplam</dt>
           <dd className="font-medium text-brand-900">{formatPrice(discount.subtotal)}</dd>
         </div>
+        {upsellSave > 0 && (
+          <p className="text-xs text-emerald-800 bg-emerald-50 rounded-lg px-2 py-1.5">
+            Öneri ürün indirimi ile {formatPrice(upsellSave)} tasarruf (ara toplama dahil)
+          </p>
+        )}
         {discount.discountAmount > 0 && (
           <div className="flex justify-between text-emerald-700">
             <dt>{discount.tierLabel}</dt>

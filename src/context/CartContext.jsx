@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useState, useMemo, useEffect } from 'react';
 import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics/ga4';
+import { getCartSubtotal } from '@/utils/cartLinePricing';
 
 const CartContext = createContext(null);
 
@@ -37,6 +38,26 @@ export function CartProvider({ children }) {
           );
         }
         return [...prev, { ...product, quantity: qty }];
+      });
+      trackAddToCart(product, qty);
+      triggerAnimation();
+    },
+    [triggerAnimation],
+  );
+
+  const addUpsellToCart = useCallback(
+    (product, quantity = 1, promo) => {
+      const qty = Math.max(1, parseInt(quantity, 10) || 1);
+      setItems((prev) => {
+        const existing = prev.find((i) => i.id === product.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.id === product.id
+              ? { ...i, quantity: i.quantity + qty, upsellPromo: promo || i.upsellPromo }
+              : i,
+          );
+        }
+        return [...prev, { ...product, quantity: qty, upsellPromo: promo }];
       });
       trackAddToCart(product, qty);
       triggerAnimation();
@@ -94,10 +115,7 @@ export function CartProvider({ children }) {
     [items],
   );
 
-  const totalPrice = useMemo(
-    () => items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-    [items],
-  );
+  const totalPrice = useMemo(() => getCartSubtotal(items), [items]);
 
   return (
     <CartContext.Provider
@@ -105,6 +123,7 @@ export function CartProvider({ children }) {
         items,
         cartAnimating,
         addToCart,
+        addUpsellToCart,
         setQuantity,
         increment,
         decrement,
