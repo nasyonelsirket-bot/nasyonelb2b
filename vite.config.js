@@ -391,6 +391,64 @@ function orderPdfDevProxy(env = {}) {
   return {
     name: 'order-pdf-dev-proxy',
     configureServer(server) {
+      server.middlewares.use('/api/coupon/validate', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+        const catalogFile = path.join(process.cwd(), '.data', 'catalog.json')
+        let promos = { coupons: [] }
+        try {
+          if (fs.existsSync(catalogFile)) {
+            const cat = JSON.parse(fs.readFileSync(catalogFile, 'utf8'))
+            promos = cat.settings?.promotions || promos
+          }
+        } catch {
+          promos = { coupons: [] }
+        }
+        const { validateCoupon } = require('./lib/promotions.cjs')
+        const result = validateCoupon(
+          promos.coupons,
+          body.code,
+          body.email,
+          Number(body.subtotal) || 0,
+        )
+        res.setHeader('Content-Type', 'application/json')
+        if (!result.ok) {
+          res.statusCode = 400
+          res.end(JSON.stringify(result))
+          return
+        }
+        res.end(
+          JSON.stringify({
+            ok: true,
+            code: result.coupon.code,
+            discountAmount: result.discountAmount,
+            label: result.label,
+            type: result.coupon.type,
+            value: result.coupon.value,
+          }),
+        )
+      })
+
       server.middlewares.use('/api/order-pdf/save', async (req, res) => {
         if (req.method === 'OPTIONS') {
           res.statusCode = 204
@@ -428,10 +486,52 @@ function orderPdfDevProxy(env = {}) {
         const customerName = String(customer.name || customer.companyName || '').trim()
         const orderNumber = body.orderNumber || `NT-${Date.now().toString(36).toUpperCase().slice(-8)}`
         const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod'
+        const itemsSubtotal = items.reduce(
+          (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+          0,
+        )
+        const subtotal =
+          Number(body.discount?.subtotal) > 0 ? Number(body.discount.subtotal) : itemsSubtotal
+        const catalogFile = path.join(process.cwd(), '.data', 'catalog.json')
+        let promos = null
+        try {
+          if (fs.existsSync(catalogFile)) {
+            const cat = JSON.parse(fs.readFileSync(catalogFile, 'utf8'))
+            promos = cat.settings?.promotions || null
+          }
+        } catch {
+          promos = null
+        }
+        const { validateCoupon, computeCartTotals, incrementCouponUsage } = require('./lib/promotions.cjs')
+        let couponResult = null
+        const couponCode = String(body.couponCode || body.discount?.couponCode || '').trim()
+        if (couponCode) {
+          couponResult = validateCoupon(promos?.coupons, couponCode, customer.email, subtotal)
+          if (!couponResult.ok) {
+            res.statusCode = 400
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: couponResult.error }))
+            return
+          }
+        }
+        const serverTotals = computeCartTotals({
+          subtotal,
+          paymentMethod,
+          couponResult,
+          promotions: promos,
+        })
         const host = req.headers.host || 'localhost:5173'
         const proto = req.headers['x-forwarded-proto'] || 'http'
         const base = `${proto}://${host}`.replace(/\/$/, '')
         const pdfUrl = `${base}/api/order-pdf?id=${id}`
+        const discount = {
+          ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
+          subtotal: serverTotals.subtotal,
+          discountAmount: serverTotals.discountAmount,
+          grandTotal: serverTotals.grandTotal,
+          parts: serverTotals.parts,
+          couponCode: serverTotals.couponCode,
+        }
         const payload = {
           ...body,
           id,
@@ -442,6 +542,8 @@ function orderPdfDevProxy(env = {}) {
           customer: { ...customer, name: customerName },
           items,
           paymentMethod,
+          discount,
+          couponCode: serverTotals.couponCode || null,
           status: paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod',
           createdAt: new Date().toISOString(),
         }
@@ -468,6 +570,21 @@ function orderPdfDevProxy(env = {}) {
           itemCount: items.length,
         })
         fs.writeFileSync(indexPath, JSON.stringify(index.slice(0, 500)))
+
+        if (serverTotals.couponCode && fs.existsSync(catalogFile)) {
+          try {
+            const cat = JSON.parse(fs.readFileSync(catalogFile, 'utf8'))
+            cat.settings = cat.settings || {}
+            cat.settings.promotions = cat.settings.promotions || { coupons: [] }
+            cat.settings.promotions.coupons = incrementCouponUsage(
+              cat.settings.promotions.coupons,
+              serverTotals.couponCode,
+            )
+            fs.writeFileSync(catalogFile, JSON.stringify(cat))
+          } catch (cupErr) {
+            console.error('[dev] coupon used:', cupErr)
+          }
+        }
 
         let emailResult = { skipped: true }
         try {
@@ -636,9 +753,48 @@ function orderPdfDevProxy(env = {}) {
           order.shippedAt = now
           order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim()
           order.trackingNumber = String(body.trackingNumber || order.trackingNumber || '').trim()
+        } else if (status === 'completed') {
+          order.completedAt = now
         }
         if (body.shippingCarrier != null) order.shippingCarrier = String(body.shippingCarrier).trim()
         if (body.trackingNumber != null) order.trackingNumber = String(body.trackingNumber).trim()
+        let rewardCoupon = null
+        if (status === 'completed') {
+          try {
+            const catalogFile = path.join(process.cwd(), '.data', 'catalog.json')
+            const { buildDeliveryRewardCoupon } = require('./lib/promotions.cjs')
+            let promos = null
+            if (fs.existsSync(catalogFile)) {
+              const cat = JSON.parse(fs.readFileSync(catalogFile, 'utf8'))
+              promos = cat.settings?.promotions
+            }
+            const draft = buildDeliveryRewardCoupon(
+              promos,
+              order.customer?.email,
+              order.orderNumber || order.id,
+            )
+            if (draft && fs.existsSync(catalogFile)) {
+              const cat = JSON.parse(fs.readFileSync(catalogFile, 'utf8'))
+              cat.settings = cat.settings || {}
+              cat.settings.promotions = cat.settings.promotions || { coupons: [] }
+              const exists = cat.settings.promotions.coupons.some(
+                (c) =>
+                  String(c.restrictedEmail || '').toLowerCase() ===
+                    String(draft.restrictedEmail || '').toLowerCase() &&
+                  c.trigger === 'after_delivery' &&
+                  c.sourceOrderNumber === draft.sourceOrderNumber,
+              )
+              if (!exists) {
+                cat.settings.promotions.coupons = [draft, ...cat.settings.promotions.coupons]
+                fs.writeFileSync(catalogFile, JSON.stringify(cat))
+                rewardCoupon = draft.code
+                order.rewardCouponCode = draft.code
+              }
+            }
+          } catch (rewardErr) {
+            console.error('[dev] delivery reward:', rewardErr)
+          }
+        }
         fs.writeFileSync(jsonPath, JSON.stringify(order))
         const indexPath = path.join(ordersDir, '_index.json')
         if (fs.existsSync(indexPath)) {
@@ -653,7 +809,7 @@ function orderPdfDevProxy(env = {}) {
           }
         }
         res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({ ok: true, order }))
+        res.end(JSON.stringify({ ok: true, order, rewardCoupon }))
       })
 
       server.middlewares.use('/api/order-pdf', (req, res) => {

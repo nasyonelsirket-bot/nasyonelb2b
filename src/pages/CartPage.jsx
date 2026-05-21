@@ -12,6 +12,7 @@ import {
   Building2,
   Banknote,
   Sparkles,
+  Ticket,
 } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
@@ -24,6 +25,8 @@ import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
 import { getCartDiscount, PAYMENT_IBAN, PAYMENT_COD } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
+import { normalizePromotions } from '@/utils/promotions';
+import { validateCouponRemote } from '@/services/promotionApi';
 import { formatPrice } from '@/utils/whatsapp';
 import { submitOrderViaWhatsApp } from '@/utils/orderPdf';
 import {
@@ -61,19 +64,38 @@ export default function CartPage() {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  const promos = useMemo(() => normalizePromotions(settings.promotions), [settings.promotions]);
 
   const discount = useMemo(
-    () => getCartDiscount(totalPrice, paymentMethod),
-    [totalPrice, paymentMethod],
+    () =>
+      getCartDiscount(totalPrice, paymentMethod, {
+        promotions: promos,
+        couponResult: couponApplied,
+      }),
+    [totalPrice, paymentMethod, promos, couponApplied],
   );
-  const shipping = useMemo(() => getFreeShippingStatus(discount.subtotal), [discount.subtotal]);
+  const shipping = useMemo(
+    () => getFreeShippingStatus(discount.subtotal, promos.freeShippingThreshold || 750),
+    [discount.subtotal, promos.freeShippingThreshold],
+  );
   const orderTotal = useMemo(
     () => getOrderPayableTotal(discount.grandTotal, shipping),
     [discount.grandTotal, shipping],
   );
 
-  const codDiscount = useMemo(() => getCartDiscount(totalPrice, PAYMENT_COD), [totalPrice]);
-  const ibanDiscount = useMemo(() => getCartDiscount(totalPrice, PAYMENT_IBAN), [totalPrice]);
+  const codDiscount = useMemo(
+    () => getCartDiscount(totalPrice, PAYMENT_COD, { promotions: promos, couponResult: couponApplied }),
+    [totalPrice, promos, couponApplied],
+  );
+  const ibanDiscount = useMemo(
+    () => getCartDiscount(totalPrice, PAYMENT_IBAN, { promotions: promos, couponResult: couponApplied }),
+    [totalPrice, promos, couponApplied],
+  );
   const codTotal = useMemo(
     () => getOrderPayableTotal(codDiscount.grandTotal, shipping),
     [codDiscount.grandTotal, shipping],
@@ -107,6 +129,41 @@ export default function CartPage() {
     formViewTracked.current = true;
     trackFormView(items);
   }, [step, items]);
+
+  const applyCoupon = async () => {
+    setCouponError('');
+    const code = couponInput.trim();
+    if (!code) {
+      setCouponError('Kupon kodu girin');
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const result = await validateCouponRemote({
+        code,
+        email: customer.email.trim(),
+        subtotal: totalPrice,
+      });
+      setCouponApplied({
+        ok: true,
+        coupon: { code: result.code },
+        discountAmount: result.discountAmount,
+        label: result.label,
+      });
+      setCouponInput(result.code);
+    } catch (err) {
+      setCouponApplied(null);
+      setCouponError(err.message || 'Kupon geçersiz');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(null);
+    setCouponInput('');
+    setCouponError('');
+  };
 
   const handleFormStart = () => {
     if (formStartTracked.current || !items.length) return;
@@ -176,6 +233,7 @@ export default function CartPage() {
         paymentMethod,
         ibanInfo: paymentMethod === PAYMENT_IBAN ? ibanInfo : null,
         notifyEmail: settings.contactEmail,
+        couponCode: discount.couponCode || undefined,
       });
       setFormSuccess(result.message);
       trackFormSubmit(items, { success: true });
@@ -184,7 +242,7 @@ export default function CartPage() {
         items,
         value: orderTotal,
         shipping: shipping.shippingFee,
-        coupon: paymentMethod,
+        coupon: discount.couponCode || paymentMethod,
       });
       trackGenerateLead({ transactionId: result.orderNumber, items, value: orderTotal });
     } catch (submitErr) {
@@ -435,6 +493,13 @@ export default function CartPage() {
               discount={discount}
               shipping={shipping}
               orderTotal={orderTotal}
+              couponInput={couponInput}
+              onCouponInput={setCouponInput}
+              onApplyCoupon={applyCoupon}
+              onRemoveCoupon={removeCoupon}
+              couponApplied={couponApplied}
+              couponError={couponError}
+              couponLoading={couponLoading}
             />
 
             {formError && (
@@ -475,14 +540,58 @@ export default function CartPage() {
   );
 }
 
-function OrderSummary({ items, discount, shipping, orderTotal }) {
+function OrderSummary({
+  items,
+  discount,
+  shipping,
+  orderTotal,
+  couponInput,
+  onCouponInput,
+  onApplyCoupon,
+  onRemoveCoupon,
+  couponApplied,
+  couponError,
+  couponLoading,
+}) {
   const upsellSave = getUpsellSavings(items);
+  const parts = Array.isArray(discount.parts) ? discount.parts : [];
 
   return (
     <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card sticky top-24">
       <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
         <Truck className="h-5 w-5 text-accent-gold" /> Sipariş Özeti
       </h2>
+
+      <div className="mt-4 rounded-xl border border-brand-100 bg-white p-3 space-y-2">
+        <p className="text-xs font-semibold text-brand-800 flex items-center gap-1">
+          <Ticket className="h-3.5 w-3.5" /> Kupon kodu
+        </p>
+        {couponApplied ? (
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="text-emerald-800 font-mono font-bold">{couponApplied.coupon?.code}</span>
+            <button type="button" onClick={onRemoveCoupon} className="text-xs text-red-600 hover:underline">
+              Kaldır
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              value={couponInput}
+              onChange={(e) => onCouponInput(e.target.value.toUpperCase())}
+              placeholder="KUPON"
+              className="flex-1 rounded-lg border border-brand-200 px-2 py-1.5 text-sm font-mono uppercase"
+            />
+            <Button type="button" variant="secondary" size="sm" onClick={onApplyCoupon} disabled={couponLoading}>
+              {couponLoading ? '...' : 'Uygula'}
+            </Button>
+          </div>
+        )}
+        {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+        {couponApplied && (
+          <p className="text-xs text-emerald-700">{couponApplied.label}</p>
+        )}
+      </div>
+
       <dl className="mt-4 space-y-2 text-sm">
         <div className="flex justify-between text-gray-600">
           <dt>Ara toplam</dt>
@@ -493,12 +602,19 @@ function OrderSummary({ items, discount, shipping, orderTotal }) {
             Öneri ürün indirimi ile {formatPrice(upsellSave)} tasarruf (ara toplama dahil)
           </p>
         )}
-        {discount.discountAmount > 0 && (
-          <div className="flex justify-between text-emerald-700">
-            <dt>{discount.tierLabel}</dt>
-            <dd className="font-semibold">-{formatPrice(discount.discountAmount)}</dd>
-          </div>
-        )}
+        {parts.length > 0
+          ? parts.map((p) => (
+              <div key={`${p.type}-${p.label}`} className="flex justify-between text-emerald-700">
+                <dt className="pr-2">{p.label}</dt>
+                <dd className="font-semibold shrink-0">-{formatPrice(p.amount)}</dd>
+              </div>
+            ))
+          : discount.discountAmount > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <dt>{discount.tierLabel}</dt>
+                <dd className="font-semibold">-{formatPrice(discount.discountAmount)}</dd>
+              </div>
+            )}
         <div className="flex justify-between text-brand-800">
           <dt>Kargo</dt>
           <dd className="font-semibold">

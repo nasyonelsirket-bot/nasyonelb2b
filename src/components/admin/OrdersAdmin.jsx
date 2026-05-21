@@ -45,7 +45,7 @@ function isPending(status) {
   return status === 'pending_cod' || status === 'pending_iban_check';
 }
 
-function OrderDetailPanel({ order, onApprove, onReject, onShip, busy }) {
+function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
 
@@ -161,6 +161,18 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, busy }) {
       )}
 
       <ShipForm order={order} onShip={onShip} busy={busy} />
+
+      {order.status === 'shipped' && onComplete && (
+        <Button type="button" variant="primary" disabled={busy} onClick={onComplete}>
+          <CheckCircle className="h-4 w-4" />
+          Teslim edildi (otomatik kupon)
+        </Button>
+      )}
+      {order.rewardCouponCode && (
+        <p className="text-xs text-emerald-800">
+          Müşteri kuponu: <code className="font-mono">{order.rewardCouponCode}</code>
+        </p>
+      )}
     </div>
   );
 }
@@ -360,6 +372,29 @@ export default function OrdersAdmin({ setMsg }) {
     }
   };
 
+  const handleComplete = async (order) => {
+    if (
+      !window.confirm(
+        `${order.orderNumber} teslim edildi olarak işaretlensin mi? İlk sipariş tesliminde müşteriye özel kupon oluşturulur.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(order.id);
+    try {
+      const data = await updateOrderStatus(order.id, 'completed');
+      const note = data.rewardCoupon ? ` Kupon: ${data.rewardCoupon}` : '';
+      setMsg(`Teslim edildi.${note}`);
+      const refreshed = await fetchOrderDetail(order.id);
+      setDetail(refreshed);
+      load();
+    } catch (err) {
+      setMsg(err.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleRejectConfirm = async (cancelReason, cancelNote) => {
     if (!rejectTarget) return;
     setBusyId(rejectTarget.id);
@@ -485,6 +520,7 @@ export default function OrdersAdmin({ setMsg }) {
                         onApprove={() => handleApprove(detail)}
                         onReject={() => setRejectTarget(detail)}
                         onShip={(carrier, trackingNumber) => handleShip(detail, carrier, trackingNumber)}
+                        onComplete={() => handleComplete(detail)}
                       />
                     )}
                   </>

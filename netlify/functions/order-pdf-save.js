@@ -4,6 +4,8 @@
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
+const { loadPromotions, markCouponUsed } = require('../../lib/catalogPromotions.cjs');
+const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -64,8 +66,65 @@ exports.handler = async (event) => {
   const status =
     paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod';
 
+  const itemsSubtotal = items.reduce(
+    (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+    0,
+  );
+  const clientSubtotal = Number(body.discount?.subtotal);
+  const subtotal = clientSubtotal > 0 ? clientSubtotal : itemsSubtotal;
+
+  let couponResult = null;
+  const couponCode = String(body.couponCode || body.discount?.couponCode || '').trim();
+  if (couponCode) {
+    try {
+      const promos = await loadPromotions(event);
+      couponResult = validateCoupon(
+        promos.coupons,
+        couponCode,
+        customer.email,
+        subtotal,
+      );
+      if (!couponResult.ok) {
+        return {
+          statusCode: 400,
+          headers: HEADERS,
+          body: JSON.stringify({ error: couponResult.error }),
+        };
+      }
+    } catch (promoErr) {
+      console.error('coupon check:', promoErr);
+      return {
+        statusCode: 500,
+        headers: HEADERS,
+        body: JSON.stringify({ error: 'Kupon doğrulanamadı' }),
+      };
+    }
+  }
+
+  let promosForTotals = null;
+  try {
+    promosForTotals = await loadPromotions(event);
+  } catch {
+    promosForTotals = null;
+  }
+  const serverTotals = computeCartTotals({
+    subtotal,
+    paymentMethod,
+    couponResult,
+    promotions: promosForTotals,
+  });
+
   const base = siteBaseUrl(event);
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
+
+  const discount = {
+    ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
+    subtotal: serverTotals.subtotal,
+    discountAmount: serverTotals.discountAmount,
+    grandTotal: serverTotals.grandTotal,
+    parts: serverTotals.parts,
+    couponCode: serverTotals.couponCode,
+  };
 
   const payload = {
     id,
@@ -84,7 +143,8 @@ exports.handler = async (event) => {
       district: String(customer.district || '').trim(),
     },
     items,
-    discount: body.discount || null,
+    discount,
+    couponCode: serverTotals.couponCode || null,
     shipping: body.shipping || null,
     paymentMethod,
     orderTotal: body.orderTotal,
@@ -118,6 +178,14 @@ exports.handler = async (event) => {
       itemCount: items.length,
     });
     await store.setJSON('order-index', index.slice(0, 500));
+
+    if (serverTotals.couponCode) {
+      try {
+        await markCouponUsed(event, serverTotals.couponCode);
+      } catch (useErr) {
+        console.error('coupon used:', useErr);
+      }
+    }
 
     let emailResult = { skipped: true };
     try {

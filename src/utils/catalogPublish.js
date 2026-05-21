@@ -19,5 +19,6 @@ export function mergePublishedSettings(local, published) {
     trendyolPriceDivisor: local.trendyolPriceDivisor || published.trendyolPriceDivisor || '4',
     pdfSettings: local.pdfSettings || published.pdfSettings,
     homepageSlots: published.homepageSlots || local.homepageSlots,
+    promotions: published.promotions || local.promotions,
   };
 }

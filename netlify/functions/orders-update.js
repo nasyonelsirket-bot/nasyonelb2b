@@ -2,6 +2,8 @@
  * Admin: sipariş durumu güncelle (onay / red / IBAN)
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+const { loadPromotions, appendCouponAndSave } = require('../../lib/catalogPromotions.cjs');
+const { buildDeliveryRewardCoupon } = require('../../lib/promotions.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -74,6 +76,8 @@ exports.handler = async (event) => {
       order.shippedAt = now;
       order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim();
       order.trackingNumber = String(body.trackingNumber || order.trackingNumber || '').trim();
+    } else if (status === 'completed') {
+      order.completedAt = now;
     }
 
     if (body.shippingCarrier != null) {
@@ -84,6 +88,27 @@ exports.handler = async (event) => {
     }
 
     await store.setJSON(key, order);
+
+    let rewardCoupon = null;
+    if (status === 'completed') {
+      try {
+        const promos = await loadPromotions(event);
+        const draft = buildDeliveryRewardCoupon(
+          promos,
+          order.customer?.email,
+          order.orderNumber || order.id,
+        );
+        if (draft) {
+          rewardCoupon = await appendCouponAndSave(event, draft);
+          if (rewardCoupon?.code) {
+            order.rewardCouponCode = rewardCoupon.code;
+            await store.setJSON(key, order);
+          }
+        }
+      } catch (rewardErr) {
+        console.error('delivery-reward:', rewardErr);
+      }
+    }
 
     let index = [];
     try {
@@ -108,7 +133,11 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: HEADERS,
-      body: JSON.stringify({ ok: true, order }),
+      body: JSON.stringify({
+        ok: true,
+        order,
+        rewardCoupon: rewardCoupon?.code || null,
+      }),
     };
   } catch (err) {
     console.error('orders-update:', err);

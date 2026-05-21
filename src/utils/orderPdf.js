@@ -23,6 +23,7 @@ export async function submitOrderViaWhatsApp({
   paymentMethod,
   ibanInfo,
   notifyEmail,
+  couponCode,
 }) {
   const businessPhone = cleanWhatsAppPhone(phone);
   if (!businessPhone) {
@@ -42,6 +43,7 @@ export async function submitOrderViaWhatsApp({
     paymentMethod,
     ibanInfo,
     notifyEmail,
+    couponCode: couponCode || discount?.couponCode || null,
   });
 
   if (!saved?.url) {

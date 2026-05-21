@@ -1,28 +1,39 @@
 import { formatPrice } from '@/utils/whatsapp';
+import { computeCartTotals, normalizePromotions } from '@/utils/promotions';
 
 export const IBAN_DISCOUNT_RATE = 0.1;
 
 export const PAYMENT_IBAN = 'iban';
 export const PAYMENT_COD = 'cod';
 
-export function getCartDiscount(subtotal, paymentMethod = PAYMENT_COD) {
-  const amount = Math.max(0, Number(subtotal) || 0);
-  const isIban = paymentMethod === PAYMENT_IBAN;
-  const rate = isIban ? IBAN_DISCOUNT_RATE : 0;
-  const discountAmount = Math.round(amount * rate * 100) / 100;
-  const grandTotal = Math.round((amount - discountAmount) * 100) / 100;
+/**
+ * @param {number} subtotal
+ * @param {'iban'|'cod'} paymentMethod
+ * @param {{ promotions?: object, couponResult?: object }} opts
+ */
+export function getCartDiscount(subtotal, paymentMethod = PAYMENT_COD, opts = {}) {
+  const promos = normalizePromotions(opts.promotions);
+  const totals = computeCartTotals({
+    subtotal,
+    paymentMethod,
+    couponResult: opts.couponResult || null,
+    promotions: promos,
+  });
+
+  const rate = paymentMethod === PAYMENT_IBAN ? (promos.ibanDiscountPercent || 10) / 100 : 0;
 
   return {
-    subtotal: amount,
-    paymentMethod,
+    ...totals,
     rate,
-    ratePercent: rate * 100,
-    discountAmount,
-    grandTotal,
-    tierLabel: isIban ? '%10 Havale/EFT indirimi' : '',
-    upsellMessage: !isIban && amount > 0 ? 'IBAN ile ödeyin, %10 indirim kazanın!' : null,
-    currentDiscountMessage: isIban
-      ? 'Havale/EFT ile %10 indirim uygulandı.'
-      : null,
+    ratePercent: totals.ratePercent ?? rate * 100,
+    tierLabel: totals.tierLabel || '',
+    upsellMessage: totals.upsellMessage,
+    currentDiscountMessage: totals.currentDiscountMessage,
+    couponLabel: opts.couponResult?.ok ? opts.couponResult.label : null,
   };
+}
+
+export function formatDiscountParts(discount) {
+  const parts = Array.isArray(discount?.parts) ? discount.parts : [];
+  return parts.map((p) => `${p.label}: -${formatPrice(p.amount)}`).join(' · ');
 }

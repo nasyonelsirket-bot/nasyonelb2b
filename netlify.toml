@@ -67,6 +67,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/coupon/validate"
+  to = "/.netlify/functions/coupon-validate"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/members/register"
   to = "/.netlify/functions/members-register"
   status = 200

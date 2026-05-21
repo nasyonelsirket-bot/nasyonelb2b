@@ -204,4 +204,35 @@ export const DEFAULT_SETTINGS = {
     educational: [],
     deals: [],
   },
+  promotions: {
+    ibanDiscountPercent: 10,
+    freeShippingThreshold: 750,
+    standardShippingFee: 100,
+    deliveryReward: {
+      enabled: true,
+      percent: 10,
+      minSubtotal: 200,
+      validDays: 60,
+      codePrefix: 'TESLIM',
+      label: '2. siparişe özel',
+    },
+    campaigns: [
+      {
+        id: 'camp-iban',
+        type: 'payment_iban',
+        title: 'Havale / EFT %10',
+        description: 'Ödeme adımında havale seçeneği ile otomatik indirim.',
+        active: true,
+        percent: 10,
+      },
+      {
+        id: 'camp-bundle',
+        type: 'bundle',
+        title: 'Birlikte al — kargo bedava',
+        description: '750 TL üzeri ücretsiz kargo; sepette uyumlu ürün önerisi %5 indirimli.',
+        active: true,
+      },
+    ],
+    coupons: [],
+  },
 };
