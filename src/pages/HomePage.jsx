@@ -1,18 +1,11 @@
 import { useMemo, useEffect, useState, useCallback } from 'react';
-import { useSearchParams, useLocation, Link } from 'react-router-dom';
-import { ShoppingCart, ArrowRight } from 'lucide-react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
-import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
-import TrustBadges from '@/components/home/TrustBadges';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
-import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
-import Button from '@/components/ui/Button';
 import { useStore } from '@/context/StoreContext';
-import { useCart } from '@/context/CartContext';
-import { getCartSubtotal } from '@/utils/cartLinePricing';
 import { hasProductDiscount, getDiscountPercent } from '@/utils/productPricing';
 import {
   getBestSellerProducts,
@@ -24,7 +17,6 @@ const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sss']
 
 export default function HomePage() {
   const { products } = useStore();
-  const { items, totalItems } = useCart();
   const [params] = useSearchParams();
   const { hash } = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -33,7 +25,6 @@ export default function HomePage() {
   const openCart = useCallback(() => setCartOpen(true), []);
   const closeCart = useCallback(() => setCartOpen(false), []);
 
-  const subtotal = useMemo(() => getCartSubtotal(items), [items]);
   const catalog = useMemo(() => (Array.isArray(products) ? products : []), [products]);
 
   const filtered = useMemo(() => {
@@ -75,7 +66,7 @@ export default function HomePage() {
   }, [hash, filtered.length]);
 
   return (
-    <div className="pb-24 sm:pb-28 bg-gray-50">
+    <div className="pb-8 bg-gray-50">
       <SEO
         title="Ana Sayfa"
         description="Nasyonel Toys — eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
@@ -125,24 +116,6 @@ export default function HomePage() {
         </div>
       )}
 
-      <section className="mx-auto max-w-7xl px-3 sm:px-4 py-2">
-        <FreeShippingBanner subtotal={subtotal} />
-      </section>
-
-      <TrustBadges />
-
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-4 flex flex-wrap justify-center gap-2">
-        <Button type="button" variant="gold" size="lg" className="min-h-[48px]" onClick={openCart}>
-          <ShoppingCart className="h-5 w-5" />
-          Sepetimi göster ({totalItems})
-        </Button>
-        <Link to="/sepet">
-          <Button type="button" variant="primary" size="lg" className="min-h-[48px]">
-            Ödemeye geç <ArrowRight className="h-5 w-5" />
-          </Button>
-        </Link>
-      </div>
-
       <div id="urunler" className="scroll-mt-32 bg-white">
         <ProductGrid
           products={filtered}
@@ -154,7 +127,6 @@ export default function HomePage() {
       </div>
 
       <HomeCartDrawer open={cartOpen} onClose={closeCart} />
-      <HomeStickyCartBar onOpenCart={openCart} />
     </div>
   );
 }
