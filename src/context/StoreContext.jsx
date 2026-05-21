@@ -26,7 +26,7 @@ import { migrateProductsSeo, normalizeProductSeoFields } from '@/utils/productSe
 import { migrateProductsReviews } from '@/utils/productReviews';
 
 function migrateCatalog(products) {
-  return migrateProductsReviews(migrateCatalog(products));
+  return migrateProductsReviews(migrateProductsSeo(products));
 }
 
 const StoreContext = createContext(null);
