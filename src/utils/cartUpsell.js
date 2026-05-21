@@ -1,6 +1,8 @@
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import { UPSELL_PROMO_BUNDLE, getUpsellDiscountRate } from '@/utils/cartLinePricing';
 
+const BUNDLE_DISCOUNT_PERCENT = 5;
+
 function bundleUnitPrice(product) {
   const base = Number(product.price) || 0;
   const rate = getUpsellDiscountRate(UPSELL_PROMO_BUNDLE);
@@ -66,7 +68,7 @@ function availableCatalog(catalog, cartIds) {
 }
 
 /**
- * 750 TL'ye tamamlamak için birkaç emsal ürün (tek dev ürün değil)
+ * 750 TL'ye tamamlamak için sepete uyumlu tek ürün (%5 indirimli)
  */
 export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   const threshold = FREE_SHIPPING_THRESHOLD_TL;
@@ -74,64 +76,61 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   if (amount >= threshold) return null;
 
   const remaining = Math.max(0, threshold - amount);
-  const targetMin = remaining * 0.98;
-  const targetMax = remaining * 1.12;
   const cartIds = cartItems.map((i) => i.id);
   const primaryCats = cartCategories(cartItems);
 
-  const candidates = availableCatalog(catalog, cartIds)
-    .map((p) => ({ product: p, score: scoreSimilarity(p, cartItems, primaryCats) }))
-    .filter((x) => x.score > 0)
+  const ranked = availableCatalog(catalog, cartIds)
+    .map((product) => ({
+      product,
+      score: scoreSimilarity(product, cartItems, primaryCats),
+      unit: bundleUnitPrice(product),
+      list: Number(product.price) || 0,
+    }))
+    .filter((x) => x.score > 0 && x.unit > 0)
     .sort((a, b) => b.score - a.score);
 
-  if (!candidates.length) return null;
+  if (!ranked.length) return null;
 
-  const maxSingle = Math.max(remaining * 0.5, 80);
-  const pool = candidates.filter((c) => bundleUnitPrice(c.product) <= maxSingle);
-  const pickFrom = pool.length >= 2 ? pool : candidates.slice(0, 24);
+  const qualifies = ranked.filter((x) => amount + x.unit >= threshold);
 
-  const picked = [];
-  let sum = 0;
-
-  for (const { product } of pickFrom) {
-    if (picked.length >= 5) break;
-    const price = bundleUnitPrice(product);
-    if (picked.length >= 1 && sum + price > targetMax) continue;
-    if (picked.length >= 2 && sum >= targetMin) break;
-    picked.push({ product, quantity: 1, promo: UPSELL_PROMO_BUNDLE });
-    sum += price;
+  let chosen;
+  if (qualifies.length) {
+    qualifies.sort((a, b) => {
+      const scoreDiff = b.score - a.score;
+      if (scoreDiff !== 0) return scoreDiff;
+      return amount + a.unit - (amount + b.unit);
+    });
+    chosen = qualifies[0];
+  } else {
+    ranked.sort((a, b) => {
+      const scoreDiff = b.score - a.score;
+      if (Math.abs(scoreDiff) > 8) return scoreDiff;
+      return Math.abs(a.unit - remaining) - Math.abs(b.unit - remaining);
+    });
+    chosen = ranked[0];
   }
 
-  if (picked.length < 2) {
-    picked.length = 0;
-    sum = 0;
-    for (const { product } of pickFrom.slice(0, 8)) {
-      if (picked.length >= 4) break;
-      const price = bundleUnitPrice(product);
-      if (sum + price > targetMax && picked.length >= 2) break;
-      picked.push({ product, quantity: 1, promo: UPSELL_PROMO_BUNDLE });
-      sum += price;
-      if (sum >= targetMin) break;
-    }
-  }
-
-  if (!picked.length) return null;
-
-  const projectedSubtotal = Math.round((amount + sum) * 100) / 100;
-  const listTotal = picked.reduce((s, { product }) => s + (Number(product.price) || 0), 0);
+  const picked = [{ product: chosen.product, quantity: 1, promo: UPSELL_PROMO_BUNDLE }];
+  const bundleTotal = chosen.unit;
+  const projectedSubtotal = Math.round((amount + bundleTotal) * 100) / 100;
+  const reachesFreeShipping = projectedSubtotal >= threshold;
 
   return {
-    type: 'bundle',
+    type: 'single',
     promo: UPSELL_PROMO_BUNDLE,
-    discountPercent: 5,
+    discountPercent: BUNDLE_DISCOUNT_PERCENT,
     remaining,
     targetFill: remaining,
     picked,
-    bundleTotal: Math.round(sum * 100) / 100,
-    bundleListTotal: Math.round(listTotal * 100) / 100,
+    suggestedProduct: chosen.product,
+    bundleTotal,
+    bundleListTotal: chosen.list,
+    bundleSavings: Math.round((chosen.list - bundleTotal) * 100) / 100,
     projectedSubtotal,
-    reachesFreeShipping: projectedSubtotal >= threshold,
-    message: `${picked.length} ürün — %5 indirimli ekle, kargo bedava`,
+    reachesFreeShipping,
+    message: reachesFreeShipping
+      ? 'Uyumlu ürün — %5 indirimle kargo bedava'
+      : 'Sepete en uyumlu ürün — %5 indirim',
   };
 }
 
