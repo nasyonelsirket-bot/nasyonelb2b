@@ -1,78 +1,21 @@
-const FIRST = ['Ayşe', 'Fatma', 'Zeynep', 'Elif', 'Merve', 'Selin', 'Deniz', 'Can', 'Emre', 'Burak', 'Gamze', 'Ece'];
-const LAST = ['K.', 'Y.', 'A.', 'T.', 'D.', 'S.', 'M.', 'B.'];
-const COMMENTS = [
-  'Çocuğum çok sevdi, kaliteli görünüyor.',
-  'Hızlı kargo, paketleme özenliydi.',
-  'Fiyat performans olarak iyi.',
-  'Montessori tarzı, eğitici bulduk.',
-  'Kurulumu kolay, parçalar sağlam.',
-  'Hediye olarak aldık, çok beğenildi.',
-  'Renkleri canlı, malzeme kokusuz.',
-  'İkinci siparişimiz, yine memnun kaldık.',
-  'Küçük parçalar için dikkat gerekir ama güzel.',
-  'Açıklamaya uygun ürün geldi.',
-  'Oyun saatleri uzadı, tavsiye ederim.',
-  'Stokta bulunca hemen aldık, pişman olmadık.',
-  'Kargo süresi makul, ürün beklentiyi karşıladı.',
-  'Arkadaşımın önerisiyle aldım, memnunuz.',
-  'Ahşap kısımlar düzgün işlenmiş.',
-];
+import {
+  REVIEWS_VERSION,
+  generateProductReviews,
+} from '@/utils/productReviewGenerator';
 
 const CUSTOM_KEY = 'nt-custom-reviews';
 
-function hash(s) {
-  let h = 0;
-  const str = String(s);
-  for (let i = 0; i < str.length; i += 1) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-function pick(arr, seed, i) {
-  return arr[(seed + i * 17) % arr.length];
-}
-
-export function generateProductReviews(product, count = 12) {
-  const seed = hash(`${product.id}|${product.sku}|${product.barcode}|${product.name}`);
-  const ty = product.trendyolRating;
-  const targetAvg = ty?.avg || 4.6;
-  const n = Math.min(15, Math.max(10, count));
-  const now = Date.now();
-  const reviews = [];
-
-  for (let i = 0; i < n; i += 1) {
-    const roll = (seed + i * 13) % 100;
-    let stars = 5;
-    if (roll > 88) stars = 4;
-    else if (roll > 96) stars = 3;
-    if (targetAvg >= 4.5 && roll > 8) stars = 5;
-
-    const daysAgo = 3 + ((seed + i * 7) % 180);
-    reviews.push({
-      id: `gen-${seed}-${i}`,
-      author: `${pick(FIRST, seed, i)} ${pick(LAST, seed, i + 3)}`,
-      rating: stars,
-      comment: pick(COMMENTS, seed, i + 5),
-      date: new Date(now - daysAgo * 86400000).toISOString(),
-      source: ty ? 'trendyol-sync' : 'generated',
-      verified: true,
-    });
-  }
-
-  const sum = reviews.reduce((s, r) => s + r.rating, 0);
-  const avg = Math.round((sum / reviews.length) * 10) / 10;
-  const reviewCount = ty?.count > reviews.length ? ty.count : reviews.length;
-
-  return {
-    reviews,
-    ratingAvg: ty?.avg || avg,
-    reviewCount,
-    ratingSource: ty ? 'trendyol' : 'generated',
-  };
-}
+export { generateProductReviews };
 
 export function enrichProductReviews(product) {
   if (!product || typeof product !== 'object') return product;
-  if (Array.isArray(product.reviews) && product.reviews.length >= 8) {
+
+  const hasCurrentReviews =
+    product.reviewsVersion === REVIEWS_VERSION &&
+    Array.isArray(product.reviews) &&
+    product.reviews.length >= 8;
+
+  if (hasCurrentReviews) {
     const avg =
       product.ratingAvg ??
       product.reviews.reduce((s, r) => s + (Number(r.rating) || 0), 0) / product.reviews.length;
@@ -82,6 +25,7 @@ export function enrichProductReviews(product) {
       reviewCount: product.reviewCount ?? product.reviews.length,
     };
   }
+
   const data = generateProductReviews(product);
   return { ...product, ...data };
 }
@@ -142,7 +86,7 @@ export function getAllProductReviews(product) {
   const merged = [...custom, ...(base.reviews || [])];
   const seen = new Set();
   const unique = merged.filter((r) => {
-    const key = r.id || `${r.author}-${r.date}`;
+    const key = r.id || `${r.author}-${r.date}-${r.comment}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
