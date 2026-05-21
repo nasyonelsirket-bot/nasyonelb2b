@@ -4,6 +4,7 @@ import SEO from '@/components/seo/SEO';
 import { fetchMemberOrders, fetchMemberOrderDetail } from '@/services/memberApi';
 import { formatPrice } from '@/utils/whatsapp';
 import { getCarrierTrackingUrl, canTrackShipment } from '@/utils/carrierTracking';
+import { getStatusMeta } from '@/constants/orderStatus';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -18,14 +19,6 @@ function formatDate(iso) {
   } catch {
     return iso;
   }
-}
-
-function statusBadgeClass(status) {
-  if (status === 'shipped') return 'bg-blue-100 text-blue-800';
-  if (status === 'completed') return 'bg-gray-200 text-gray-800';
-  if (status === 'cancelled') return 'bg-red-100 text-red-800';
-  if (status === 'confirmed' || status === 'iban_verified') return 'bg-emerald-100 text-emerald-800';
-  return 'bg-amber-100 text-amber-800';
 }
 
 export default function AccountOrdersPage() {
@@ -105,9 +98,9 @@ export default function AccountOrdersPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`text-xs font-medium rounded-full px-2.5 py-1 ${statusBadgeClass(o.status)}`}
+                    className={`text-xs font-medium rounded-full px-2.5 py-1 ${getStatusMeta(o.status).color}`}
                   >
-                    {o.statusLabel || o.status}
+                    {o.statusLabel || getStatusMeta(o.status).label}
                   </span>
                   <span className="font-bold text-brand-800">{formatPrice(o.orderTotal)}</span>
                   {openId === o.id ? (

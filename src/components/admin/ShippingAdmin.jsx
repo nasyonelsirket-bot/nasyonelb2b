@@ -14,6 +14,7 @@ import {
 import Button from '@/components/ui/Button';
 import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
 import { formatPrice } from '@/utils/whatsapp';
+import { getStatusMeta } from '@/constants/orderStatus';
 
 const FILTERS = [
   { id: 'preparing', label: 'Hazırlanıyor' },
@@ -22,14 +23,6 @@ const FILTERS = [
   { id: 'cancelled', label: 'İptal' },
   { id: 'all', label: 'Tümü' },
 ];
-
-const STATUS_STYLE = {
-  confirmed: 'text-emerald-700 bg-emerald-50',
-  iban_verified: 'text-emerald-700 bg-emerald-50',
-  shipped: 'text-blue-700 bg-blue-50',
-  completed: 'text-gray-700 bg-gray-100',
-  cancelled: 'text-red-700 bg-red-50',
-};
 
 function bucket(status) {
   if (status === 'shipped') return 'in_transit';
@@ -213,9 +206,9 @@ export default function ShippingAdmin({ setMsg }) {
                     </div>
                   </div>
                   <span
-                    className={`text-xs font-semibold rounded-full px-2.5 py-0.5 ${STATUS_STYLE[o.status] || 'bg-gray-100'}`}
+                    className={`text-xs font-semibold rounded-full px-2.5 py-0.5 ${getStatusMeta(o.status).color}`}
                   >
-                    {o.status === 'shipped' ? 'Yolda' : o.status === 'completed' ? 'Teslim' : 'Hazırlık'}
+                    {getStatusMeta(o.status).shortLabel}
                   </span>
                 </button>
                 {expanded && (

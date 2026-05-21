@@ -23,6 +23,13 @@ import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
+import { useMember } from '@/context/MemberContext';
+import {
+  resolveCartCustomerPrefill,
+  saveCheckoutCustomer,
+  isCheckoutCustomerComplete,
+  EMPTY_CHECKOUT_CUSTOMER,
+} from '@/utils/checkoutCustomer';
 import { getCartDiscount, PAYMENT_IBAN, PAYMENT_COD } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { normalizePromotions } from '@/utils/promotions';
@@ -45,22 +52,15 @@ const STEPS = [
   { id: 3, label: 'Ödeme', icon: CreditCard },
 ];
 
-const EMPTY_CUSTOMER = {
-  name: '',
-  phone: '',
-  email: '',
-  address: '',
-  city: '',
-  district: '',
-};
-
 export default function CartPage() {
   const { items, totalPrice, removeFromCart, setQuantity, increment, decrement, clearCart } =
     useCart();
   const { settings } = useStore();
+  const { profile, isLoggedIn } = useMember();
 
   const [step, setStep] = useState(1);
-  const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
+  const [customer, setCustomer] = useState(() => ({ ...EMPTY_CHECKOUT_CUSTOMER }));
+  const [customerPrefillSource, setCustomerPrefillSource] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_COD);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
@@ -129,6 +129,23 @@ export default function CartPage() {
   const checkoutTracked = useRef(false);
   const formViewTracked = useRef(false);
   const formStartTracked = useRef(false);
+  const customerPrefilled = useRef(false);
+
+  const hasSavedCustomer = isCheckoutCustomerComplete(customer);
+
+  useEffect(() => {
+    const { customer: pre, source } = resolveCartCustomerPrefill({ profile, isLoggedIn });
+    if (!isCheckoutCustomerComplete(pre)) return;
+    if (source === 'member' || !customerPrefilled.current) {
+      setCustomer(pre);
+      setCustomerPrefillSource(source);
+      customerPrefilled.current = true;
+    }
+  }, [profile, isLoggedIn]);
+
+  useEffect(() => {
+    if (hasSavedCustomer) saveCheckoutCustomer(customer);
+  }, [customer, hasSavedCustomer]);
 
   useEffect(() => {
     if (!items.length || checkoutTracked.current) return;
@@ -198,6 +215,10 @@ export default function CartPage() {
 
   const goNext = () => {
     setFormError('');
+    if (step === 1 && hasSavedCustomer) {
+      setStep(3);
+      return;
+    }
     if (step === 2) {
       const err = validateDelivery();
       if (err) {
@@ -247,6 +268,7 @@ export default function CartPage() {
         notifyEmail: settings.contactEmail,
         couponCode: discount.couponCode || undefined,
       });
+      saveCheckoutCustomer(customer);
       setFormSuccess(result.message);
       trackFormSubmit(items, { success: true });
       trackPurchase({
@@ -390,6 +412,13 @@ export default function CartPage() {
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-accent-gold" /> Teslimat Bilgileri
                 </h2>
+                {customerPrefillSource && hasSavedCustomer && (
+                  <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    {customerPrefillSource === 'member'
+                      ? 'Hesabınızdaki kayıtlı adres ve iletişim bilgileri kullanılıyor. Gerekirse düzenleyebilirsiniz.'
+                      : 'Önceki siparişinizden kayıtlı bilgiler kullanılıyor. Gerekirse düzenleyebilirsiniz.'}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500">Tüm alanlar zorunludur.</p>
                 {[
                   ['name', 'Ad Soyad *', 'text'],

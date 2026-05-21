@@ -19,19 +19,16 @@ import Button from '@/components/ui/Button';
 import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
 import { ORDER_CANCEL_PRESETS } from '@/data/orderCancelReasons';
 import { formatPrice } from '@/utils/whatsapp';
-
-const STATUS_LABELS = {
-  pending_iban_check: { label: 'IBAN bekleniyor', color: 'text-amber-700 bg-amber-50', icon: Building2 },
-  pending_cod: { label: 'Onay bekliyor', color: 'text-orange-700 bg-orange-50', icon: Clock },
-  iban_verified: { label: 'IBAN onaylandı', color: 'text-emerald-700 bg-emerald-50', icon: CheckCircle },
-  confirmed: { label: 'Onaylandı', color: 'text-emerald-700 bg-emerald-50', icon: CheckCircle },
-  shipped: { label: 'Kargoda', color: 'text-blue-700 bg-blue-50', icon: Package },
-  completed: { label: 'Tamamlandı', color: 'text-gray-700 bg-gray-50', icon: CheckCircle },
-  cancelled: { label: 'Reddedildi / İptal', color: 'text-red-700 bg-red-50', icon: XCircle },
-};
+import {
+  getStatusMeta,
+  isPendingStatus,
+  matchesStatusFilter,
+  ADMIN_STATUS_FILTERS,
+} from '@/constants/orderStatus';
 
 function StatusBadge({ status }) {
-  const cfg = STATUS_LABELS[status] || { label: status, color: 'text-gray-600 bg-gray-100', icon: Clock };
+  const meta = getStatusMeta(status);
+  const cfg = { label: meta.shortLabel || meta.label, color: meta.color, icon: meta.icon };
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${cfg.color}`}>
@@ -39,10 +36,6 @@ function StatusBadge({ status }) {
       {cfg.label}
     </span>
   );
-}
-
-function isPending(status) {
-  return status === 'pending_cod' || status === 'pending_iban_check';
 }
 
 function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy }) {
@@ -114,6 +107,10 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
 
       <div className="flex flex-wrap gap-4 text-sm border-t border-brand-100 pt-3">
         <div>
+          <span className="text-gray-500">Durum: </span>
+          <strong>{getStatusMeta(order.status).label}</strong>
+        </div>
+        <div>
           <span className="text-gray-500">Ödeme: </span>
           <strong>{order.paymentMethod === 'iban' ? 'Havale / EFT' : 'Kapıda ödeme'}</strong>
         </div>
@@ -147,7 +144,7 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
         </div>
       )}
 
-      {isPending(order.status) && (
+      {isPendingStatus(order.status) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-100">
           <Button type="button" variant="primary" disabled={busy} onClick={onApprove}>
             <CheckCircle className="h-4 w-4" />
@@ -412,14 +409,7 @@ export default function OrdersAdmin({ setMsg }) {
     }
   };
 
-  const filtered = orders.filter((o) => {
-    if (filter === 'iban') return o.paymentMethod === 'iban';
-    if (filter === 'cod') return o.paymentMethod === 'cod';
-    if (filter === 'pending') return isPending(o.status);
-    if (filter === 'approved') return o.status === 'confirmed' || o.status === 'iban_verified';
-    if (filter === 'cancelled') return o.status === 'cancelled';
-    return true;
-  });
+  const filtered = orders.filter((o) => matchesStatusFilter(o, filter));
 
   return (
     <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-card space-y-4">
@@ -444,14 +434,7 @@ export default function OrdersAdmin({ setMsg }) {
       </p>
 
       <div className="flex flex-wrap gap-2">
-        {[
-          ['all', 'Tümü'],
-          ['pending', 'Bekleyen'],
-          ['approved', 'Onaylanan'],
-          ['cancelled', 'Reddedilen'],
-          ['iban', 'IBAN'],
-          ['cod', 'Kapıda'],
-        ].map(([id, label]) => (
+        {ADMIN_STATUS_FILTERS.map(({ id, label }) => (
           <button
             key={id}
             type="button"

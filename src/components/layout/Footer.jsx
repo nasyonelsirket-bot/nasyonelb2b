@@ -12,7 +12,6 @@ import { useStore } from '@/context/StoreContext';
 import { useMember } from '@/context/MemberContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { APP_VERSION } from '@/constants/appVersion';
-import FooterFaqAccordion from '@/components/layout/FooterFaqAccordion';
 
 export default function Footer() {
   const { settings } = useStore();
@@ -100,7 +99,11 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
-              <FooterFaqAccordion />
+              <li>
+                <Link to="/sss" className="hover:text-white">
+                  Sıkça Sorulan Sorular
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

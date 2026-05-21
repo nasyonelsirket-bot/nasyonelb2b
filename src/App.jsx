@@ -10,6 +10,7 @@ import Layout from '@/components/layout/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
 import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
+import MemberActivityTracker from '@/components/account/MemberActivityTracker';
 
 import HomePage from '@/pages/HomePage';
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -22,6 +23,7 @@ const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const OrderTrackPage = lazy(() => import('@/pages/OrderTrackPage'));
+const FaqPage = lazy(() => import('@/pages/FaqPage'));
 const AccountOverviewPage = lazy(() => import('@/pages/account/AccountOverviewPage'));
 const AccountOrdersPage = lazy(() => import('@/pages/account/AccountOrdersPage'));
 const AccountAddressesPage = lazy(() => import('@/pages/account/AccountAddressesPage'));
@@ -44,6 +46,7 @@ export default function App() {
         <CartProvider>
           <MemberProvider>
           <BrowserRouter>
+            <MemberActivityTracker />
             <Ga4Bootstrap />
             <Ga4PageTracker />
             <Routes>
@@ -58,6 +61,7 @@ export default function App() {
                 <Route path="giris" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
                 <Route path="kayit" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
                 <Route path="siparis-takip" element={<Suspense fallback={<PageLoader />}><OrderTrackPage /></Suspense>} />
+                <Route path="sss" element={<Suspense fallback={<PageLoader />}><FaqPage /></Suspense>} />
                 <Route
                   path="hesabim"
                   element={

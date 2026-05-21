@@ -1,6 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { fetchMemberAccount } from '@/services/memberApi';
-import { getMemberSession, saveMemberSession, clearMemberSession } from '@/utils/memberSession';
+import {
+  getMemberSession,
+  saveMemberSession,
+  clearMemberSession,
+  touchMemberSession,
+} from '@/utils/memberSession';
 
 const MemberContext = createContext(null);
 
@@ -13,8 +18,10 @@ export function MemberProvider({ children }) {
     const session = getMemberSession();
     if (!session?.id) {
       setProfile(null);
+      setMember(null);
       return null;
     }
+    touchMemberSession();
     setLoading(true);
     try {
       const p = await fetchMemberAccount();
@@ -24,6 +31,8 @@ export function MemberProvider({ children }) {
       return p;
     } catch {
       setProfile(null);
+      clearMemberSession();
+      setMember(null);
       return null;
     } finally {
       setLoading(false);
@@ -38,12 +47,21 @@ export function MemberProvider({ children }) {
   const setSession = useCallback((m) => {
     saveMemberSession(m);
     setMember(getMemberSession());
+    touchMemberSession();
   }, []);
 
   const logout = useCallback(() => {
     clearMemberSession();
     setMember(null);
     setProfile(null);
+  }, []);
+
+  useEffect(() => {
+    const valid = getMemberSession();
+    if (!valid) {
+      setMember(null);
+      setProfile(null);
+    }
   }, []);
 
   const value = useMemo(

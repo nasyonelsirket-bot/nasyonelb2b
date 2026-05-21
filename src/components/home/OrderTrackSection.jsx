@@ -4,15 +4,7 @@ import Button from '@/components/ui/Button';
 import { trackOrder } from '@/services/orderApi';
 import { getCarrierTrackingUrl } from '@/utils/carrierTracking';
 
-const STATUS_TR = {
-  pending_iban_check: 'Ödeme kontrolü bekleniyor',
-  pending_cod: 'Onay bekleniyor',
-  iban_verified: 'Ödeme onaylandı — hazırlanıyor',
-  confirmed: 'Sipariş onaylandı',
-  shipped: 'Kargoya verildi',
-  completed: 'Teslim edildi',
-  cancelled: 'İptal / red',
-};
+import { STATUS_TR } from '@/constants/orderStatus';
 
 export default function OrderTrackSection({ variant = 'page' }) {
   const isAuth = variant === 'auth';
