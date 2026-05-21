@@ -12,6 +12,7 @@ import {
   normalizeHomepageLayout,
   countPinnedInSection,
   getSectionHashId,
+  isBannerSectionId,
 } from '@/utils/homepagePlacements';
 
 const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sepet'];
@@ -123,6 +124,16 @@ export default function HomePage() {
     );
   };
 
+  const renderBanner = (sectionId) => {
+    const cfg = homepageLayout.sections[sectionId];
+    if (!cfg || cfg.enabled === false) return null;
+    return (
+      <div key={sectionId} id={sectionId} className="scroll-mt-32">
+        <HeroBanner bannerIds={cfg.bannerIds} />
+      </div>
+    );
+  };
+
   return (
     <div className="pb-8 bg-gray-50">
       <SEO
@@ -131,10 +142,9 @@ export default function HomePage() {
         path="/"
       />
 
-      <HeroBanner />
-
       {!q &&
         homepageLayout.order.map((sectionId) => {
+          if (isBannerSectionId(sectionId)) return renderBanner(sectionId);
           if (sectionId === 'allProducts') return renderAllProducts();
           return renderStrip(sectionId);
         })}

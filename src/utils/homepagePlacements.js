@@ -93,6 +93,34 @@ const EMPTY_SLOTS = {
   deals: [],
 };
 
+export function isBannerSectionId(sectionId) {
+  return typeof sectionId === 'string' && sectionId.startsWith('banner-');
+}
+
+export function createBannerSectionId() {
+  return `banner-${Date.now()}`;
+}
+
+export function getSectionDisplayLabel(sectionId, sections = {}) {
+  if (isBannerSectionId(sectionId)) {
+    const cfg = sections[sectionId];
+    const custom = String(cfg?.label || '').trim();
+    if (custom) return custom;
+    const count = (cfg?.bannerIds || []).length;
+    return count > 0 ? `Banner alanı (${count} görsel)` : 'Banner alanı';
+  }
+  return HOMEPAGE_SECTIONS.find((s) => s.id === sectionId)?.label || sectionId;
+}
+
+function normalizeBannerSection(from = {}) {
+  return {
+    type: 'banner',
+    enabled: from.enabled !== false,
+    label: String(from.label || '').trim(),
+    bannerIds: Array.isArray(from.bannerIds) ? from.bannerIds.map(String).filter(Boolean) : [],
+  };
+}
+
 /** @deprecated — homepageLayout.sections[id].productIds kullanın */
 export function normalizeHomepageSlots(slots) {
   if (!slots || typeof slots !== 'object') return { ...EMPTY_SLOTS };
@@ -123,6 +151,10 @@ function normalizeStripSection(id, from = {}, legacyIds = []) {
   };
 }
 
+function isValidOrderId(id) {
+  return HOMEPAGE_SECTION_IDS.includes(id) || isBannerSectionId(id);
+}
+
 /** settings.homepageLayout + eski homepageSlots birleşimi */
 export function normalizeHomepageLayout(settings) {
   const legacySlots = normalizeHomepageSlots(settings?.homepageSlots);
@@ -143,14 +175,19 @@ export function normalizeHomepageLayout(settings) {
     },
   };
 
-  const allowed = new Set(HOMEPAGE_SECTION_IDS);
+  if (raw?.sections && typeof raw.sections === 'object') {
+    for (const [key, val] of Object.entries(raw.sections)) {
+      if (isBannerSectionId(key)) {
+        sections[key] = normalizeBannerSection(val);
+      }
+    }
+  }
+
   let order = Array.isArray(raw?.order)
-    ? raw.order.filter((id) => allowed.has(id))
+    ? raw.order.filter((id) => isValidOrderId(id))
     : [...DEFAULT_SECTION_ORDER];
 
-  for (const id of DEFAULT_SECTION_ORDER) {
-    if (!order.includes(id)) order.push(id);
-  }
+  if (!order.length) order = [...DEFAULT_SECTION_ORDER];
 
   return { order, sections };
 }
@@ -231,6 +268,8 @@ export function getEducationalProductsAuto(catalog, limit = 12) {
 }
 
 export function resolveHomepageSection(catalog, settingsOrLayout, sectionId, limitOverride) {
+  if (isBannerSectionId(sectionId)) return [];
+
   const layout = settingsOrLayout?.sections
     ? normalizeHomepageLayout({ homepageLayout: settingsOrLayout })
     : normalizeHomepageLayout(settingsOrLayout);
@@ -279,5 +318,6 @@ export function countPinnedInSection(layoutOrSettings, sectionId) {
 }
 
 export function getSectionHashId(sectionId) {
+  if (isBannerSectionId(sectionId)) return sectionId;
   return HOMEPAGE_SECTIONS.find((s) => s.id === sectionId)?.hashId || sectionId;
 }

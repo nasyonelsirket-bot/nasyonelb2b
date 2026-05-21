@@ -9,13 +9,20 @@ import {
   GripVertical,
   Eye,
   EyeOff,
+  Trash2,
+  ImagePlus,
+  Plus,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import {
   HOMEPAGE_SECTIONS,
+  HOMEPAGE_SECTION_IDS,
   normalizeHomepageLayout,
   layoutToHomepageSlots,
   layoutToHomepageLayoutPayload,
+  isBannerSectionId,
+  createBannerSectionId,
+  getSectionDisplayLabel,
 } from '@/utils/homepagePlacements';
 
 function productLabel(p) {
@@ -23,12 +30,9 @@ function productLabel(p) {
   return `${p.name || 'İsimsiz'}${p.sku ? ` · ${p.sku}` : ''}`;
 }
 
-function sectionLabel(id) {
-  return HOMEPAGE_SECTIONS.find((s) => s.id === id)?.label || id;
-}
-
 export default function HomepagePlacementAdmin({ store, showMsg }) {
   const products = store.products || [];
+  const catalogBanners = store.banners || [];
   const [localLayout, setLocalLayout] = useState(() =>
     normalizeHomepageLayout(store.settings),
   );
@@ -45,9 +49,13 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
   );
 
   const sectionMeta = HOMEPAGE_SECTIONS.find((s) => s.id === activeSection);
+  const isBanner = isBannerSectionId(activeSection);
   const isStrip = sectionMeta?.type === 'strip';
   const activeCfg = localLayout.sections[activeSection];
   const pinnedIds = isStrip ? activeCfg?.productIds || [] : [];
+  const selectedBannerIds = isBanner ? activeCfg?.bannerIds || [] : [];
+
+  const presetsNotInOrder = HOMEPAGE_SECTION_IDS.filter((id) => !localLayout.order.includes(id));
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('tr');
@@ -85,6 +93,74 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
       if (next < 0 || next >= order.length) return prev;
       [order[index], order[next]] = [order[next], order[index]];
       return { ...prev, order };
+    });
+  };
+
+  const removeSectionFromOrder = (index) => {
+    const sectionId = localLayout.order[index];
+    setLocalLayout((prev) => {
+      const order = prev.order.filter((_, i) => i !== index);
+      const sections = { ...prev.sections };
+      if (isBannerSectionId(sectionId)) {
+        delete sections[sectionId];
+      }
+      return { order, sections };
+    });
+    if (activeSection === sectionId) {
+      const next = localLayout.order.filter((_, i) => i !== index)[0] || 'bestsellers';
+      setActiveSection(next);
+    }
+  };
+
+  const addBannerSlot = () => {
+    const id = createBannerSectionId();
+    setLocalLayout((prev) => ({
+      order: [...prev.order, id],
+      sections: {
+        ...prev.sections,
+        [id]: { type: 'banner', enabled: true, label: '', bannerIds: [] },
+      },
+    }));
+    setActiveSection(id);
+    showMsg('Banner alanı eklendi — hangi görsellerin görüneceğini seçin.');
+  };
+
+  const addPresetToOrder = (presetId) => {
+    if (localLayout.order.includes(presetId)) return;
+    setLocalLayout((prev) => ({ ...prev, order: [...prev.order, presetId] }));
+    setActiveSection(presetId);
+  };
+
+  const toggleBannerInSlot = (bannerId) => {
+    if (!isBanner) return;
+    setLocalLayout((prev) => {
+      const ids = [...(prev.sections[activeSection]?.bannerIds || [])];
+      const idx = ids.indexOf(bannerId);
+      const nextIds = idx >= 0 ? ids.filter((id) => id !== bannerId) : [...ids, bannerId];
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [activeSection]: { ...prev.sections[activeSection], bannerIds: nextIds },
+        },
+      };
+    });
+  };
+
+  const moveBannerInSlot = (index, direction) => {
+    if (!isBanner) return;
+    setLocalLayout((prev) => {
+      const ids = [...(prev.sections[activeSection]?.bannerIds || [])];
+      const next = index + direction;
+      if (next < 0 || next >= ids.length) return prev;
+      [ids[index], ids[next]] = [ids[next], ids[index]];
+      return {
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [activeSection]: { ...prev.sections[activeSection], bannerIds: ids },
+        },
+      };
     });
   };
 
@@ -166,94 +242,241 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
         <div>
           <h2 className="font-bold text-brand-900 text-lg">Ana Sayfa Düzeni</h2>
           <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-            Bölüm sırasını, başlık ve alt yazıları, hangi ürünlerin hangi sırada görüneceğini buradan
-            yönetin. «Sadece seçtiğim ürünler» açıksa liste yalnızca sizin seçtiklerinizden oluşur;
-            kapalıysa seçtikleriniz önce gelir, kalan yerler otomatik dolar.
+            Bölüm sırasını değiştirin, silin veya araya banner alanı ekleyin. Banner görselleri
+            «Bannerlar» sekmesinden yüklenir; burada hangi sıraya hangi bannerın geleceğini seçersiniz.
           </p>
         </div>
       </div>
 
       <div>
-        <h3 className="font-semibold text-brand-900 mb-2 text-sm">Sayfadaki bölüm sırası</h3>
-        <ul className="space-y-2">
-          {localLayout.order.map((sectionId, index) => {
-            const cfg = localLayout.sections[sectionId];
-            return (
-              <li
-                key={sectionId}
-                className="flex items-center gap-2 rounded-xl border border-brand-100 bg-gray-50 px-3 py-2"
-              >
-                <GripVertical className="h-4 w-4 text-gray-400 shrink-0" />
-                <span className="flex-1 text-sm font-medium text-brand-900">
-                  {index + 1}. {sectionLabel(sectionId)}
-                  {cfg?.enabled === false && (
-                    <span className="ml-2 text-xs text-gray-500">(gizli)</span>
-                  )}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => patchSection(sectionId, { enabled: cfg?.enabled === false })}
-                  className="p-1.5 rounded-lg hover:bg-white text-brand-700"
-                  title={cfg?.enabled === false ? 'Göster' : 'Gizle'}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 className="font-semibold text-brand-900 text-sm">Sayfadaki bölüm sırası</h3>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={addBannerSlot}>
+              <ImagePlus className="h-4 w-4" /> Banner ekle
+            </Button>
+          </div>
+        </div>
+        {localLayout.order.length === 0 ? (
+          <p className="text-sm text-gray-500 border border-dashed border-brand-200 rounded-xl p-4">
+            Henüz bölüm yok. Banner veya ürün bölümü ekleyin.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {localLayout.order.map((sectionId, index) => {
+              const cfg = localLayout.sections[sectionId];
+              const isActive = activeSection === sectionId;
+              return (
+                <li
+                  key={sectionId}
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${
+                    isActive
+                      ? 'border-brand-400 bg-brand-50'
+                      : 'border-brand-100 bg-gray-50'
+                  }`}
                 >
-                  {cfg?.enabled === false ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+                  <GripVertical className="h-4 w-4 text-gray-400 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection(sectionId)}
+                    className="flex-1 text-left text-sm font-medium text-brand-900 min-w-0"
+                  >
+                    {index + 1}. {getSectionDisplayLabel(sectionId, localLayout.sections)}
+                    {cfg?.enabled === false && (
+                      <span className="ml-2 text-xs text-gray-500">(gizli)</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => patchSection(sectionId, { enabled: cfg?.enabled === false })}
+                    className="p-1.5 rounded-lg hover:bg-white text-brand-700"
+                    title={cfg?.enabled === false ? 'Göster' : 'Gizle'}
+                  >
+                    {cfg?.enabled === false ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={index === 0}
+                    onClick={() => moveSectionInOrder(index, -1)}
+                    className="p-1 rounded hover:bg-white disabled:opacity-30"
+                    aria-label="Yukarı"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={index === localLayout.order.length - 1}
+                    onClick={() => moveSectionInOrder(index, 1)}
+                    className="p-1 rounded hover:bg-white disabled:opacity-30"
+                    aria-label="Aşağı"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSectionFromOrder(index)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"
+                    title="Listeden kaldır"
+                    aria-label="Sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {presetsNotInOrder.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-gray-500">Bölüm ekle:</span>
+            {presetsNotInOrder.map((id) => {
+              const label = HOMEPAGE_SECTIONS.find((s) => s.id === id)?.label || id;
+              return (
                 <button
+                  key={id}
                   type="button"
-                  disabled={index === 0}
-                  onClick={() => moveSectionInOrder(index, -1)}
-                  className="p-1 rounded hover:bg-white disabled:opacity-30"
-                  aria-label="Yukarı"
+                  onClick={() => addPresetToOrder(id)}
+                  className="inline-flex items-center gap-1 rounded-full border border-brand-200 bg-white px-3 py-1 text-xs font-medium text-brand-800 hover:bg-brand-50"
                 >
-                  <ChevronUp className="h-4 w-4" />
+                  <Plus className="h-3 w-3" /> {label}
                 </button>
-                <button
-                  type="button"
-                  disabled={index === localLayout.order.length - 1}
-                  onClick={() => moveSectionInOrder(index, 1)}
-                  className="p-1 rounded hover:bg-white disabled:opacity-30"
-                  aria-label="Aşağı"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {HOMEPAGE_SECTIONS.map((s) => {
-          const cfg = localLayout.sections[s.id];
-          const count = s.type === 'strip' ? (cfg?.productIds || []).length : 0;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setActiveSection(s.id)}
-              className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
-                activeSection === s.id
-                  ? 'bg-brand-900 text-white border-brand-900'
-                  : 'bg-white text-brand-800 border-brand-200 hover:bg-brand-50'
-              }`}
-            >
-              {s.label}
-              {count > 0 && <span className="ml-1.5 opacity-80">({count})</span>}
-            </button>
-          );
-        })}
+        {localLayout.order
+          .filter((id) => !isBannerSectionId(id))
+          .map((id) => {
+            const s = HOMEPAGE_SECTIONS.find((sec) => sec.id === id);
+            if (!s) return null;
+            const cfg = localLayout.sections[s.id];
+            const count = s.type === 'strip' ? (cfg?.productIds || []).length : 0;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setActiveSection(s.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+                  activeSection === s.id
+                    ? 'bg-brand-900 text-white border-brand-900'
+                    : 'bg-white text-brand-800 border-brand-200 hover:bg-brand-50'
+                }`}
+              >
+                {s.label}
+                {count > 0 && <span className="ml-1.5 opacity-80">({count})</span>}
+              </button>
+            );
+          })}
+        {localLayout.order.filter(isBannerSectionId).map((id, i) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveSection(id)}
+            className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+              activeSection === id
+                ? 'bg-orange-600 text-white border-orange-600'
+                : 'bg-white text-orange-800 border-orange-200 hover:bg-orange-50'
+            }`}
+          >
+            {getSectionDisplayLabel(id, localLayout.sections)}
+            {i > 0 ? '' : ''}
+          </button>
+        ))}
       </div>
 
-      {sectionMeta && (
+      {isBanner && (
+        <p className="text-xs text-gray-500 bg-orange-50 border border-orange-100 rounded-lg px-3 py-2">
+          Admin → Bannerlar sekmesinden yüklediğiniz görselleri bu alana atayın. Hiç seçmezseniz tüm
+          aktif bannerlar gösterilir.
+        </p>
+      )}
+      {sectionMeta && !isBanner && (
         <p className="text-xs text-gray-500 bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">
           {sectionMeta.hint}
         </p>
       )}
 
+      {isBanner && (
+        <div className="rounded-xl border border-orange-100 p-4 bg-orange-50/40 space-y-4">
+          <label className="block">
+            <span className="text-xs font-semibold text-brand-800">Alan adı (isteğe bağlı)</span>
+            <input
+              type="text"
+              value={activeCfg?.label || ''}
+              onChange={(e) => patchSection(activeSection, { label: e.target.value })}
+              placeholder="Örn. Üst kampanya bannerı"
+              className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            />
+          </label>
+          <div>
+            <h3 className="font-semibold text-brand-900 mb-2 text-sm">Bu alanda gösterilecek bannerlar</h3>
+            {catalogBanners.length === 0 ? (
+              <p className="text-sm text-gray-600">
+                Henüz banner yok. Admin → Bannerlar sekmesinden görsel yükleyin.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {catalogBanners.map((b) => {
+                  const selected = selectedBannerIds.includes(b.id);
+                  const orderIndex = selectedBannerIds.indexOf(b.id);
+                  return (
+                    <li
+                      key={b.id}
+                      className={`flex items-center gap-2 rounded-xl border p-2 ${
+                        selected ? 'border-orange-300 bg-white' : 'border-brand-100 bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleBannerInSlot(b.id)}
+                        className="rounded border-brand-300"
+                      />
+                      {b.image ? (
+                        <img src={b.image} alt="" className="h-10 w-20 rounded object-contain bg-brand-950" />
+                      ) : (
+                        <div className="h-10 w-20 rounded bg-brand-100" />
+                      )}
+                      <span className="flex-1 text-sm truncate">
+                        {b.title?.trim() || 'Başlıksız banner'}
+                      </span>
+                      {selected && selectedBannerIds.length > 1 && (
+                        <div className="flex gap-0.5 shrink-0">
+                          <button
+                            type="button"
+                            disabled={orderIndex === 0}
+                            onClick={() => moveBannerInSlot(orderIndex, -1)}
+                            className="p-1 rounded hover:bg-brand-50 disabled:opacity-30"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={orderIndex === selectedBannerIds.length - 1}
+                            onClick={() => moveBannerInSlot(orderIndex, 1)}
+                            className="p-1 rounded hover:bg-brand-50 disabled:opacity-30"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!isBanner && (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-brand-100 p-4 bg-brand-50/50">
         <label className="block sm:col-span-2">
           <span className="text-xs font-semibold text-brand-800">Başlık</span>
@@ -341,6 +564,7 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
           </label>
         )}
       </div>
+      )}
 
       {isStrip && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
@@ -7,9 +7,24 @@ import { PRODUCTS_SECTION_PATH } from '@/constants/siteLinks';
 const AUTO_MS = 5500;
 const SWIPE_THRESHOLD = 48;
 
-export default function HeroBanner() {
+/**
+ * @param {{ bannerIds?: string[] }} props
+ * bannerIds doluysa yalnızca seçilen görseller; boşsa tüm aktif bannerlar
+ */
+export default function HeroBanner({ bannerIds }) {
   const { banners } = useStore();
-  const active = (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false && b.image);
+  const allActive = useMemo(
+    () => (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false && b.image),
+    [banners],
+  );
+
+  const active = useMemo(() => {
+    const ids = Array.isArray(bannerIds) ? bannerIds.filter(Boolean) : [];
+    if (!ids.length) return allActive;
+    const byId = new Map(allActive.map((b) => [b.id, b]));
+    return ids.map((id) => byId.get(id)).filter(Boolean);
+  }, [allActive, bannerIds]);
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStart = useRef(null);
@@ -61,8 +76,8 @@ export default function HeroBanner() {
         <div className="hero-banner-frame relative w-full">
           {active.map((banner, i) => {
             if (i !== index) return null;
-            const isActive = true;
             const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
+            const linkTo = banner.link?.trim() || PRODUCTS_SECTION_PATH;
 
             const slideContent = (
               <>
@@ -97,14 +112,14 @@ export default function HeroBanner() {
             return (
               <div
                 key={banner.id}
-                className={`hero-slide absolute inset-0 ${isActive ? 'hero-slide-active z-10' : 'hero-slide-idle z-0'}`}
-                aria-hidden={!isActive}
+                className="hero-slide absolute inset-0 hero-slide-active z-10"
+                aria-hidden={false}
               >
                 <Link
-                  to={PRODUCTS_SECTION_PATH}
+                  to={linkTo}
                   className="block w-full h-full touch-manipulation cursor-pointer"
-                  tabIndex={isActive ? 0 : -1}
-                  aria-label={banner.title?.trim() ? `${banner.title} — ürünlere git` : 'Ürünlere git'}
+                  tabIndex={0}
+                  aria-label={banner.title?.trim() ? `${banner.title} — devam` : 'Devam'}
                 >
                   {slideContent}
                 </Link>
