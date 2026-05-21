@@ -1,5 +1,5 @@
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
-import { UPSELL_PROMO_BUNDLE, UPSELL_PROMO_SIMILAR } from '@/utils/cartLinePricing';
+import { UPSELL_PROMO_BUNDLE } from '@/utils/cartLinePricing';
 
 function norm(s) {
   return String(s || '')
@@ -123,51 +123,11 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
     bundleTotal: Math.round(sum * 100) / 100,
     projectedSubtotal: Math.round(projectedSubtotal * 100) / 100,
     reachesFreeShipping: projectedSubtotal >= threshold,
-    message: `${picked.length} emsal ürün ekleyin, %5 indirim + kargo bedava hedefi`,
-  };
-}
-
-/**
- * Düşük sepet — tek emsal ürün önerisi %8 indirim
- */
-export function buildSimilarSingleOffer(cartItems, catalog, subtotal) {
-  const threshold = FREE_SHIPPING_THRESHOLD_TL;
-  const amount = Math.max(0, Number(subtotal) || 0);
-  if (amount >= threshold) return null;
-
-  const cartIds = cartItems.map((i) => i.id);
-  const primaryCats = cartCategories(cartItems);
-  const avgCartPrice =
-    cartItems.reduce((s, i) => s + Number(i.price) * (i.quantity || 1), 0) /
-    Math.max(1, cartItems.reduce((s, i) => s + (i.quantity || 1), 0));
-
-  const best = availableCatalog(catalog, cartIds)
-    .map((p) => ({ product: p, score: scoreSimilarity(p, cartItems, primaryCats) }))
-    .filter((x) => x.score > 0)
-    .sort((a, b) => {
-      const pa = Math.abs(Number(a.product.price) - avgCartPrice);
-      const pb = Math.abs(Number(b.product.price) - avgCartPrice);
-      if (b.score !== a.score) return b.score - a.score;
-      return pa - pb;
-    })[0];
-
-  if (!best) return null;
-
-  const price = Number(best.product.price) || 0;
-
-  return {
-    type: 'similar',
-    promo: UPSELL_PROMO_SIMILAR,
-    discountPercent: 8,
-    product: best.product,
-    quantity: 1,
-    discountedPrice: Math.round(price * 0.92 * 100) / 100,
-    message: 'Sepetinize uygun emsal ürün — %8 indirim',
+    message: `${picked.length} ürünlük paket — kargo bedava + özel fiyat`,
   };
 }
 
 export function getCartUpsellOffers(cartItems, catalog, subtotal) {
   const bundle = buildFreeShippingBundle(cartItems, catalog, subtotal);
-  const similar = buildSimilarSingleOffer(cartItems, catalog, subtotal);
-  return { bundle, similar, eligible: subtotal < FREE_SHIPPING_THRESHOLD_TL };
+  return { bundle, eligible: subtotal < FREE_SHIPPING_THRESHOLD_TL };
 }

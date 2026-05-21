@@ -23,6 +23,11 @@ import {
   sortCategoriesBySearchPopularity,
 } from '@/utils/categories';
 import { migrateProductsSeo, normalizeProductSeoFields } from '@/utils/productSeo';
+import { migrateProductsReviews } from '@/utils/productReviews';
+
+function migrateCatalog(products) {
+  return migrateProductsReviews(migrateCatalog(products));
+}
 
 const StoreContext = createContext(null);
 
@@ -62,7 +67,7 @@ export function StoreProvider({ children }) {
 
   const applyRemoteCatalog = useCallback((remote) => {
     if (!remote?.products?.length) return false;
-    setProducts(migrateProductsSeo(remote.products));
+    setProducts(migrateCatalog(remote.products));
     setCategories(
       refreshCategoryIcons(
         remote.categories?.length ? remote.categories : buildCategoriesFromProducts(remote.products),
@@ -84,7 +89,7 @@ export function StoreProvider({ children }) {
     const meta = loadFromStorage(KEYS.CATALOG_META, null);
     const cachedProducts = loadProductsCache();
     if (!meta?.updatedAt || !cachedProducts.length) return false;
-    setProducts(migrateProductsSeo(cachedProducts));
+    setProducts(migrateCatalog(cachedProducts));
     const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     setCategories(
       refreshCategoryIcons(
@@ -102,7 +107,7 @@ export function StoreProvider({ children }) {
     if (!isAdminSession()) return false;
     const localProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
     if (!localProducts.length) return false;
-    setProducts(migrateProductsSeo(localProducts));
+    setProducts(migrateCatalog(localProducts));
     const localCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     setCategories(
       refreshCategoryIcons(
@@ -122,7 +127,7 @@ export function StoreProvider({ children }) {
       if (applyRemoteCatalog(remote)) return;
       if (applyCachedCatalog()) return;
       if (applyLocalAdminCatalog()) return;
-      setProducts(migrateProductsSeo(DEMO_PRODUCTS));
+      setProducts(migrateCatalog(DEMO_PRODUCTS));
       setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
       setBanners(DEMO_BANNERS);
       setCatalogSource('local');
@@ -131,7 +136,7 @@ export function StoreProvider({ children }) {
       setCatalogLoadError(err?.message || 'Katalog yüklenemedi');
       if (applyCachedCatalog()) return;
       if (applyLocalAdminCatalog()) return;
-      setProducts(migrateProductsSeo(DEMO_PRODUCTS));
+      setProducts(migrateCatalog(DEMO_PRODUCTS));
       setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     }
   }, [applyRemoteCatalog, applyCachedCatalog, applyLocalAdminCatalog]);
@@ -225,7 +230,7 @@ export function StoreProvider({ children }) {
       newProducts.forEach((p) => {
         if (p?.sku || p?.id) map.set(p.sku || p.id, p);
       });
-      return migrateProductsSeo(Array.from(map.values()));
+      return migrateCatalog(Array.from(map.values()));
     });
     if (newCategories?.length) {
       setCategories((prev) => {
@@ -268,7 +273,7 @@ export function StoreProvider({ children }) {
       safeProducts.forEach((p) => {
         if (p?.sku || p?.id) map.set(p.sku || p.id, p);
       });
-      return migrateProductsSeo(Array.from(map.values()));
+      return migrateCatalog(Array.from(map.values()));
     });
 
     setCategories(refreshCategoryIcons(syncedCategories, { force: true }));
@@ -311,7 +316,7 @@ export function StoreProvider({ children }) {
   );
 
   const resetToDemo = useCallback(() => {
-    setProducts(migrateProductsSeo(DEMO_PRODUCTS));
+    setProducts(migrateCatalog(DEMO_PRODUCTS));
     setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
     setBanners(DEMO_BANNERS);
     setSettings({ ...DEFAULT_SETTINGS, pdfSettings: mergePdfSettings(DEFAULT_SETTINGS.pdfSettings) });

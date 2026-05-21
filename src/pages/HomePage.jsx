@@ -19,7 +19,6 @@ import { hasProductDiscount, getDiscountPercent } from '@/utils/productPricing';
 import {
   getBestSellerProducts,
   filterEducationalProducts,
-  sortByBestSellers,
   hasTrendyolSalesData,
 } from '@/utils/productBestseller';
 
@@ -47,13 +46,15 @@ export default function HomePage() {
   const catalog = useMemo(() => (Array.isArray(products) ? products : []), [products]);
 
   const filtered = useMemo(() => {
-    if (!q) return sortByBestSellers(catalog);
-    return catalog.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q),
-    );
+    const base = !q
+      ? catalog
+      : catalog.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.sku.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q),
+        );
+    return base;
   }, [catalog, q]);
 
   const bestSellers = useMemo(() => getBestSellerProducts(catalog, 16), [catalog]);
@@ -181,11 +182,8 @@ export default function HomePage() {
         <ProductGrid
           products={filtered}
           title={q ? `Arama: "${q}"` : 'Tüm Ürünler'}
-          subtitle={
-            q
-              ? `${filtered.length} ürün`
-              : `${filtered.length} ürün — çok satanlara göre sıralı`
-          }
+          subtitle={q ? `${filtered.length} ürün` : `${filtered.length} ürün — sıralamayı değiştirin`}
+          showSort
           onOpenCart={openCart}
         />
       </div>

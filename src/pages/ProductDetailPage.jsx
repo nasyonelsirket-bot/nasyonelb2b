@@ -15,6 +15,9 @@ import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
 import { trackViewItem } from '@/lib/analytics/ga4';
 import { getProductPath } from '@/utils/productSeo';
+import ProductRatingStars from '@/components/product/ProductRatingStars';
+import ProductReviewsSection from '@/components/product/ProductReviewsSection';
+import { getProductRatingSummary } from '@/utils/productReviews';
 
 export default function ProductDetailPage() {
   const { id: idOrSlug } = useParams();
@@ -56,6 +59,7 @@ export default function ProductDetailPage() {
 
   const lineTotal = product.price * Math.max(1, qty);
   const onSale = hasProductDiscount(product);
+  const { avg: ratingAvg, count: reviewCount } = getProductRatingSummary(product);
 
   return (
     <>
@@ -106,6 +110,14 @@ export default function ProductDetailPage() {
             )}
             <p className="text-sm text-brand-500 mt-2">{product.category}</p>
             <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
+            {ratingAvg > 0 && (
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <ProductRatingStars rating={ratingAvg} size="md" />
+                <span className="text-sm text-gray-600">
+                  {reviewCount} müşteri değerlendirmesi
+                </span>
+              </div>
+            )}
             <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>
             <div className="mt-6">
               <ProductPriceDisplay product={product} size="lg" />
@@ -133,6 +145,8 @@ export default function ProductDetailPage() {
             </Button>
           </div>
         </div>
+
+        <ProductReviewsSection product={product} />
       </div>
     </>
   );

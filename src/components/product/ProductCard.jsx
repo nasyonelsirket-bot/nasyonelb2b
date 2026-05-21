@@ -11,6 +11,8 @@ import { getPrimaryImage } from '@/utils/productImage';
 import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
 import { getTrendyolUnitsSold } from '@/utils/productBestseller';
 import { getProductLink } from '@/utils/productSeo';
+import ProductRatingStars from '@/components/product/ProductRatingStars';
+import { getProductRatingSummary } from '@/utils/productReviews';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
@@ -18,6 +20,7 @@ export default function ProductCard({ product }) {
   const onSale = hasProductDiscount(product);
   const pct = getDiscountPercent(product);
   const unitsSold = getTrendyolUnitsSold(product);
+  const { avg: ratingAvg, count: reviewCount } = getProductRatingSummary(product);
 
   const handleAdd = () => {
     addToCart(product, Math.max(1, qty));
@@ -65,6 +68,15 @@ export default function ProductCard({ product }) {
             {product.name}
           </h3>
         </Link>
+
+        {ratingAvg > 0 && (
+          <div className="mt-1 flex items-center gap-1 flex-wrap">
+            <ProductRatingStars rating={ratingAvg} size="sm" />
+            {reviewCount > 0 && (
+              <span className="text-[10px] text-gray-500">({reviewCount})</span>
+            )}
+          </div>
+        )}
 
         <div className="mt-1 sm:mt-2">
           <ProductPriceDisplay product={product} size="sm" />

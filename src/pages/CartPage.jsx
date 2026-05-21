@@ -274,8 +274,8 @@ export default function CartPage() {
                           <p className="text-brand-700 font-bold mt-1">
                             {formatPrice(unit)} / adet
                             {item.upsellPromo && (
-                              <span className="text-xs font-normal text-red-600 ml-1">
-                                (%{item.upsellPromo === 'bundle5' ? 5 : 8} öneri indirimi)
+                              <span className="text-xs font-normal text-emerald-700 ml-1">
+                                (paket özel fiyat)
                               </span>
                             )}
                           </p>
@@ -355,8 +355,6 @@ export default function CartPage() {
 
             {step === 3 && (
               <div className="space-y-4 animate-slide-up">
-                <CartUpsellPanel />
-
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme Yöntemi
                 </h2>
