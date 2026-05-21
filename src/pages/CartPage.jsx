@@ -156,6 +156,9 @@ export default function CartPage() {
       const result = await submitOrderViaWhatsApp({
         phone: settings.whatsappNumber,
         siteName: settings.siteName || 'Nasyonel Toys',
+        siteUrl: settings.siteUrl || import.meta.env.VITE_SITE_URL || window.location.origin,
+        siteLogoUrl: settings.logoUrl,
+        pdfSettings: settings.pdfSettings,
         customer: {
           name: customer.name.trim(),
           phone: customer.phone.trim(),

@@ -189,10 +189,17 @@ function orderPdfDevProxy(env = {}) {
         const customerName = String(customer.name || customer.companyName || '').trim()
         const orderNumber = body.orderNumber || `NT-${Date.now().toString(36).toUpperCase().slice(-8)}`
         const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod'
+        const host = req.headers.host || 'localhost:5173'
+        const proto = req.headers['x-forwarded-proto'] || 'http'
+        const base = `${proto}://${host}`.replace(/\/$/, '')
+        const pdfUrl = `${base}/api/order-pdf?id=${id}`
         const payload = {
           ...body,
           id,
           orderNumber,
+          siteUrl: body.siteUrl || base,
+          siteLogoUrl: body.siteLogoUrl || '',
+          pdfUrl,
           customer: { ...customer, name: customerName },
           items,
           paymentMethod,
@@ -226,19 +233,17 @@ function orderPdfDevProxy(env = {}) {
         let emailResult = { skipped: true }
         try {
           const { sendOrderEmails } = require('./lib/orderEmail.cjs')
-          emailResult = await sendOrderEmails({
-            ...payload,
-            notifyEmail: body.notifyEmail || env.ORDER_NOTIFY_EMAIL,
+          emailResult = await sendOrderEmails(payload, {
+            pdfUrl,
+            siteUrl: payload.siteUrl,
           })
         } catch (emailErr) {
           console.error('[dev] order email:', emailErr)
           emailResult = { ok: false, error: emailErr.message }
         }
 
-        const host = req.headers.host || 'localhost:5173'
-        const url = `http://${host}/api/order-pdf?id=${id}`
         res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({ ok: true, id, orderNumber, url, email: emailResult }))
+        res.end(JSON.stringify({ ok: true, id, orderNumber, url: pdfUrl, email: emailResult }))
       })
 
       server.middlewares.use('/api/orders/list', (req, res) => {

@@ -1,7 +1,4 @@
-export default function KdvNotice({ className = '' }) {
-  return (
-    <p className={`text-xs text-amber-800/90 ${className}`}>
-      * Ürün fiyatlarımıza KDV dahil değildir.
-    </p>
-  );
+/** KDV notu artık gösterilmiyor */
+export default function KdvNotice() {
+  return null;
 }

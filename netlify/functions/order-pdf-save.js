@@ -64,11 +64,17 @@ exports.handler = async (event) => {
   const status =
     paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod';
 
+  const base = siteBaseUrl(event);
+  const pdfUrl = `${base}/api/order-pdf?id=${id}`;
+
   const payload = {
     id,
     orderNumber,
     siteName: body.siteName || 'Nasyonel Toys',
+    siteUrl: String(body.siteUrl || '').trim() || base,
     siteLogoUrl: body.siteLogoUrl || '',
+    pdfUrl,
+    pdfSettings: body.pdfSettings || null,
     customer: {
       name: customerName,
       phone: String(customer.phone || '').trim(),
@@ -115,14 +121,11 @@ exports.handler = async (event) => {
 
     let emailResult = { skipped: true };
     try {
-      emailResult = await sendOrderEmails(payload);
+      emailResult = await sendOrderEmails(payload, { pdfUrl, siteUrl: payload.siteUrl });
     } catch (emailErr) {
       console.error('order email:', emailErr);
       emailResult = { error: emailErr.message };
     }
-
-    const base = siteBaseUrl(event);
-    const url = `${base}/api/order-pdf?id=${id}`;
 
     return {
       statusCode: 200,
@@ -131,7 +134,7 @@ exports.handler = async (event) => {
         ok: true,
         id,
         orderNumber,
-        url,
+        url: pdfUrl,
         email: emailResult,
       }),
     };
