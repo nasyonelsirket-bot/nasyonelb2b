@@ -95,7 +95,7 @@ export default function AboutPage() {
         <div className="mt-12 rounded-2xl bg-gradient-to-r from-brand-900 to-brand-800 p-6 sm:p-8 text-center text-white">
           <h2 className="font-display text-xl sm:text-2xl font-bold">Alışverişe başlayın</h2>
           <p className="mt-2 text-brand-100 text-sm sm:text-base">
-            Markalya eğitici oyuncaklar ve Trendyol’da çok satan ürünler bir arada.
+            Markalya eğitici oyuncaklar ve en çok satan ürünler bir arada.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/">

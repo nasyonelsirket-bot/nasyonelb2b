@@ -98,7 +98,7 @@ export default function CategoriesPage() {
             </section>
           ))}
           {!grouped?.length && (
-            <p className="text-center text-gray-500 py-12">Henüz ürün yok. Trendyol’dan ürün çekin.</p>
+            <p className="text-center text-gray-500 py-12">Henüz ürün bulunmuyor. Yakında yeni ürünler eklenecek.</p>
           )}
         </div>
       )}

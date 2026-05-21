@@ -41,7 +41,7 @@ export default function Header() {
         <span className="font-bold">750 TL üzeri KARGO BEDAVA</span>
         {' · '}
         <span className="hidden sm:inline">Markalya eğitici oyuncaklar · </span>
-        Trendyol çok satanlar burada
+        En çok satanlar ve fırsat ürünleri
       </div>
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">

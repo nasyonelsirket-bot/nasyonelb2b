@@ -95,12 +95,12 @@ export default function HomePage() {
     <div className="pb-24 sm:pb-28 bg-gray-50">
       <SEO
         title="Ana Sayfa"
-        description="Nasyonel Toys — Markalya eğitici oyuncaklar, Trendyol çok satanlar, %50 indirim fırsatları."
+        description="Nasyonel Toys — Markalya eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
         path="/"
       />
 
       <HomeUrgencyStrip onOpenCart={openCart} />
-      <HeroBanner onOpenCart={openCart} />
+      <HeroBanner />
 
       {!q && bestSellers.length > 0 && (
         <div id="cok-satanlar" className="scroll-mt-32">
@@ -109,10 +109,10 @@ export default function HomePage() {
             title="En Çok Satanlar"
             subtitle={
               hasOrderSales
-                ? 'Sizin Trendyol siparişlerinize göre — son 30 günde en çok satan ürünler'
-                : 'Trendyol senkronu sonrası sipariş verisine göre sıralanır (Admin → Trendyol → Ürünleri Çek)'
+                ? 'Son 30 günde en çok tercih edilen ürünler'
+                : 'Müşterilerimizin en çok tercih ettiği ürünler'
             }
-            badge="Trendyol"
+            badge="Popüler"
             seeAllHref="/#urunler"
             accent="orange"
           />

@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ShoppingCart, Sparkles } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { PRODUCTS_SECTION_PATH } from '@/constants/siteLinks';
 
 const AUTO_MS = 5500;
 const SWIPE_THRESHOLD = 48;
 
-export default function HeroBanner({ onOpenCart }) {
+export default function HeroBanner() {
   const { banners } = useStore();
   const active = (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false && b.image);
   const [index, setIndex] = useState(0);
@@ -151,35 +150,6 @@ export default function HeroBanner({ onOpenCart }) {
           </div>
         </>
       )}
-
-      <div className="absolute bottom-12 sm:bottom-14 left-3 right-3 sm:left-6 sm:right-auto z-20 flex flex-wrap gap-2 sm:max-w-md pointer-events-auto">
-        <Button
-          type="button"
-          variant="gold"
-          size="sm"
-          className="shadow-lg min-h-[44px] touch-manipulation"
-          onClick={() => onOpenCart?.()}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Sepetimi gör
-        </Button>
-        <a href="/#urunler">
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            className="shadow-lg min-h-[44px] bg-white/95 text-brand-900 hover:bg-white border-0"
-          >
-            <Sparkles className="h-4 w-4" />
-            Fırsatlar
-          </Button>
-        </a>
-        <a href="/sepet">
-          <Button type="button" variant="outline" size="sm" className="shadow-lg min-h-[44px] border-white/60 text-white hover:bg-white/15">
-            Ödeme
-          </Button>
-        </a>
-      </div>
     </section>
   );
 }
