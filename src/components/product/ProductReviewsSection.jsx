@@ -59,7 +59,13 @@ export default function ProductReviewsSection({ product }) {
         </div>
       </div>
 
-      <ul className="mt-6 space-y-4 max-h-[480px] overflow-y-auto pr-1">
+      {reviewCount > reviews.length && (
+        <p className="mt-4 text-xs text-gray-500">
+          Son {reviews.length} yorum gösteriliyor · toplam {reviewCount} değerlendirme
+        </p>
+      )}
+
+      <ul className="mt-4 space-y-4 max-h-[480px] overflow-y-auto pr-1">
         {reviews.map((r) => (
           <li
             key={r.id}
