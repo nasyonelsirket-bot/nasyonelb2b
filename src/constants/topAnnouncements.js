@@ -1,0 +1,12 @@
+/** Üst turuncu şerit — dönen duyurular */
+export const TOP_ANNOUNCEMENTS = [
+  { highlight: '750 TL üzeri KARGO BEDAVA', rest: 'Tüm siparişlerde' },
+  { highlight: '14 iş günü', rest: 'iade hakkı · koşulsuz kolaylık' },
+  { highlight: 'Havale/EFT %10 indirim', rest: 'Ödeme adımında otomatik' },
+  { highlight: 'Eğitici oyuncaklar', rest: 'güvenli alışveriş · hızlı kargo' },
+  { highlight: 'Sepette %5 indirim', rest: '750 TL\'yi tamamlayan uyumlu ürün önerisi' },
+  { highlight: 'En çok satanlar', rest: 'Trendyol satış verilerine göre sıralama' },
+  { highlight: 'Ücretsiz üyelik', rest: 'sipariş takibi · adres kaydı' },
+];
+
+export const ANNOUNCEMENT_ROTATE_MS = 4200;

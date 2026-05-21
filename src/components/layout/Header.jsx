@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart, User, Package } from 'lucide-react';
 import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
+import TopAnnouncementBar from '@/components/layout/TopAnnouncementBar';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
 import { useMember } from '@/context/MemberContext';
@@ -36,11 +37,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
-      <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white text-center text-[11px] sm:text-xs py-1.5 sm:py-2 px-3 font-medium">
-        <span className="font-bold">750 TL üzeri KARGO BEDAVA</span>
-        {' · '}
-        14 iş günü iade · Havale %10 indirim
-      </div>
+      <TopAnnouncementBar />
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <div className="flex min-h-[4.25rem] sm:min-h-[5rem] items-center justify-between gap-2 sm:gap-4 py-2">

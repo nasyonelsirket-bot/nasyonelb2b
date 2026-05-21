@@ -263,6 +263,19 @@
     animation: pulse-soft 2s ease-in-out infinite;
   }
 
+  @keyframes announcement-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .animate-announcement-progress {
+    animation: announcement-progress linear forwards;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hero-slide,
     .hero-slide-img-active {
@@ -275,7 +288,8 @@
     }
     .animate-fade-in,
     .animate-slide-up,
-    .animate-pulse-soft {
+    .animate-pulse-soft,
+    .animate-announcement-progress {
       animation: none;
     }
   }
