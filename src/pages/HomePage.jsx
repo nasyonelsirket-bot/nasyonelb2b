@@ -9,18 +9,29 @@ import { useStore } from '@/context/StoreContext';
 import { hasTrendyolSalesData } from '@/utils/productBestseller';
 import {
   resolveHomepageSection,
-  normalizeHomepageSlots,
+  normalizeHomepageLayout,
   countPinnedInSection,
+  getSectionHashId,
 } from '@/utils/homepagePlacements';
 
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sepet'];
+
+function defaultBestsellerSubtitle(layout, catalog) {
+  const pinned = countPinnedInSection(layout, 'bestsellers');
+  const hasOrderSales = hasTrendyolSalesData(catalog);
+  if (layout.sections.bestsellers?.subtitle) return layout.sections.bestsellers.subtitle;
+  if (pinned > 0) {
+    return `Editör seçimi + ${hasOrderSales ? 'Trendyol satış sıralaması' : 'popüler ürünler'}`;
+  }
+  if (hasOrderSales) {
+    return 'Son 15 günde en çok tercih edilen ürünler (iptal/iade hariç)';
+  }
+  return 'Müşterilerimizin en çok tercih ettiği ürünler';
+}
 
 export default function HomePage() {
   const { products, settings } = useStore();
-  const homepageSlots = useMemo(
-    () => normalizeHomepageSlots(settings?.homepageSlots),
-    [settings?.homepageSlots],
-  );
+  const homepageLayout = useMemo(() => normalizeHomepageLayout(settings), [settings]);
   const [params] = useSearchParams();
   const { hash } = useLocation();
   const [cartOpen, setCartOpen] = useState(false);
@@ -41,22 +52,13 @@ export default function HomePage() {
     );
   }, [catalog, q]);
 
-  const pinnedBestsellers = countPinnedInSection(homepageSlots, 'bestsellers');
-  const bestSellers = useMemo(
-    () => resolveHomepageSection(catalog, homepageSlots, 'bestsellers', 16),
-    [catalog, homepageSlots],
-  );
-  const hasOrderSales = useMemo(() => hasTrendyolSalesData(catalog), [catalog]);
-
-  const dealProducts = useMemo(
-    () => resolveHomepageSection(catalog, homepageSlots, 'deals', 12),
-    [catalog, homepageSlots],
-  );
-
-  const educationalProducts = useMemo(
-    () => resolveHomepageSection(catalog, homepageSlots, 'educational', 12),
-    [catalog, homepageSlots],
-  );
+  const sectionProducts = useMemo(() => {
+    const out = {};
+    for (const id of ['bestsellers', 'educational', 'deals']) {
+      out[id] = resolveHomepageSection(catalog, settings, id);
+    }
+    return out;
+  }, [catalog, settings]);
 
   useEffect(() => {
     const id = hash.replace('#', '');
@@ -68,6 +70,59 @@ export default function HomePage() {
     if (id === 'sepet') setCartOpen(true);
   }, [hash, filtered.length]);
 
+  const renderStrip = (sectionId) => {
+    const cfg = homepageLayout.sections[sectionId];
+    if (!cfg?.enabled) return null;
+    const list = sectionProducts[sectionId];
+    if (!list?.length) return null;
+
+    const hashId = getSectionHashId(sectionId);
+    let subtitle = cfg.subtitle;
+    if (sectionId === 'bestsellers' && !subtitle) {
+      subtitle = defaultBestsellerSubtitle(homepageLayout, catalog);
+    }
+    if (sectionId === 'allProducts' && !subtitle && !q) {
+      subtitle = `${filtered.length} ürün — sıralamayı değiştirin`;
+    }
+
+    return (
+      <div key={sectionId} id={hashId} className="scroll-mt-32">
+        <ProductStrip
+          products={list}
+          title={cfg.title}
+          subtitle={subtitle}
+          badge={cfg.badge || undefined}
+          seeAllHref={cfg.seeAllHref}
+          seeAllLabel={cfg.seeAllLabel}
+          accent={cfg.accent}
+        />
+      </div>
+    );
+  };
+
+  const renderAllProducts = () => {
+    const cfg = homepageLayout.sections.allProducts;
+    if (!cfg?.enabled) return null;
+
+    const title = q ? `Arama: "${q}"` : cfg.title || 'Tüm Ürünler';
+    let subtitle = q ? `${filtered.length} ürün` : cfg.subtitle;
+    if (!subtitle && !q) {
+      subtitle = `${filtered.length} ürün — sıralamayı değiştirin`;
+    }
+
+    return (
+      <div key="allProducts" id={getSectionHashId('allProducts')} className="scroll-mt-32 bg-white">
+        <ProductGrid
+          products={filtered}
+          title={title}
+          subtitle={subtitle}
+          showSort={cfg.showSort !== false}
+          onOpenCart={openCart}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="pb-8 bg-gray-50">
       <SEO
@@ -78,58 +133,13 @@ export default function HomePage() {
 
       <HeroBanner />
 
-      {!q && bestSellers.length > 0 && (
-        <div id="cok-satanlar" className="scroll-mt-32">
-          <ProductStrip
-            products={bestSellers}
-            title="En Çok Satanlar"
-            subtitle={
-              pinnedBestsellers > 0
-                ? `Editör seçimi + ${hasOrderSales ? 'Trendyol satış sıralaması' : 'popüler ürünler'}`
-                : hasOrderSales
-                  ? 'Son 15 günde en çok tercih edilen ürünler (iptal/iade hariç)'
-                  : 'Müşterilerimizin en çok tercih ettiği ürünler'
-            }
-            badge="Popüler"
-            seeAllHref="/en-cok-satanlar"
-            accent="orange"
-          />
-        </div>
-      )}
+      {!q &&
+        homepageLayout.order.map((sectionId) => {
+          if (sectionId === 'allProducts') return renderAllProducts();
+          return renderStrip(sectionId);
+        })}
 
-      {!q && educationalProducts.length > 0 && (
-        <div id="egitici" className="scroll-mt-32">
-          <ProductStrip
-            products={educationalProducts}
-            title="Eğitici Oyuncaklar"
-            subtitle="Montessori, zeka ve öğrenme oyuncakları"
-            seeAllHref="/kategoriler?cat=Eğitici%20Oyuncaklar"
-          />
-        </div>
-      )}
-
-      {!q && dealProducts.length > 0 && (
-        <div id="firsatlar" className="scroll-mt-32">
-          <ProductStrip
-            products={dealProducts}
-            title="Flaş Fırsatlar"
-            subtitle="En yüksek indirimli ürünler"
-            badge="İndirim"
-            seeAllHref="/#firsatlar"
-            accent="orange"
-          />
-        </div>
-      )}
-
-      <div id="urunler" className="scroll-mt-32 bg-white">
-        <ProductGrid
-          products={filtered}
-          title={q ? `Arama: "${q}"` : 'Tüm Ürünler'}
-          subtitle={q ? `${filtered.length} ürün` : `${filtered.length} ürün — sıralamayı değiştirin`}
-          showSort
-          onOpenCart={openCart}
-        />
-      </div>
+      {q && renderAllProducts()}
 
       <HomeCartDrawer open={cartOpen} onClose={closeCart} />
     </div>

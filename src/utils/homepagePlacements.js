@@ -4,26 +4,88 @@ import {
   filterEducationalProducts,
 } from '@/utils/productBestseller';
 
+export const HOMEPAGE_SECTION_IDS = ['bestsellers', 'educational', 'deals', 'allProducts'];
+
 export const HOMEPAGE_SECTIONS = [
   {
     id: 'bestsellers',
     label: 'En Çok Satanlar',
-    limit: 16,
-    hint: 'Ana sayfa ve /en-cok-satanlar. Sabitlediğiniz ürünler önce gösterilir; kalan yerler Trendyol satış sıralamasıyla dolar.',
+    type: 'strip',
+    limit: 24,
+    hashId: 'cok-satanlar',
+    hint: 'Yatay ürün bandı. Ürün seçmezseniz otomatik doldurulur (açıksa).',
   },
   {
     id: 'educational',
     label: 'Eğitici Oyuncaklar',
-    limit: 12,
-    hint: 'Montessori, zeka, puzzle vb. Sabit ürünlerden sonra otomatik eğitici ürünler eklenir.',
+    type: 'strip',
+    limit: 24,
+    hashId: 'egitici',
+    hint: 'Eğitici kategorideki ürünler veya seçtiğiniz liste.',
   },
   {
     id: 'deals',
     label: 'Flaş Fırsatlar',
-    limit: 12,
-    hint: 'İndirimli ürünler bandı. Sabitledikleriniz önce; kalanlar en yüksek indirim oranına göre dolar.',
+    type: 'strip',
+    limit: 24,
+    hashId: 'firsatlar',
+    hint: 'İndirimli ürünler bandı.',
+  },
+  {
+    id: 'allProducts',
+    label: 'Tüm Ürünler',
+    type: 'grid',
+    hashId: 'urunler',
+    hint: 'Ana sayfa altındaki tam ürün listesi ve sıralama.',
   },
 ];
+
+const DEFAULT_SECTION_ORDER = ['bestsellers', 'educational', 'deals', 'allProducts'];
+
+const DEFAULT_SECTIONS = {
+  bestsellers: {
+    enabled: true,
+    title: 'En Çok Satanlar',
+    subtitle: '',
+    badge: 'Popüler',
+    seeAllHref: '/en-cok-satanlar',
+    seeAllLabel: 'Tümünü Gör',
+    accent: 'orange',
+    limit: 16,
+    autoFill: true,
+    productIds: [],
+  },
+  educational: {
+    enabled: true,
+    title: 'Eğitici Oyuncaklar',
+    subtitle: 'Montessori, zeka ve öğrenme oyuncakları',
+    badge: '',
+    seeAllHref: '/kategoriler?cat=Eğitici%20Oyuncaklar',
+    seeAllLabel: 'Tümünü Gör',
+    accent: 'brand',
+    limit: 12,
+    autoFill: true,
+    productIds: [],
+  },
+  deals: {
+    enabled: true,
+    title: 'Flaş Fırsatlar',
+    subtitle: 'En yüksek indirimli ürünler',
+    badge: 'İndirim',
+    seeAllHref: '/#firsatlar',
+    seeAllLabel: 'Tümünü Gör',
+    accent: 'orange',
+    limit: 12,
+    autoFill: true,
+    productIds: [],
+  },
+  allProducts: {
+    enabled: true,
+    title: 'Tüm Ürünler',
+    subtitle: '',
+    showSort: true,
+  },
+};
 
 const EMPTY_SLOTS = {
   bestsellers: [],
@@ -31,6 +93,7 @@ const EMPTY_SLOTS = {
   deals: [],
 };
 
+/** @deprecated — homepageLayout.sections[id].productIds kullanın */
 export function normalizeHomepageSlots(slots) {
   if (!slots || typeof slots !== 'object') return { ...EMPTY_SLOTS };
   return {
@@ -40,8 +103,93 @@ export function normalizeHomepageSlots(slots) {
   };
 }
 
-/** Sabit ID sırası + otomatik doldurma */
-export function resolveSectionProducts(catalog, slotIds, fallbackFn, limit = 16) {
+function normalizeStripSection(id, from = {}, legacyIds = []) {
+  const def = DEFAULT_SECTIONS[id];
+  const productIds = Array.isArray(from.productIds)
+    ? from.productIds.map(String).filter(Boolean)
+    : legacyIds;
+  return {
+    ...def,
+    enabled: from.enabled !== false,
+    title: String(from.title ?? def.title).trim() || def.title,
+    subtitle: String(from.subtitle ?? def.subtitle ?? '').trim(),
+    badge: String(from.badge ?? def.badge ?? '').trim(),
+    seeAllHref: String(from.seeAllHref ?? def.seeAllHref).trim() || def.seeAllHref,
+    seeAllLabel: String(from.seeAllLabel ?? def.seeAllLabel).trim() || def.seeAllLabel,
+    accent: from.accent === 'brand' ? 'brand' : 'orange',
+    limit: Math.min(48, Math.max(1, Number(from.limit) || def.limit)),
+    autoFill: from.autoFill !== false,
+    productIds,
+  };
+}
+
+/** settings.homepageLayout + eski homepageSlots birleşimi */
+export function normalizeHomepageLayout(settings) {
+  const legacySlots = normalizeHomepageSlots(settings?.homepageSlots);
+  const raw = settings?.homepageLayout;
+
+  const sections = {
+    bestsellers: normalizeStripSection('bestsellers', raw?.sections?.bestsellers, legacySlots.bestsellers),
+    educational: normalizeStripSection('educational', raw?.sections?.educational, legacySlots.educational),
+    deals: normalizeStripSection('deals', raw?.sections?.deals, legacySlots.deals),
+    allProducts: {
+      ...DEFAULT_SECTIONS.allProducts,
+      ...(raw?.sections?.allProducts || {}),
+      enabled: raw?.sections?.allProducts?.enabled !== false,
+      title: String(raw?.sections?.allProducts?.title ?? DEFAULT_SECTIONS.allProducts.title).trim()
+        || DEFAULT_SECTIONS.allProducts.title,
+      subtitle: String(raw?.sections?.allProducts?.subtitle ?? '').trim(),
+      showSort: raw?.sections?.allProducts?.showSort !== false,
+    },
+  };
+
+  const allowed = new Set(HOMEPAGE_SECTION_IDS);
+  let order = Array.isArray(raw?.order)
+    ? raw.order.filter((id) => allowed.has(id))
+    : [...DEFAULT_SECTION_ORDER];
+
+  for (const id of DEFAULT_SECTION_ORDER) {
+    if (!order.includes(id)) order.push(id);
+  }
+
+  return { order, sections };
+}
+
+export function layoutToHomepageSlots(layout) {
+  const { sections } = layout;
+  return {
+    bestsellers: sections.bestsellers?.productIds || [],
+    educational: sections.educational?.productIds || [],
+    deals: sections.deals?.productIds || [],
+  };
+}
+
+export function layoutToHomepageLayoutPayload(layout) {
+  const normalized = normalizeHomepageLayout({ homepageLayout: layout });
+  return {
+    order: normalized.order,
+    sections: normalized.sections,
+  };
+}
+
+function resolveManualProducts(catalog, slotIds, limit) {
+  const list = Array.isArray(catalog) ? catalog : [];
+  const byId = new Map(list.filter((p) => p?.id).map((p) => [p.id, p]));
+  const result = [];
+  for (const id of slotIds || []) {
+    const p = byId.get(id);
+    if (p) result.push(p);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+/** Sabit ID sırası + isteğe bağlı otomatik doldurma */
+export function resolveSectionProducts(catalog, slotIds, fallbackFn, limit = 16, autoFill = true) {
+  if (!autoFill) {
+    return resolveManualProducts(catalog, slotIds, limit);
+  }
+
   const list = Array.isArray(catalog) ? catalog : [];
   const byId = new Map(list.filter((p) => p?.id).map((p) => [p.id, p]));
   const seen = new Set();
@@ -82,22 +230,54 @@ export function getEducationalProductsAuto(catalog, limit = 12) {
   );
 }
 
-export function resolveHomepageSection(catalog, slots, sectionId, limit) {
-  const normalized = normalizeHomepageSlots(slots);
-  const ids = normalized[sectionId] || [];
+export function resolveHomepageSection(catalog, settingsOrLayout, sectionId, limitOverride) {
+  const layout = settingsOrLayout?.sections
+    ? normalizeHomepageLayout({ homepageLayout: settingsOrLayout })
+    : normalizeHomepageLayout(settingsOrLayout);
+  const cfg = layout.sections[sectionId];
+  if (!cfg || cfg.enabled === false) return [];
+
+  const limit = limitOverride ?? cfg.limit ?? 16;
+  const ids = cfg.productIds || [];
+  const autoFill = cfg.autoFill !== false;
 
   if (sectionId === 'bestsellers') {
-    return resolveSectionProducts(catalog, ids, (c) => getBestSellerProducts(c, limit), limit);
+    return resolveSectionProducts(
+      catalog,
+      ids,
+      (c) => getBestSellerProducts(c, limit),
+      limit,
+      autoFill,
+    );
   }
   if (sectionId === 'educational') {
-    return resolveSectionProducts(catalog, ids, (c) => getEducationalProductsAuto(c, limit), limit);
+    return resolveSectionProducts(
+      catalog,
+      ids,
+      (c) => getEducationalProductsAuto(c, limit),
+      limit,
+      autoFill,
+    );
   }
   if (sectionId === 'deals') {
-    return resolveSectionProducts(catalog, ids, (c) => getDealProductsAuto(c, limit), limit);
+    return resolveSectionProducts(
+      catalog,
+      ids,
+      (c) => getDealProductsAuto(c, limit),
+      limit,
+      autoFill,
+    );
   }
   return [];
 }
 
-export function countPinnedInSection(slots, sectionId) {
-  return (normalizeHomepageSlots(slots)[sectionId] || []).length;
+export function countPinnedInSection(layoutOrSettings, sectionId) {
+  const layout = layoutOrSettings?.sections
+    ? normalizeHomepageLayout({ homepageLayout: layoutOrSettings })
+    : normalizeHomepageLayout(layoutOrSettings);
+  return (layout.sections[sectionId]?.productIds || []).length;
+}
+
+export function getSectionHashId(sectionId) {
+  return HOMEPAGE_SECTIONS.find((s) => s.id === sectionId)?.hashId || sectionId;
 }

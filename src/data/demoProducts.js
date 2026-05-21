@@ -204,6 +204,8 @@ export const DEFAULT_SETTINGS = {
     educational: [],
     deals: [],
   },
+  /** Ana sayfa bölüm sırası, başlıklar ve ürün listeleri */
+  homepageLayout: null,
   promotions: {
     ibanDiscountPercent: 10,
     freeShippingThreshold: 750,
