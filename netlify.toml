@@ -66,6 +66,24 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/members/register"
+  to = "/.netlify/functions/members-register"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/members/login"
+  to = "/.netlify/functions/members-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/members/list"
+  to = "/.netlify/functions/members-list"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"

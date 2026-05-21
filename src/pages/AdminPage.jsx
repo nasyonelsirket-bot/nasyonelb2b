@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, CloudUpload, ClipboardList, LayoutGrid } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, CloudUpload, ClipboardList, LayoutGrid, Users } from 'lucide-react';
 import HomepagePlacementAdmin from '@/components/admin/HomepagePlacementAdmin';
 import OrdersAdmin from '@/components/admin/OrdersAdmin';
+import MembersAdmin from '@/components/admin/MembersAdmin';
 import { getAdminPasswordForPublish, askPublishPassword } from '@/services/catalogApi';
 import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
 import Button from '@/components/ui/Button';
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'banners', label: 'Bannerlar', icon: Image },
   { id: 'placement', label: 'Yerleşim', icon: LayoutGrid },
   { id: 'orders', label: 'Siparişler', icon: ClipboardList },
+  { id: 'members', label: 'Üyeler', icon: Users },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
   { id: 'excel', label: 'Excel', icon: Upload },
   { id: 'trendyol', label: 'Trendyol', icon: RefreshCw },
@@ -231,6 +233,10 @@ export default function AdminPage() {
 
             {tab === 'orders' && (
               <OrdersAdmin setMsg={showMsg} />
+            )}
+
+            {tab === 'members' && (
+              <MembersAdmin showMsg={showMsg} />
             )}
 
             {tab === 'settings' && (

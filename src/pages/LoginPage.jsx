@@ -1,23 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { UserPlus } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import OrderTrackSection from '@/components/home/OrderTrackSection';
+import { loginMember } from '@/services/memberApi';
+import { saveMemberSession } from '@/utils/memberSession';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [notMember, setNotMember] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setNotMember(false);
+    setLoading(true);
     try {
-      localStorage.setItem('nt_member_email', email.trim());
-    } catch {
-      /* ignore */
+      const member = await loginMember({ email: email.trim(), password });
+      saveMemberSession(member);
+      navigate('/');
+    } catch (err) {
+      if (err.code === 'NOT_REGISTERED') {
+        setNotMember(true);
+        setError('');
+      } else {
+        setNotMember(false);
+        setError(err.message || 'Giriş yapılamadı');
+      }
+    } finally {
+      setLoading(false);
     }
-    navigate('/');
   };
 
   useEffect(() => {
@@ -35,6 +53,24 @@ export default function LoginPage() {
         <h1 className="font-display text-2xl font-bold text-brand-900">Giriş Yap</h1>
         <p className="mt-2 text-sm text-gray-600">Üye olmadan da alışveriş yapabilirsiniz.</p>
 
+        {notMember && (
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+            <p className="font-semibold text-amber-900">Bu e-posta ile kayıtlı üyemiz yok</p>
+            <p className="mt-1 text-amber-800 leading-relaxed">
+              Girdiğiniz bilgilerle eşleşen bir üyelik bulunamadı. Alışverişe devam etmek için hemen
+              ücretsiz kayıt olabilirsiniz — üye olmadan da sipariş verebilirsiniz.
+            </p>
+            <Link
+              to="/kayit"
+              state={{ email: email.trim() }}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-800"
+            >
+              <UserPlus className="h-4 w-4" />
+              Hemen kayıt ol
+            </Link>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-medium text-brand-800">E-posta</label>
@@ -42,7 +78,10 @@ export default function LoginPage() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setNotMember(false);
+              }}
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"
             />
           </div>
@@ -50,13 +89,18 @@ export default function LoginPage() {
             <label className="text-xs font-medium text-brand-800">Şifre</label>
             <input
               type="password"
+              required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"
             />
           </div>
-          <Button type="submit" variant="primary" className="w-full">
-            Giriş yap
+          {error && (
+            <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          )}
+          <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+            {loading ? 'Kontrol ediliyor...' : 'Giriş yap'}
           </Button>
         </form>
 

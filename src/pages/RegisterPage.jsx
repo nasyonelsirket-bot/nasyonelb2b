@@ -3,23 +3,39 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import OrderTrackSection from '@/components/home/OrderTrackSection';
+import { registerMember } from '@/services/memberApi';
+import { saveMemberSession } from '@/utils/memberSession';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { hash } = useLocation();
+  const { hash, state } = useLocation();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => String(state?.email || '').trim());
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (state?.email) setEmail(String(state.email).trim());
+  }, [state?.email]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
     try {
-      localStorage.setItem('nt_member_email', email.trim());
-      localStorage.setItem('nt_member_name', name.trim());
-    } catch {
-      /* ignore */
+      const member = await registerMember({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      saveMemberSession(member);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Kayıt başarısız');
+    } finally {
+      setLoading(false);
     }
-    navigate('/');
   };
 
   useEffect(() => {
@@ -70,8 +86,16 @@ export default function RegisterPage() {
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"
             />
           </div>
-          <Button type="submit" variant="primary" className="w-full">
-            Hesap oluştur
+          {error && (
+            <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          )}
+          {state?.email && (
+            <p className="text-xs text-brand-700 bg-brand-50 rounded-lg px-3 py-2">
+              Giriş sayfasından yönlendirildiniz — bilgilerinizi tamamlayıp kayıt olun.
+            </p>
+          )}
+          <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+            {loading ? 'Kaydediliyor...' : 'Hesap oluştur'}
           </Button>
         </form>
 

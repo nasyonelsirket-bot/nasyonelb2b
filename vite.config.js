@@ -149,6 +149,102 @@ function applyResendEnv(env = {}) {
   if (env.ORDER_NOTIFY_EMAIL) process.env.ORDER_NOTIFY_EMAIL = env.ORDER_NOTIFY_EMAIL
 }
 
+function membersDevProxy() {
+  const membersDir = path.join(process.cwd(), '.data', 'members')
+  const {
+    createFileStorage,
+    registerMember,
+    loginMember,
+    listMembers,
+  } = require('./lib/members.cjs')
+  const { verifyAdmin } = require('./lib/adminAuth.cjs')
+
+  async function readJsonBody(req) {
+    const chunks = []
+    for await (const chunk of req) chunks.push(chunk)
+    return JSON.parse(Buffer.concat(chunks).toString() || '{}')
+  }
+
+  function sendJson(res, status, data) {
+    res.statusCode = status
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify(data))
+  }
+
+  return {
+    name: 'members-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/members/register', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { error: 'Method not allowed' })
+          return
+        }
+        try {
+          const body = await readJsonBody(req)
+          const result = await registerMember(createFileStorage(membersDir), body)
+          if (!result.ok) {
+            sendJson(res, result.status, { error: result.error, code: result.code })
+            return
+          }
+          sendJson(res, 201, { ok: true, member: result.member })
+        } catch (err) {
+          sendJson(res, 500, { error: err.message || 'Kayıt başarısız' })
+        }
+      })
+
+      server.middlewares.use('/api/members/login', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'POST') {
+          sendJson(res, 405, { error: 'Method not allowed' })
+          return
+        }
+        try {
+          const body = await readJsonBody(req)
+          const result = await loginMember(createFileStorage(membersDir), body)
+          if (!result.ok) {
+            sendJson(res, result.status, { error: result.error, code: result.code })
+            return
+          }
+          sendJson(res, 200, { ok: true, member: result.member })
+        } catch (err) {
+          sendJson(res, 500, { error: err.message || 'Giriş başarısız' })
+        }
+      })
+
+      server.middlewares.use('/api/members/list', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'GET') {
+          sendJson(res, 405, { error: 'Method not allowed' })
+          return
+        }
+        if (!verifyAdmin(req.headers)) {
+          sendJson(res, 401, { error: 'Yetkisiz' })
+          return
+        }
+        try {
+          const members = await listMembers(createFileStorage(membersDir))
+          sendJson(res, 200, { members, count: members.length })
+        } catch (err) {
+          sendJson(res, 500, { error: err.message || 'Liste alınamadı' })
+        }
+      })
+    },
+  }
+}
+
 function orderPdfDevProxy(env = {}) {
   const ordersDir = path.join(process.cwd(), '.data', 'orders')
   applyResendEnv(env)
@@ -456,7 +552,7 @@ function orderPdfDevProxy(env = {}) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env), orderPdfDevProxy(env)],
+  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env), membersDevProxy(), orderPdfDevProxy(env)],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
