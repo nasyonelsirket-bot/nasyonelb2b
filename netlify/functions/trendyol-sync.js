@@ -51,7 +51,7 @@ exports.handler = async (event) => {
     const result = fullSync
       ? await syncTrendyolCatalogWithSales(credentials, {
           size: params.size || '50',
-          salesDays: params.salesDays || 30,
+          salesDays: params.salesDays || 15,
           clientIp,
         })
       : await syncTrendyolProducts(credentials, {

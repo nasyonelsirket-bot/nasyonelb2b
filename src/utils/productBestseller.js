@@ -1,4 +1,5 @@
-/** En çok satanlar — öncelik: Trendyol Sipariş API (trendyolUnitsSold) */
+/** En çok satanlar — Trendyol Sipariş API, son 15 gün, iptal/iade hariç */
+export const TRENDYOL_SALES_PERIOD_DAYS = 15;
 
 const EDUCATIONAL_KEYWORDS = [
   'eğitici',

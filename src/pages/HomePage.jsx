@@ -96,7 +96,7 @@ export default function HomePage() {
             title="En Çok Satanlar"
             subtitle={
               hasOrderSales
-                ? 'Son 30 günde en çok tercih edilen ürünler'
+                ? 'Son 15 günde en çok tercih edilen ürünler (iptal/iade hariç)'
                 : 'Müşterilerimizin en çok tercih ettiği ürünler'
             }
             badge="Popüler"

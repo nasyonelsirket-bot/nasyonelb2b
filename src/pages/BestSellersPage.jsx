@@ -23,7 +23,7 @@ export default function BestSellersPage() {
           title="En Çok Satanlar"
           subtitle={
             hasSales
-              ? `${bestSellers.length} ürün — son 30 gün satış sıralaması`
+              ? `${bestSellers.length} ürün — son 15 gün satış sıralaması (iptal/iade hariç)`
               : `${bestSellers.length} ürün — popülerlik sıralaması`
           }
           defaultSort="bestseller"

@@ -114,7 +114,7 @@ export default function AdminPage() {
       store.importTrendyolProducts(tyProducts);
       const soldCount = tyProducts.filter((p) => Number(p.trendyolUnitsSold) > 0).length;
       const salesNote = sales
-        ? ` · Sipariş API: ${soldCount} çok satan (son ${sales.periodDays || 30} gün, ${sales.totalUnitsSold || 0} adet)`
+        ? ` · Sipariş API: ${soldCount} çok satan (son ${sales.periodDays || 15} gün, iptal/iade hariç, ${sales.totalUnitsSold || 0} adet)`
         : '';
       const pass = askPublishPassword();
       if (pass) {
@@ -519,7 +519,7 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
         <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
         <p className="text-sm text-gray-600 mb-4">
           Ürünler Trendyol Ürün API&apos;den, <strong>en çok satanlar</strong> ise Trendyol{' '}
-          <strong>Sipariş API</strong>&apos;den (son 30 gün sipariş adetleri) hesaplanır. Satış fiyatı =
+          <strong>Sipariş API</strong>&apos;den (son 15 gün, iptal ve iade düşülerek) hesaplanır. Satış fiyatı =
           Trendyol fiyatı ÷ bölücü (varsayılan 2).
         </p>
         {tyProgress && (
