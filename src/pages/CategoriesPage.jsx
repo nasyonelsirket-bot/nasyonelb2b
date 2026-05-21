@@ -68,7 +68,7 @@ export default function CategoriesPage() {
                 to={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium ${cat === c.name ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
               >
-                {c.icon} {c.name}
+                {c.name}
               </Link>
             ))}
           </div>
