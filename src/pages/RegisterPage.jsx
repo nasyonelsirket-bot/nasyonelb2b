@@ -4,11 +4,12 @@ import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import OrderTrackSection from '@/components/home/OrderTrackSection';
 import { registerMember } from '@/services/memberApi';
-import { saveMemberSession } from '@/utils/memberSession';
+import { useMember } from '@/context/MemberContext';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { hash, state } = useLocation();
+  const { setSession, isLoggedIn } = useMember();
   const [name, setName] = useState('');
   const [email, setEmail] = useState(() => String(state?.email || '').trim());
   const [password, setPassword] = useState('');
@@ -18,6 +19,10 @@ export default function RegisterPage() {
   useEffect(() => {
     if (state?.email) setEmail(String(state.email).trim());
   }, [state?.email]);
+
+  useEffect(() => {
+    if (isLoggedIn) navigate('/hesabim', { replace: true });
+  }, [isLoggedIn, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,8 +34,8 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
       });
-      saveMemberSession(member);
-      navigate('/');
+      setSession(member);
+      navigate('/hesabim', { replace: true });
     } catch (err) {
       setError(err.message || 'Kayıt başarısız');
     } finally {

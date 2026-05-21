@@ -9,12 +9,14 @@ import {
   LEGAL_ROUTES,
 } from '@/constants/siteLinks';
 import { useStore } from '@/context/StoreContext';
+import { useMember } from '@/context/MemberContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { APP_VERSION } from '@/constants/appVersion';
 import FaqSection from '@/components/home/FaqSection';
 
 export default function Footer() {
   const { settings } = useStore();
+  const { isLoggedIn } = useMember();
   const siteName = settings.siteName || 'Nasyonel Toys';
 
   return (
@@ -68,8 +70,8 @@ export default function Footer() {
             <h4 className="font-display font-bold mb-4 text-accent-gold">Hesabım</h4>
             <ul className="space-y-2 text-sm text-brand-100">
               <li>
-                <Link to="/giris" className="hover:text-white">
-                  Giriş Yap
+                <Link to={isLoggedIn ? '/hesabim' : '/giris'} className="hover:text-white">
+                  {isLoggedIn ? 'Hesabım' : 'Giriş Yap'}
                 </Link>
               </li>
               <li>

@@ -151,13 +151,18 @@ function applyResendEnv(env = {}) {
 
 function membersDevProxy() {
   const membersDir = path.join(process.cwd(), '.data', 'members')
+  const ordersDir = path.join(process.cwd(), '.data', 'orders')
   const {
     createFileStorage,
     registerMember,
     loginMember,
     listMembers,
+    getMemberAccount,
+    updateMemberAccount,
+    verifyMemberAccess,
   } = require('./lib/members.cjs')
   const { verifyAdmin } = require('./lib/adminAuth.cjs')
+  const { listOrdersForMemberEmail, getOrderDetailForMember } = require('./lib/memberOrders.cjs')
 
   async function readJsonBody(req) {
     const chunks = []
@@ -239,6 +244,140 @@ function membersDevProxy() {
           sendJson(res, 200, { members, count: members.length })
         } catch (err) {
           sendJson(res, 500, { error: err.message || 'Liste alınamadı' })
+        }
+      })
+
+      const memberAuth = (req) => ({
+        memberId: String(req.headers['x-member-id'] || '').trim(),
+        email: String(req.headers['x-member-email'] || '').trim(),
+      })
+
+      server.middlewares.use('/api/members/account', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        const { memberId, email } = memberAuth(req)
+        if (!memberId || !email) {
+          sendJson(res, 401, { error: 'Giriş gerekli' })
+          return
+        }
+        const storage = createFileStorage(membersDir)
+        try {
+          if (req.method === 'GET') {
+            const result = await getMemberAccount(storage, memberId, email)
+            if (!result.ok) {
+              sendJson(res, result.status, { error: result.error })
+              return
+            }
+            sendJson(res, 200, { ok: true, profile: result.profile })
+            return
+          }
+          if (req.method === 'PUT') {
+            const body = await readJsonBody(req)
+            const result = await updateMemberAccount(storage, memberId, email, body)
+            if (!result.ok) {
+              sendJson(res, result.status, { error: result.error })
+              return
+            }
+            sendJson(res, 200, { ok: true, profile: result.profile })
+            return
+          }
+          sendJson(res, 405, { error: 'Method not allowed' })
+        } catch (err) {
+          sendJson(res, 500, { error: err.message || 'Hesap hatası' })
+        }
+      })
+
+      server.middlewares.use('/api/members/orders', async (req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+        if (req.method !== 'GET') {
+          sendJson(res, 405, { error: 'Method not allowed' })
+          return
+        }
+        const { memberId, email } = memberAuth(req)
+        if (!memberId || !email) {
+          sendJson(res, 401, { error: 'Giriş gerekli' })
+          return
+        }
+        try {
+          const storage = createFileStorage(membersDir)
+          const member = await verifyMemberAccess(storage, memberId, email)
+          if (!member) {
+            sendJson(res, 403, { error: 'Oturum geçersiz' })
+            return
+          }
+          const url = new URL(req.url, 'http://localhost')
+          const orderId = url.searchParams.get('id') || ''
+          if (orderId) {
+            const indexPath = path.join(ordersDir, '_index.json')
+            let index = []
+            if (fs.existsSync(indexPath)) {
+              index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+            }
+            const row = (Array.isArray(index) ? index : []).find((r) => r.id === orderId)
+            if (!row) {
+              sendJson(res, 404, { error: 'Sipariş bulunamadı' })
+              return
+            }
+            const jsonPath = path.join(ordersDir, `${orderId}.json`)
+            if (!fs.existsSync(jsonPath)) {
+              sendJson(res, 404, { error: 'Sipariş bulunamadı' })
+              return
+            }
+            const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+            const norm = (e) => String(e || '').trim().toLowerCase()
+            if (norm(order.customer?.email) !== norm(member.email)) {
+              sendJson(res, 403, { error: 'Yetkisiz' })
+              return
+            }
+            const { STATUS_TR } = require('./lib/memberOrders.cjs')
+            sendJson(res, 200, {
+              ok: true,
+              order: {
+                id: order.id,
+                orderNumber: order.orderNumber || order.id,
+                status: order.status,
+                statusLabel: STATUS_TR[order.status] || order.status,
+                createdAt: order.createdAt,
+                orderTotal: order.orderTotal,
+                paymentMethod: order.paymentMethod,
+                itemCount: Array.isArray(order.items) ? order.items.length : 0,
+                customer: order.customer,
+                items: order.items,
+                shippingCarrier: order.shippingCarrier || null,
+                trackingNumber: order.trackingNumber || null,
+              },
+            })
+            return
+          }
+          const norm = (e) => String(e || '').trim().toLowerCase()
+          const indexPath = path.join(ordersDir, '_index.json')
+          let index = []
+          if (fs.existsSync(indexPath)) {
+            index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+          }
+          const { STATUS_TR } = require('./lib/memberOrders.cjs')
+          const orders = (Array.isArray(index) ? index : [])
+            .filter((r) => norm(r.customerEmail) === norm(member.email))
+            .map((r) => ({
+              id: r.id,
+              orderNumber: r.orderNumber || r.id,
+              status: r.status,
+              statusLabel: STATUS_TR[r.status] || r.status,
+              createdAt: r.createdAt,
+              orderTotal: r.orderTotal,
+              paymentMethod: r.paymentMethod,
+              itemCount: r.itemCount || 0,
+            }))
+          sendJson(res, 200, { ok: true, orders, count: orders.length })
+        } catch (err) {
+          sendJson(res, 500, { error: err.message || 'Siparişler alınamadı' })
         }
       })
     },

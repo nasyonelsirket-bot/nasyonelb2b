@@ -5,11 +5,12 @@ import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import OrderTrackSection from '@/components/home/OrderTrackSection';
 import { loginMember } from '@/services/memberApi';
-import { saveMemberSession } from '@/utils/memberSession';
+import { useMember } from '@/context/MemberContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { hash } = useLocation();
+  const { hash, state } = useLocation();
+  const { setSession, isLoggedIn } = useMember();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,8 +24,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const member = await loginMember({ email: email.trim(), password });
-      saveMemberSession(member);
-      navigate('/');
+      setSession(member);
+      const dest = state?.from && String(state.from).startsWith('/hesabim') ? state.from : '/hesabim';
+      navigate(dest, { replace: true });
     } catch (err) {
       if (err.code === 'NOT_REGISTERED') {
         setNotMember(true);
@@ -37,6 +39,10 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn) navigate('/hesabim', { replace: true });
+  }, [isLoggedIn, navigate]);
 
   useEffect(() => {
     if (hash !== '#siparis-takip') return;

@@ -4,6 +4,7 @@ import { Menu, X, ShoppingCart, User, Package } from 'lucide-react';
 import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
+import { useMember } from '@/context/MemberContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 
 const NAV = [
@@ -19,6 +20,7 @@ const mobileNavClass =
 export default function Header() {
   const { settings } = useStore();
   const { totalItems, cartAnimating } = useCart();
+  const { isLoggedIn, member } = useMember();
   const { pathname } = useLocation();
   const isHome = pathname === '/';
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,13 +65,23 @@ export default function Header() {
               <Package className="h-4 w-4" />
               Sipariş Takip
             </Link>
-            <Link
-              to="/giris"
-              className="hidden sm:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
-            >
-              <User className="h-4 w-4" />
-              Giriş / Üye Ol
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                to="/hesabim"
+                className="hidden sm:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50 max-w-[140px]"
+              >
+                <User className="h-4 w-4 shrink-0" />
+                <span className="truncate">Hesabım</span>
+              </Link>
+            ) : (
+              <Link
+                to="/giris"
+                className="hidden sm:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
+              >
+                <User className="h-4 w-4" />
+                Giriş / Üye Ol
+              </Link>
+            )}
 
             <Link
               to="/sepet"
@@ -118,9 +130,15 @@ export default function Header() {
                 {item.label}
               </NavLink>
             ))}
-            <Link to="/giris" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
-              Giriş / Üye Ol
-            </Link>
+            {isLoggedIn ? (
+              <Link to="/hesabim" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
+                Hesabım {member?.name ? `(${member.name.split(' ')[0]})` : ''}
+              </Link>
+            ) : (
+              <Link to="/giris" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
+                Giriş / Üye Ol
+              </Link>
+            )}
             <Link
               to="/giris#siparis-takip"
               className={mobileNavClass}

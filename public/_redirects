@@ -10,5 +10,7 @@
 /api/members/register  /.netlify/functions/members-register  200!
 /api/members/login  /.netlify/functions/members-login  200!
 /api/members/list  /.netlify/functions/members-list  200!
+/api/members/account  /.netlify/functions/members-account  200!
+/api/members/orders  /.netlify/functions/members-orders  200!
 /yeni-urunler  /kategoriler  301
 /kampanyalar  /kategoriler  301

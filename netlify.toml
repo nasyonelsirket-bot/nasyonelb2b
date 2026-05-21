@@ -84,6 +84,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/members/account"
+  to = "/.netlify/functions/members-account"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/members/orders"
+  to = "/.netlify/functions/members-orders"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"
