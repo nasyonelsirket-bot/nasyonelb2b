@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
+import OrderTrackSection from '@/components/home/OrderTrackSection';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +21,14 @@ export default function RegisterPage() {
     }
     navigate('/');
   };
+
+  useEffect(() => {
+    if (hash !== '#siparis-takip') return;
+    const el = document.getElementById('siparis-takip');
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    }
+  }, [hash]);
 
   return (
     <>
@@ -94,6 +104,10 @@ export default function RegisterPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div id="siparis-takip" className="mt-10 scroll-mt-28">
+          <OrderTrackSection variant="auth" />
         </div>
       </div>
     </>

@@ -75,7 +75,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/#siparis-takip" className="hover:text-white">
+                <Link to="/giris#siparis-takip" className="hover:text-white">
                   Sipariş Takip
                 </Link>
               </li>

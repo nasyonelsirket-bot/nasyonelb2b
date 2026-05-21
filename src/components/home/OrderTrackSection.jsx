@@ -13,7 +13,8 @@ const STATUS_TR = {
   cancelled: 'İptal / red',
 };
 
-export default function OrderTrackSection() {
+export default function OrderTrackSection({ variant = 'page' }) {
+  const isAuth = variant === 'auth';
   const [orderNumber, setOrderNumber] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,14 @@ export default function OrderTrackSection() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-3 sm:px-4 py-6">
-      <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 sm:p-8 shadow-card">
+    <section className={isAuth ? 'w-full' : 'mx-auto max-w-7xl px-3 sm:px-4 py-6'}>
+      <div
+        className={
+          isAuth
+            ? 'rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 shadow-card'
+            : 'rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 sm:p-8 shadow-card'
+        }
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-900 text-accent-gold">
             <Package className="h-6 w-6" />
@@ -52,7 +59,10 @@ export default function OrderTrackSection() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+        <form
+          onSubmit={handleSubmit}
+          className={`grid grid-cols-1 gap-3 ${isAuth ? '' : 'sm:grid-cols-2 max-w-2xl'}`}
+        >
           <div>
             <label className="text-xs font-medium text-brand-800">Sipariş numarası *</label>
             <input
@@ -74,8 +84,8 @@ export default function OrderTrackSection() {
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"
             />
           </div>
-          <div className="sm:col-span-2">
-            <Button type="submit" variant="primary" disabled={loading}>
+          <div className={isAuth ? '' : 'sm:col-span-2'}>
+            <Button type="submit" variant="primary" disabled={loading} className={isAuth ? 'w-full' : ''}>
               <Search className="h-4 w-4" />
               {loading ? 'Sorgulanıyor...' : 'Siparişi sorgula'}
             </Button>

@@ -6,7 +6,6 @@ import HeroBanner from '@/components/home/HeroBanner';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
-import OrderTrackSection from '@/components/home/OrderTrackSection';
 import TrustBadges from '@/components/home/TrustBadges';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
 import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
@@ -21,7 +20,7 @@ import {
   hasTrendyolSalesData,
 } from '@/utils/productBestseller';
 
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'siparis-takip', 'sss'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sss'];
 
 export default function HomePage() {
   const { products } = useStore();
@@ -84,10 +83,6 @@ export default function HomePage() {
       />
 
       <HeroBanner />
-
-      <div id="siparis-takip" className="scroll-mt-24">
-        <OrderTrackSection />
-      </div>
 
       {!q && bestSellers.length > 0 && (
         <div id="cok-satanlar" className="scroll-mt-32">
