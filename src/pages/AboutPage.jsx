@@ -20,7 +20,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 py-14 sm:py-20 text-center">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold">
             <Sparkles className="h-4 w-4" />
-            Markalya · Eğitici Oyuncaklar
+            Nasyonel Toys · Eğitici Oyuncaklar
           </p>
           <h1 className="mt-4 font-display text-3xl sm:text-5xl font-bold">{ABOUT_HERO.title}</h1>
           <p className="mt-4 text-base sm:text-lg text-orange-50/95 max-w-2xl mx-auto">{ABOUT_HERO.subtitle}</p>
@@ -31,14 +31,14 @@ export default function AboutPage() {
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/#markalya">
+            <Link to="/#egitici">
               <Button
                 type="button"
                 size="lg"
                 className="bg-white/10 text-white border border-white/30 hover:bg-white/20"
               >
                 <GraduationCap className="h-5 w-5" />
-                Markalya Koleksiyonu
+                Eğitici Oyuncaklar
               </Button>
             </Link>
           </div>
@@ -95,7 +95,7 @@ export default function AboutPage() {
         <div className="mt-12 rounded-2xl bg-gradient-to-r from-brand-900 to-brand-800 p-6 sm:p-8 text-center text-white">
           <h2 className="font-display text-xl sm:text-2xl font-bold">Alışverişe başlayın</h2>
           <p className="mt-2 text-brand-100 text-sm sm:text-base">
-            Markalya eğitici oyuncaklar ve en çok satan ürünler bir arada.
+            Eğitici oyuncaklar ve en çok satan ürünler bir arada.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/">

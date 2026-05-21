@@ -52,23 +52,37 @@ export default function ProductStrip({
 
   if (!list.length) return null;
 
-  const accentBar =
-    accent === 'orange'
-      ? 'bg-gradient-to-r from-orange-500 to-amber-500'
-      : 'bg-gradient-to-r from-brand-700 to-brand-900';
+  const accentStyles = {
+    orange: {
+      bar: 'bg-gradient-to-r from-orange-500 to-amber-500',
+      badge: 'bg-orange-100 text-orange-800',
+      badgeIcon: Flame,
+      link: 'text-orange-600 hover:text-orange-700',
+    },
+    brand: {
+      bar: 'bg-gradient-to-r from-brand-700 to-brand-900',
+      badge: 'bg-brand-100 text-brand-800',
+      badgeIcon: Flame,
+      link: 'text-brand-700 hover:text-brand-900',
+    },
+  };
+  const style = accentStyles[accent] || accentStyles.orange;
+  const BadgeIcon = style.badgeIcon;
 
   return (
     <section className="py-4 sm:py-6 bg-white border-y border-gray-100">
       <div className="mx-auto max-w-7xl px-3 sm:px-4">
         <div className="flex items-start justify-between gap-3 mb-3 sm:mb-4">
           <div className="flex items-start gap-3 min-w-0">
-            <div className={`w-1 sm:w-1.5 self-stretch rounded-full shrink-0 ${accentBar}`} />
+            <div className={`w-1 sm:w-1.5 self-stretch rounded-full shrink-0 ${style.bar}`} />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display text-lg sm:text-2xl font-bold text-gray-900">{title}</h2>
                 {badge && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 text-orange-800 px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase">
-                    <Flame className="h-3 w-3" />
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase ${style.badge}`}
+                  >
+                    <BadgeIcon className="h-3 w-3" />
                     {badge}
                   </span>
                 )}

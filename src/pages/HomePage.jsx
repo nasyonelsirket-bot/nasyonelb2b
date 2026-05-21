@@ -19,7 +19,6 @@ import { hasProductDiscount, getDiscountPercent } from '@/utils/productPricing';
 import {
   getBestSellerProducts,
   filterEducationalProducts,
-  filterMarkalyaProducts,
   sortByBestSellers,
   hasTrendyolSalesData,
 } from '@/utils/productBestseller';
@@ -27,11 +26,11 @@ import {
 const FEATURES = [
   { icon: Package, title: '%50\'ye Varan İndirim', desc: 'Fırsat fiyatları' },
   { icon: Truck, title: '750 TL Kargo Bedava', desc: 'Altında sadece 100 TL' },
-  { icon: Shield, title: 'Güvenli Alışveriş', desc: 'Markalya kalitesi' },
+  { icon: Shield, title: 'Güvenli Alışveriş', desc: 'Kaliteli ürünler' },
   { icon: Headphones, title: 'IBAN %10 İndirim', desc: 'WhatsApp ile sipariş' },
 ];
 
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'markalya'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici'];
 
 export default function HomePage() {
   const { products } = useStore();
@@ -75,12 +74,6 @@ export default function HomePage() {
     );
   }, [catalog]);
 
-  const markalyaProducts = useMemo(() => {
-    const mark = filterMarkalyaProducts(catalog, 12);
-    if (mark.length >= 4) return mark;
-    return filterEducationalProducts(catalog, 12).slice(0, 12);
-  }, [catalog]);
-
   useEffect(() => {
     const id = hash.replace('#', '');
     if (!HASH_SECTIONS.includes(id)) return;
@@ -95,7 +88,7 @@ export default function HomePage() {
     <div className="pb-24 sm:pb-28 bg-gray-50">
       <SEO
         title="Ana Sayfa"
-        description="Nasyonel Toys — Markalya eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
+        description="Nasyonel Toys — eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
         path="/"
       />
 
@@ -120,19 +113,6 @@ export default function HomePage() {
       )}
 
       <CategorySlider />
-
-      {!q && markalyaProducts.length > 0 && (
-        <div id="markalya" className="scroll-mt-32">
-          <ProductStrip
-            products={markalyaProducts}
-            title="Markalya Koleksiyonu"
-            subtitle="Eğitici ve gelişim odaklı Markalya oyuncakları"
-            badge="Markalya"
-            seeAllHref="/kategoriler?cat=Eğitici%20Oyuncaklar"
-            accent="brand"
-          />
-        </div>
-      )}
 
       {!q && educationalProducts.length > 0 && (
         <div id="egitici" className="scroll-mt-32">

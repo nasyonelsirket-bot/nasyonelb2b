@@ -12,10 +12,7 @@ const EDUCATIONAL_KEYWORDS = [
   'ogren',
   'gelişim',
   'gelisim',
-  'markalya',
 ];
-
-const MARKALYA_KEYWORDS = ['markalya', 'marka ly', 'nasyonel toys'];
 
 function norm(s) {
   return String(s || '')
@@ -115,16 +112,6 @@ export function filterEducationalProducts(products, limit = 12) {
     list.filter((p) => {
       const blob = `${p.name} ${p.category} ${p.description || ''}`;
       return textHasAny(blob, EDUCATIONAL_KEYWORDS);
-    }),
-  ).slice(0, limit);
-}
-
-export function filterMarkalyaProducts(products, limit = 12) {
-  const list = Array.isArray(products) ? products : [];
-  return sortByBestSellers(
-    list.filter((p) => {
-      const blob = `${p.name} ${p.category} ${p.brand || ''} ${p.description || ''}`;
-      return textHasAny(blob, MARKALYA_KEYWORDS) || norm(p.category).includes('egitici');
     }),
   ).slice(0, limit);
 }
