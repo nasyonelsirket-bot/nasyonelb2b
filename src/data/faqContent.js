@@ -9,7 +9,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Sipariş durumumu nasıl takip edebilirim?',
-    a: 'Ana sayfadaki “Sipariş Takip” bölümüne sipariş numaranızı ve siparişte kullandığınız e-posta adresini girin. Kargoya verildiyse takip numaranız görünür.',
+    a: 'Üst menüden Sipariş Takip sayfasına gidin; sipariş numaranızı ve siparişte kullandığınız e-postayı girin. Kargoya verildiyse “Kargo takip et” ile takip numaranıza ulaşabilirsiniz.',
   },
   {
     q: 'Eksik ürün teslim alınması durumunda ne yapılmalıdır?',

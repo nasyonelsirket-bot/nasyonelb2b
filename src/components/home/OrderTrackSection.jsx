@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Package, Search } from 'lucide-react';
+import { Package, Search, ExternalLink, Truck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { trackOrder } from '@/services/orderApi';
+import { getCarrierTrackingUrl } from '@/utils/carrierTracking';
 
 const STATUS_TR = {
   pending_iban_check: 'Ödeme kontrolü bekleniyor',
@@ -95,7 +96,7 @@ export default function OrderTrackSection({ variant = 'page' }) {
         {error && <p className="mt-3 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
         {result && (
-          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm space-y-2">
+          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm space-y-3">
             <p>
               <strong>Sipariş:</strong> {result.orderNumber}
             </p>
@@ -110,6 +111,18 @@ export default function OrderTrackSection({ variant = 'page' }) {
             )}
             {result.status === 'shipped' && !result.trackingNumber && (
               <p className="text-gray-600">Kargoya verildi; takip numarası kısa süre içinde güncellenecektir.</p>
+            )}
+            {result.trackingNumber && getCarrierTrackingUrl(result.shippingCarrier, result.trackingNumber) && (
+              <a
+                href={getCarrierTrackingUrl(result.shippingCarrier, result.trackingNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 w-full rounded-lg bg-brand-900 text-white px-4 py-2.5 text-sm font-semibold hover:bg-brand-800"
+              >
+                <Truck className="h-4 w-4" />
+                Kargo takip et
+                <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+              </a>
             )}
           </div>
         )}

@@ -12,7 +12,7 @@ import { useStore } from '@/context/StoreContext';
 import { useMember } from '@/context/MemberContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 import { APP_VERSION } from '@/constants/appVersion';
-import FaqSection from '@/components/home/FaqSection';
+import FooterFaqAccordion from '@/components/layout/FooterFaqAccordion';
 
 export default function Footer() {
   const { settings } = useStore();
@@ -21,8 +21,6 @@ export default function Footer() {
 
   return (
     <footer className="gradient-hero text-white mt-auto">
-      <FaqSection />
-
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
@@ -80,7 +78,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/giris#siparis-takip" className="hover:text-white">
+                <Link to="/siparis-takip" className="hover:text-white">
                   Sipariş Takip
                 </Link>
               </li>
@@ -93,7 +91,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="font-display font-bold mb-4 text-accent-gold">Sözleşmeler</h4>
+            <h4 className="font-display font-bold mb-4 text-accent-gold">Sözleşmeler & Yardım</h4>
             <ul className="space-y-2 text-sm text-brand-100">
               {LEGAL_ROUTES.map((r) => (
                 <li key={r.path}>
@@ -102,6 +100,7 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <FooterFaqAccordion />
             </ul>
           </div>
         </div>

@@ -21,6 +21,7 @@ const BestSellersPage = lazy(() => import('@/pages/BestSellersPage'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+const OrderTrackPage = lazy(() => import('@/pages/OrderTrackPage'));
 const AccountOverviewPage = lazy(() => import('@/pages/account/AccountOverviewPage'));
 const AccountOrdersPage = lazy(() => import('@/pages/account/AccountOrdersPage'));
 const AccountAddressesPage = lazy(() => import('@/pages/account/AccountAddressesPage'));
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path="en-cok-satanlar" element={<Suspense fallback={<PageLoader />}><BestSellersPage /></Suspense>} />
                 <Route path="giris" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
                 <Route path="kayit" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
+                <Route path="siparis-takip" element={<Suspense fallback={<PageLoader />}><OrderTrackPage /></Suspense>} />
                 <Route
                   path="hesabim"
                   element={

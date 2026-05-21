@@ -13,7 +13,7 @@ import {
   countPinnedInSection,
 } from '@/utils/homepagePlacements';
 
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sss'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici'];
 
 export default function HomePage() {
   const { products, settings } = useStore();

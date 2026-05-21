@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
-import OrderTrackSection from '@/components/home/OrderTrackSection';
 import { registerMember } from '@/services/memberApi';
 import { useMember } from '@/context/MemberContext';
 
@@ -44,12 +43,10 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    if (hash !== '#siparis-takip') return;
-    const el = document.getElementById('siparis-takip');
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    if (hash === '#siparis-takip') {
+      navigate('/siparis-takip', { replace: true });
     }
-  }, [hash]);
+  }, [hash, navigate]);
 
   return (
     <>
@@ -118,6 +115,11 @@ export default function RegisterPage() {
             Giriş yapın
           </Link>
         </p>
+        <p className="mt-3 text-center text-sm text-gray-600">
+          <Link to="/siparis-takip" className="font-semibold text-brand-700 hover:underline">
+            Sipariş takip
+          </Link>
+        </p>
 
         <div className="mt-8 space-y-2">
           <p className="text-xs text-center text-gray-500">veya (yakında)</p>
@@ -135,9 +137,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div id="siparis-takip" className="mt-10 scroll-mt-28">
-          <OrderTrackSection variant="auth" />
-        </div>
       </div>
     </>
   );

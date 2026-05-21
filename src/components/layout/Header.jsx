@@ -56,7 +56,7 @@ export default function Header() {
 
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <Link
-              to="/giris#siparis-takip"
+              to="/siparis-takip"
               className="hidden sm:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
             >
               <Package className="h-4 w-4" />
@@ -137,7 +137,7 @@ export default function Header() {
               </Link>
             )}
             <Link
-              to="/giris#siparis-takip"
+              to="/siparis-takip"
               className={mobileNavClass}
               onClick={() => setMobileOpen(false)}
             >

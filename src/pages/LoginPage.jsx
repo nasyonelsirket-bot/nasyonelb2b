@@ -3,13 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
-import OrderTrackSection from '@/components/home/OrderTrackSection';
 import { loginMember } from '@/services/memberApi';
 import { useMember } from '@/context/MemberContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { hash, state } = useLocation();
+  const { state, hash } = useLocation();
   const { setSession, isLoggedIn } = useMember();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,12 +44,10 @@ export default function LoginPage() {
   }, [isLoggedIn, navigate]);
 
   useEffect(() => {
-    if (hash !== '#siparis-takip') return;
-    const el = document.getElementById('siparis-takip');
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    if (hash === '#siparis-takip') {
+      navigate('/siparis-takip', { replace: true });
     }
-  }, [hash]);
+  }, [hash, navigate]);
 
   return (
     <>
@@ -116,6 +113,11 @@ export default function LoginPage() {
             Kayıt olun
           </Link>
         </p>
+        <p className="mt-3 text-center text-sm text-gray-600">
+          <Link to="/siparis-takip" className="font-semibold text-brand-700 hover:underline">
+            Sipariş takip
+          </Link>
+        </p>
 
         <div className="mt-8 space-y-2">
           <p className="text-xs text-center text-gray-500">Hızlı kayıt (yakında aktif)</p>
@@ -144,9 +146,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div id="siparis-takip" className="mt-10 scroll-mt-28">
-          <OrderTrackSection variant="auth" />
-        </div>
       </div>
     </>
   );
