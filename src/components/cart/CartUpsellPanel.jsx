@@ -1,4 +1,6 @@
-import { Gift, Plus, Truck, Tag } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Gift, Plus, Truck, Tag, ExternalLink } from 'lucide-react';
+import { getProductPath } from '@/utils/productSeo';
 import Button from '@/components/ui/Button';
 import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
@@ -24,7 +26,11 @@ export default function CartUpsellPanel({ compact = false }) {
   const discounted = getEffectiveUnitPrice({ ...product, upsellPromo: promo });
   const listPrice = Number(product.price) || 0;
 
-  const addSuggested = () => {
+  const productUrl = getProductPath(product);
+
+  const addSuggested = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     addUpsellToCart(product, quantity, promo);
   };
 
@@ -58,8 +64,9 @@ export default function CartUpsellPanel({ compact = false }) {
         </div>
       </div>
 
-      <div
-        className={`flex gap-3 rounded-xl border border-brand-100 bg-white p-2.5 shadow-sm ${
+      <Link
+        to={productUrl}
+        className={`flex gap-3 rounded-xl border border-brand-100 bg-white p-2.5 shadow-sm hover:border-brand-300 hover:shadow-md transition-all group ${
           compact ? '' : 'sm:p-3'
         }`}
       >
@@ -71,15 +78,21 @@ export default function CartUpsellPanel({ compact = false }) {
             <Tag className="h-3 w-3" />
             %{bundle.discountPercent} indirim
           </span>
-          <p className="text-sm font-medium text-brand-900 line-clamp-2 leading-snug">{product.name}</p>
+          <p className="text-sm font-medium text-brand-900 line-clamp-2 leading-snug group-hover:text-brand-700">
+            {product.name}
+          </p>
           <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
             {listPrice > discounted && (
               <span className="text-xs text-gray-400 line-through">{formatPrice(listPrice)}</span>
             )}
             <span className="text-base font-bold text-brand-800">{formatPrice(discounted)}</span>
           </div>
+          <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 group-hover:text-brand-800">
+            Ürünü gör
+            <ExternalLink className="h-3.5 w-3.5" />
+          </span>
         </div>
-      </div>
+      </Link>
 
       <p className="text-xs text-gray-600">
         Tahmini sepet:{' '}
@@ -102,7 +115,7 @@ export default function CartUpsellPanel({ compact = false }) {
         variant="primary"
         size={compact ? 'sm' : 'md'}
         className="w-full text-xs sm:text-sm"
-        onClick={addSuggested}
+        onClick={(e) => addSuggested(e)}
       >
         <Plus className="h-4 w-4" />
         Sepete ekle (%{bundle.discountPercent} indirim)
