@@ -6,5 +6,6 @@
 /api/orders/list  /.netlify/functions/orders-list  200!
 /api/orders/get  /.netlify/functions/orders-get  200!
 /api/orders/update  /.netlify/functions/orders-update  200!
+/api/orders/track  /.netlify/functions/orders-track  200!
 /yeni-urunler  /kategoriler  301
 /kampanyalar  /kategoriler  301

@@ -17,22 +17,22 @@ export const ABOUT_HIGHLIGHTS = [
   {
     title: 'Güvenilir Seçim',
     desc: 'Eğitici oyuncaklarda kalite kontrol ve güvenli malzeme odağı.',
-    icon: '✨',
+    iconKey: 'shield',
   },
   {
     title: 'Eğitici Odak',
     desc: 'Montessori, zeka oyunları, ahşap setler ve yaş uyumlu öğrenme ürünleri.',
-    icon: '🧩',
+    iconKey: 'puzzle',
   },
   {
     title: 'Aile Dostu Alışveriş',
-    desc: '750 TL üzeri kargo bedava, net fiyat, WhatsApp ile hızlı sipariş onayı.',
-    icon: '🛒',
+    desc: '750 TL üzeri kargo bedava, net fiyat, kolay sipariş süreci.',
+    iconKey: 'cart',
   },
   {
     title: 'Çok Satanlar',
     desc: 'Mağazamızda en çok tercih edilen ürünler özel bölümde listelenir.',
-    icon: '🔥',
+    iconKey: 'flame',
   },
 ];
 

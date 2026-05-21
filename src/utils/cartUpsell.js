@@ -1,5 +1,11 @@
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
-import { UPSELL_PROMO_BUNDLE } from '@/utils/cartLinePricing';
+import { UPSELL_PROMO_BUNDLE, getUpsellDiscountRate } from '@/utils/cartLinePricing';
+
+function bundleUnitPrice(product) {
+  const base = Number(product.price) || 0;
+  const rate = getUpsellDiscountRate(UPSELL_PROMO_BUNDLE);
+  return Math.round(base * (1 - rate) * 100) / 100;
+}
 
 function norm(s) {
   return String(s || '')
@@ -67,9 +73,9 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   const amount = Math.max(0, Number(subtotal) || 0);
   if (amount >= threshold) return null;
 
-  const remaining = threshold - amount;
-  const targetMin = remaining * 0.88;
-  const targetMax = remaining * 1.08;
+  const remaining = Math.max(0, threshold - amount);
+  const targetMin = remaining * 0.98;
+  const targetMax = remaining * 1.12;
   const cartIds = cartItems.map((i) => i.id);
   const primaryCats = cartCategories(cartItems);
 
@@ -80,8 +86,8 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
 
   if (!candidates.length) return null;
 
-  const maxSingle = Math.max(remaining * 0.45, 80);
-  const pool = candidates.filter((c) => Number(c.product.price) <= maxSingle);
+  const maxSingle = Math.max(remaining * 0.5, 80);
+  const pool = candidates.filter((c) => bundleUnitPrice(c.product) <= maxSingle);
   const pickFrom = pool.length >= 2 ? pool : candidates.slice(0, 24);
 
   const picked = [];
@@ -89,7 +95,7 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
 
   for (const { product } of pickFrom) {
     if (picked.length >= 5) break;
-    const price = Number(product.price) || 0;
+    const price = bundleUnitPrice(product);
     if (picked.length >= 1 && sum + price > targetMax) continue;
     if (picked.length >= 2 && sum >= targetMin) break;
     picked.push({ product, quantity: 1, promo: UPSELL_PROMO_BUNDLE });
@@ -99,9 +105,9 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   if (picked.length < 2) {
     picked.length = 0;
     sum = 0;
-    for (const { product } of pickFrom.slice(0, 6)) {
+    for (const { product } of pickFrom.slice(0, 8)) {
       if (picked.length >= 4) break;
-      const price = Number(product.price) || 0;
+      const price = bundleUnitPrice(product);
       if (sum + price > targetMax && picked.length >= 2) break;
       picked.push({ product, quantity: 1, promo: UPSELL_PROMO_BUNDLE });
       sum += price;
@@ -111,7 +117,8 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
 
   if (!picked.length) return null;
 
-  const projectedSubtotal = amount + sum;
+  const projectedSubtotal = Math.round((amount + sum) * 100) / 100;
+  const listTotal = picked.reduce((s, { product }) => s + (Number(product.price) || 0), 0);
 
   return {
     type: 'bundle',
@@ -121,9 +128,10 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
     targetFill: remaining,
     picked,
     bundleTotal: Math.round(sum * 100) / 100,
-    projectedSubtotal: Math.round(projectedSubtotal * 100) / 100,
+    bundleListTotal: Math.round(listTotal * 100) / 100,
+    projectedSubtotal,
     reachesFreeShipping: projectedSubtotal >= threshold,
-    message: `${picked.length} ürünlük paket — kargo bedava + özel fiyat`,
+    message: `${picked.length} ürün — %5 indirimli ekle, kargo bedava`,
   };
 }
 

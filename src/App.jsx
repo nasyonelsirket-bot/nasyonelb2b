@@ -14,6 +14,10 @@ const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ContactPage = lazy(() => import('@/pages/ContactPage'));
+const BestSellersPage = lazy(() => import('@/pages/BestSellersPage'));
+const LegalPage = lazy(() => import('@/pages/LegalPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 
 function PageLoader() {
@@ -41,6 +45,10 @@ export default function App() {
                 <Route path="sepet" element={<Suspense fallback={<PageLoader />}><CartPage /></Suspense>} />
                 <Route path="hakkimizda" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="iletisim" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />
+                <Route path="en-cok-satanlar" element={<Suspense fallback={<PageLoader />}><BestSellersPage /></Suspense>} />
+                <Route path="giris" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+                <Route path="kayit" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
+                <Route path="sozlesme/:slug" element={<Suspense fallback={<PageLoader />}><LegalPage /></Suspense>} />
               </Route>
               <Route path="admin" element={<Suspense fallback={<PageLoader />}><ErrorBoundary><AdminPage /></ErrorBoundary></Suspense>} />
             </Routes>

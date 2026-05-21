@@ -287,6 +287,81 @@ function orderPdfDevProxy(env = {}) {
         res.end(JSON.stringify({ order }))
       })
 
+      server.middlewares.use('/api/orders/track', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+        const orderNumber = String(body.orderNumber || '').trim().toUpperCase()
+        const email = String(body.email || '').trim().toLowerCase()
+        if (!orderNumber || !email) {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Sipariş numarası ve e-posta zorunludur' }))
+          return
+        }
+        const indexPath = path.join(ordersDir, '_index.json')
+        let index = []
+        try {
+          if (fs.existsSync(indexPath)) index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+        } catch {
+          index = []
+        }
+        const row = (Array.isArray(index) ? index : []).find(
+          (r) =>
+            String(r.orderNumber || '').toUpperCase() === orderNumber ||
+            String(r.id || '').toUpperCase() === orderNumber,
+        )
+        if (!row) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Sipariş bulunamadı' }))
+          return
+        }
+        const jsonPath = path.join(ordersDir, `${row.id}.json`)
+        if (!fs.existsSync(jsonPath)) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Sipariş bulunamadı' }))
+          return
+        }
+        const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+        const orderEmail = String(order.customer?.email || '').trim().toLowerCase()
+        if (orderEmail !== email) {
+          res.statusCode = 403
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'E-posta adresi siparişle eşleşmiyor' }))
+          return
+        }
+        res.setHeader('Content-Type', 'application/json')
+        res.end(
+          JSON.stringify({
+            ok: true,
+            order: {
+              orderNumber: order.orderNumber || order.id,
+              status: order.status,
+              createdAt: order.createdAt,
+              orderTotal: order.orderTotal,
+              paymentMethod: order.paymentMethod,
+              shippingCarrier: order.shippingCarrier || null,
+              trackingNumber: order.trackingNumber || null,
+              shippedAt: order.shippedAt || null,
+            },
+          }),
+        )
+      })
+
       server.middlewares.use('/api/orders/update', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405
@@ -322,7 +397,13 @@ function orderPdfDevProxy(env = {}) {
           order.cancelledAt = now
         } else if (status === 'confirmed' || status === 'iban_verified') {
           order.confirmedAt = now
+        } else if (status === 'shipped') {
+          order.shippedAt = now
+          order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim()
+          order.trackingNumber = String(body.trackingNumber || order.trackingNumber || '').trim()
         }
+        if (body.shippingCarrier != null) order.shippingCarrier = String(body.shippingCarrier).trim()
+        if (body.trackingNumber != null) order.trackingNumber = String(body.trackingNumber).trim()
         fs.writeFileSync(jsonPath, JSON.stringify(order))
         const indexPath = path.join(ordersDir, '_index.json')
         if (fs.existsSync(indexPath)) {

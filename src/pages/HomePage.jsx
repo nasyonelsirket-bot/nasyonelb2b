@@ -1,14 +1,14 @@
 import { useMemo, useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useLocation, Link } from 'react-router-dom';
-import { Package, Truck, Shield, Headphones, ShoppingCart, ArrowRight } from 'lucide-react';
+import { ShoppingCart, ArrowRight } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
 import CategorySlider from '@/components/home/CategorySlider';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
-import HomeShopCTA from '@/components/home/HomeShopCTA';
-import HomeUrgencyStrip from '@/components/home/HomeUrgencyStrip';
+import OrderTrackSection from '@/components/home/OrderTrackSection';
+import TrustBadges from '@/components/home/TrustBadges';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
 import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
 import Button from '@/components/ui/Button';
@@ -22,14 +22,7 @@ import {
   hasTrendyolSalesData,
 } from '@/utils/productBestseller';
 
-const FEATURES = [
-  { icon: Package, title: '%50\'ye Varan İndirim', desc: 'Fırsat fiyatları' },
-  { icon: Truck, title: '750 TL Kargo Bedava', desc: 'Altında sadece 100 TL' },
-  { icon: Shield, title: 'Güvenli Alışveriş', desc: 'Kaliteli ürünler' },
-  { icon: Headphones, title: 'IBAN %10 İndirim', desc: 'WhatsApp ile sipariş' },
-];
-
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'siparis-takip', 'sss'];
 
 export default function HomePage() {
   const { products } = useStore();
@@ -46,15 +39,13 @@ export default function HomePage() {
   const catalog = useMemo(() => (Array.isArray(products) ? products : []), [products]);
 
   const filtered = useMemo(() => {
-    const base = !q
-      ? catalog
-      : catalog.filter(
-          (p) =>
-            p.name.toLowerCase().includes(q) ||
-            p.sku.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q),
-        );
-    return base;
+    if (!q) return catalog;
+    return catalog.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q),
+    );
   }, [catalog, q]);
 
   const bestSellers = useMemo(() => getBestSellerProducts(catalog, 16), [catalog]);
@@ -93,8 +84,11 @@ export default function HomePage() {
         path="/"
       />
 
-      <HomeUrgencyStrip onOpenCart={openCart} />
       <HeroBanner />
+
+      <div id="siparis-takip" className="scroll-mt-24">
+        <OrderTrackSection />
+      </div>
 
       {!q && bestSellers.length > 0 && (
         <div id="cok-satanlar" className="scroll-mt-32">
@@ -107,7 +101,7 @@ export default function HomePage() {
                 : 'Müşterilerimizin en çok tercih ettiği ürünler'
             }
             badge="Popüler"
-            seeAllHref="/#urunler"
+            seeAllHref="/en-cok-satanlar"
             accent="orange"
           />
         </div>
@@ -131,7 +125,7 @@ export default function HomePage() {
           <ProductStrip
             products={dealProducts}
             title="Flaş Fırsatlar"
-            subtitle="En yüksek indirimli ürünler — sınırlı süre fırsatı"
+            subtitle="En yüksek indirimli ürünler"
             badge="İndirim"
             seeAllHref="/#firsatlar"
             accent="orange"
@@ -139,32 +133,11 @@ export default function HomePage() {
         </div>
       )}
 
-      <HomeShopCTA onOpenCart={openCart} />
-
-      <section className="mx-auto max-w-7xl px-3 sm:px-4 py-2 animate-fade-in">
+      <section className="mx-auto max-w-7xl px-3 sm:px-4 py-2">
         <FreeShippingBanner subtotal={subtotal} />
       </section>
 
-      <section className="border-y border-gray-200 bg-white py-6 sm:py-8 animate-slide-up">
-        <div className="mx-auto max-w-7xl px-3 sm:px-4 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-          {FEATURES.map(({ icon: Icon, title, desc }) => (
-            <button
-              key={title}
-              type="button"
-              onClick={openCart}
-              className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 text-center sm:text-left rounded-xl hover:bg-orange-50/50 p-2 transition-colors touch-manipulation"
-            >
-              <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-white shadow-md">
-                <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-gray-900 text-xs sm:text-base">{title}</p>
-                <p className="text-[10px] sm:text-sm text-gray-500">{desc}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+      <TrustBadges />
 
       <div className="mx-auto max-w-7xl px-3 sm:px-4 py-4 flex flex-wrap justify-center gap-2">
         <Button type="button" variant="gold" size="lg" className="min-h-[48px]" onClick={openCart}>

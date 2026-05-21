@@ -45,7 +45,7 @@ function isPending(status) {
   return status === 'pending_cod' || status === 'pending_iban_check';
 }
 
-function OrderDetailPanel({ order, onApprove, onReject, busy }) {
+function OrderDetailPanel({ order, onApprove, onReject, onShip, busy }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
 
@@ -140,6 +140,13 @@ function OrderDetailPanel({ order, onApprove, onReject, busy }) {
         </div>
       )}
 
+      {(order.shippingCarrier || order.trackingNumber) && (
+        <div className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-blue-900 text-xs">
+          <strong>Kargo:</strong> {order.shippingCarrier || '—'}{' '}
+          {order.trackingNumber ? `· Takip: ${order.trackingNumber}` : ''}
+        </div>
+      )}
+
       {isPending(order.status) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-100">
           <Button type="button" variant="primary" disabled={busy} onClick={onApprove}>
@@ -152,6 +159,58 @@ function OrderDetailPanel({ order, onApprove, onReject, busy }) {
           </Button>
         </div>
       )}
+
+      <ShipForm order={order} onShip={onShip} busy={busy} />
+    </div>
+  );
+}
+
+const CARRIERS = ['Yurtiçi Kargo', 'Aras Kargo', 'MNG Kargo', 'PTT Kargo', 'Sürat Kargo', 'Diğer'];
+
+function ShipForm({ order, onShip, busy }) {
+  const [carrier, setCarrier] = useState(order.shippingCarrier || CARRIERS[0]);
+  const [tracking, setTracking] = useState(order.trackingNumber || '');
+
+  if (!['confirmed', 'iban_verified', 'shipped'].includes(order.status)) return null;
+
+  return (
+    <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-3">
+      <h4 className="font-bold text-brand-900 text-sm">Kargo bilgisi</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block text-xs">
+          <span className="font-medium text-gray-700">Kargo firması</span>
+          <select
+            value={carrier}
+            onChange={(e) => setCarrier(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-gray-200 px-2 py-2 text-sm"
+          >
+            {CARRIERS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-xs">
+          <span className="font-medium text-gray-700">Takip numarası</span>
+          <input
+            value={tracking}
+            onChange={(e) => setTracking(e.target.value)}
+            placeholder="Kargo takip no"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-2 py-2 text-sm"
+          />
+        </label>
+      </div>
+      <Button
+        type="button"
+        variant="primary"
+        size="sm"
+        disabled={busy || !tracking.trim()}
+        onClick={() => onShip(carrier, tracking.trim())}
+      >
+        <Package className="h-4 w-4" />
+        Kargoya ver / güncelle
+      </Button>
     </div>
   );
 }
@@ -286,6 +345,21 @@ export default function OrdersAdmin({ setMsg }) {
     }
   };
 
+  const handleShip = async (order, carrier, trackingNumber) => {
+    setBusyId(order.id);
+    try {
+      await updateOrderStatus(order.id, 'shipped', { shippingCarrier: carrier, trackingNumber });
+      setMsg('Kargo bilgisi kaydedildi');
+      const refreshed = await fetchOrderDetail(order.id);
+      setDetail(refreshed);
+      load();
+    } catch (err) {
+      setMsg(err.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleRejectConfirm = async (cancelReason, cancelNote) => {
     if (!rejectTarget) return;
     setBusyId(rejectTarget.id);
@@ -410,6 +484,7 @@ export default function OrdersAdmin({ setMsg }) {
                         busy={busyId === o.id}
                         onApprove={() => handleApprove(detail)}
                         onReject={() => setRejectTarget(detail)}
+                        onShip={(carrier, trackingNumber) => handleShip(detail, carrier, trackingNumber)}
                       />
                     )}
                   </>

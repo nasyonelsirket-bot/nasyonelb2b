@@ -63,8 +63,14 @@ export default function CartUpsellPanel({ compact = false }) {
         ))}
       </div>
 
-      {bundle.reachesFreeShipping && (
-        <p className="text-xs font-semibold text-emerald-700">Bu paketle ücretsiz kargo!</p>
+      {bundle && (
+        <p className="text-xs text-gray-600">
+          Paket indirimli tahmini toplam:{' '}
+          <strong className="text-emerald-700">{formatPrice(bundle.projectedSubtotal)}</strong>
+          {bundle.reachesFreeShipping && (
+            <span className="text-emerald-700 font-semibold"> · kargo bedava</span>
+          )}
+        </p>
       )}
 
       <Button

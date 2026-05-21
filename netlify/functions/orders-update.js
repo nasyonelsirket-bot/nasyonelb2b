@@ -70,6 +70,17 @@ exports.handler = async (event) => {
       order.confirmedAt = now;
       if (body.cancelReason) order.cancelReason = '';
       if (body.cancelNote) order.cancelNote = '';
+    } else if (status === 'shipped') {
+      order.shippedAt = now;
+      order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim();
+      order.trackingNumber = String(body.trackingNumber || order.trackingNumber || '').trim();
+    }
+
+    if (body.shippingCarrier != null) {
+      order.shippingCarrier = String(body.shippingCarrier).trim();
+    }
+    if (body.trackingNumber != null) {
+      order.trackingNumber = String(body.trackingNumber).trim();
     }
 
     await store.setJSON(key, order);

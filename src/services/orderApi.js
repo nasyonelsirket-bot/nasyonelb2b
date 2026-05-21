@@ -2,6 +2,7 @@ const ORDER_SAVE = '/api/order-pdf/save';
 const ORDERS_LIST = '/api/orders/list';
 const ORDERS_GET = '/api/orders/get';
 const ORDERS_UPDATE = '/api/orders/update';
+const ORDERS_TRACK = '/api/orders/track';
 
 function adminHeaders() {
   const pass =
@@ -55,6 +56,17 @@ export async function updateOrderStatus(id, status, extra = {}) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Güncellenemedi');
   return data;
+}
+
+export async function trackOrder(orderNumber, email) {
+  const res = await fetch(ORDERS_TRACK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderNumber, email }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Sipariş bulunamadı');
+  return data.order;
 }
 
 /** @deprecated use saveOrder */

@@ -60,6 +60,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/orders/track"
+  to = "/.netlify/functions/orders-track"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"

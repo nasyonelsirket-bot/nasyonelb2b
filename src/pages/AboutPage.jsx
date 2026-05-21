@@ -1,5 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, GraduationCap, Sparkles } from 'lucide-react';
+import { ArrowRight, GraduationCap, Sparkles, Puzzle, ShoppingCart, Flame, Shield } from 'lucide-react';
+
+const HIGHLIGHT_ICONS = {
+  shield: Shield,
+  puzzle: Puzzle,
+  cart: ShoppingCart,
+  flame: Flame,
+};
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import {
@@ -47,16 +54,21 @@ export default function AboutPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 -mt-10 sm:-mt-14 relative z-10 mb-12">
-          {ABOUT_HIGHLIGHTS.map(({ title, desc, icon }) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card hover:shadow-card-hover transition-shadow"
-            >
-              <span className="text-3xl">{icon}</span>
-              <h3 className="mt-3 font-display font-bold text-brand-900">{title}</h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">{desc}</p>
-            </div>
-          ))}
+          {ABOUT_HIGHLIGHTS.map(({ title, desc, iconKey }) => {
+            const Icon = HIGHLIGHT_ICONS[iconKey] || Sparkles;
+            return (
+              <div
+                key={title}
+                className="rounded-2xl border border-brand-100 bg-white p-5 shadow-card hover:shadow-card-hover transition-shadow"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h3 className="mt-3 font-display font-bold text-brand-900">{title}</h3>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{desc}</p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="space-y-6 text-gray-600 leading-relaxed text-base sm:text-lg">

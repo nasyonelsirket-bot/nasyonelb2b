@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { getCartSubtotal, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { getFreeShippingStatus } from '@/utils/cartShipping';
 import { formatPrice } from '@/utils/whatsapp';
+import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 
 export default function HomeCartDrawer({ open, onClose }) {
   const { items, totalItems, totalPrice, removeFromCart, setQuantity, increment, decrement } =
@@ -111,6 +112,12 @@ export default function HomeCartDrawer({ open, onClose }) {
                 );
               })}
             </ul>
+          )}
+
+          {items.length > 0 && (
+            <div className="mt-4">
+              <CartUpsellPanel compact />
+            </div>
           )}
         </div>
 
