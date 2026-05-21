@@ -19,6 +19,16 @@ export function getUpsellDiscountPercent(promo) {
 
 export function getEffectiveUnitPrice(item) {
   const base = Number(item?.price) || 0;
+  if (item?.upsellPromo) {
+    const fixed = Number(item.upsellOfferPrice);
+    if (Number.isFinite(fixed) && fixed > 0) {
+      return Math.round(fixed * 100) / 100;
+    }
+    const pct = Number(item.upsellDiscountPercent);
+    if (Number.isFinite(pct) && pct > 0) {
+      return Math.round(base * (1 - Math.min(100, pct) / 100) * 100) / 100;
+    }
+  }
   const rate = getUpsellDiscountRate(item?.upsellPromo);
   if (!rate) return base;
   return Math.round(base * (1 - rate) * 100) / 100;

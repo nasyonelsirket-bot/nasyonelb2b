@@ -234,5 +234,6 @@ export const DEFAULT_SETTINGS = {
       },
     ],
     coupons: [],
+    bundleRules: [],
   },
 };

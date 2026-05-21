@@ -12,6 +12,7 @@ export const DEFAULT_PROMOTIONS = {
   },
   campaigns: [],
   coupons: [],
+  bundleRules: [],
 };
 
 export function normalizePromotions(raw) {
@@ -26,6 +27,7 @@ export function normalizePromotions(raw) {
     },
     campaigns: Array.isArray(p.campaigns) ? p.campaigns : [],
     coupons: Array.isArray(p.coupons) ? p.coupons : [],
+    bundleRules: Array.isArray(p.bundleRules) ? p.bundleRules : [],
   };
 }
 

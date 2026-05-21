@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
+import { normalizePromotions } from '@/utils/promotions';
 import { getCartUpsellOffers } from '@/utils/cartUpsell';
 import { getCartSubtotal, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { formatPrice } from '@/utils/whatsapp';
@@ -12,10 +13,12 @@ import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
 export default function CartUpsellPanel({ compact = false }) {
   const { items, addUpsellToCart } = useCart();
-  const { products } = useStore();
+  const { products, settings } = useStore();
+  const promos = normalizePromotions(settings?.promotions);
 
   const subtotal = getCartSubtotal(items);
-  const { bundle, eligible } = getCartUpsellOffers(items, products, subtotal);
+  const { bundle, eligible } = getCartUpsellOffers(items, products, subtotal, promos);
+  const threshold = promos.freeShippingThreshold || FREE_SHIPPING_THRESHOLD_TL;
 
   if (!eligible || !bundle) return null;
 
@@ -31,8 +34,19 @@ export default function CartUpsellPanel({ compact = false }) {
   const addSuggested = (e) => {
     e?.preventDefault?.();
     e?.stopPropagation?.();
-    addUpsellToCart(product, quantity, promo);
+    addUpsellToCart(product, quantity, {
+      promo,
+      upsellDiscountPercent: line.upsellDiscountPercent,
+      upsellOfferPrice: line.upsellOfferPrice,
+    });
   };
+
+  const isAdminRule = bundle.source === 'admin_rule';
+  const headline = isAdminRule
+    ? bundle.ruleTitle || 'Birlikte al önerisi'
+    : bundle.reachesFreeShipping
+      ? `${threshold} TL'yi tamamla — kargo bedava!`
+      : 'Sepete uyumlu ürün önerisi';
 
   return (
     <div
@@ -45,14 +59,22 @@ export default function CartUpsellPanel({ compact = false }) {
           <Gift className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <h3 className="font-display font-bold text-brand-900 text-sm leading-tight">
-            {bundle.reachesFreeShipping
-              ? '750 TL\'yi tamamla — kargo bedava!'
-              : 'Sepete uyumlu ürün önerisi'}
-          </h3>
+          <h3 className="font-display font-bold text-brand-900 text-sm leading-tight">{headline}</h3>
           <p className="text-xs text-brand-700 mt-0.5">
             <Truck className="inline h-3 w-3 text-emerald-600 mr-0.5" />
-            {bundle.reachesFreeShipping ? (
+            {isAdminRule ? (
+              <>
+                <span className="font-medium">{bundle.triggerName}</span> sepette ·{' '}
+                {bundle.discountType === 'fixed' ? (
+                  <span className="font-semibold text-emerald-700">
+                    {formatPrice(bundle.offerPrice)} kampanya fiyatı
+                  </span>
+                ) : (
+                  <span className="font-semibold text-emerald-700">%{bundle.discountPercent} indirim</span>
+                )}
+                {bundle.grantFreeShipping && bundle.reachesFreeShipping ? ' · kargo bedava' : ''}
+              </>
+            ) : bundle.reachesFreeShipping ? (
               <>
                 {formatPrice(bundle.remaining)} eksik ·{' '}
                 <span className="font-semibold text-emerald-700">%5 indirimli</span> tek ürün
@@ -104,8 +126,8 @@ export default function CartUpsellPanel({ compact = false }) {
         ) : (
           <span>
             {' '}
-            · {FREE_SHIPPING_THRESHOLD_TL} TL için{' '}
-            {formatPrice(Math.max(0, FREE_SHIPPING_THRESHOLD_TL - bundle.projectedSubtotal))} daha gerekir
+            · {threshold} TL için{' '}
+            {formatPrice(Math.max(0, threshold - bundle.projectedSubtotal))} daha gerekir
           </span>
         )}
       </p>
@@ -118,7 +140,10 @@ export default function CartUpsellPanel({ compact = false }) {
         onClick={(e) => addSuggested(e)}
       >
         <Plus className="h-4 w-4" />
-        Sepete ekle (%{bundle.discountPercent} indirim)
+        Sepete ekle
+        {bundle.discountType === 'fixed'
+          ? ` (${formatPrice(bundle.offerPrice)})`
+          : ` (%${bundle.discountPercent} indirim)`}
       </Button>
     </div>
   );

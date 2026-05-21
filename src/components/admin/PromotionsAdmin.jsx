@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import { useStore } from '@/context/StoreContext';
 import { CAMPAIGN_TYPES, normalizePromotions, normalizeCode } from '@/utils/promotions';
 import { askPublishPassword } from '@/services/catalogApi';
+import BundleRulesAdmin from '@/components/admin/BundleRulesAdmin';
 
 function newId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -223,8 +224,10 @@ export default function PromotionsAdmin({ showMsg }) {
         </div>
       </div>
 
+      <BundleRulesAdmin store={store} promos={promos} saveLocal={saveLocal} showMsg={showMsg} />
+
       <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
-        <h3 className="font-bold">Kampanyalar ({promos.campaigns.length})</h3>
+        <h3 className="font-bold">Diğer kampanya tanımları ({promos.campaigns.length})</h3>
         <ul className="space-y-2">
           {promos.campaigns.map((c) => (
             <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 border-b border-brand-50 pb-2">

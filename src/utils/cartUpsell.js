@@ -1,5 +1,6 @@
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import { UPSELL_PROMO_BUNDLE, getUpsellDiscountRate } from '@/utils/cartLinePricing';
+import { buildAdminBundleUpsell, normalizeBundleRules } from '@/utils/bundleRules';
 
 const BUNDLE_DISCOUNT_PERCENT = 5;
 
@@ -134,7 +135,32 @@ export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   };
 }
 
-export function getCartUpsellOffers(cartItems, catalog, subtotal) {
+export function getCartUpsellOffers(cartItems, catalog, subtotal, promotions = null) {
+  const threshold =
+    Number(promotions?.freeShippingThreshold) > 0
+      ? Number(promotions.freeShippingThreshold)
+      : FREE_SHIPPING_THRESHOLD_TL;
+
+  const adminRules = normalizeBundleRules(promotions?.bundleRules);
+  if (adminRules.length) {
+    const adminBundle = buildAdminBundleUpsell(cartItems, catalog, adminRules, subtotal);
+    if (adminBundle) {
+      const offerInCart = (cartItems || []).some((i) =>
+        adminRules.some((r) => r.offerProductId === i.id),
+      );
+      return {
+        bundle: adminBundle,
+        eligible: !offerInCart,
+        threshold,
+      };
+    }
+  }
+
   const bundle = buildFreeShippingBundle(cartItems, catalog, subtotal);
-  return { bundle, eligible: subtotal < FREE_SHIPPING_THRESHOLD_TL };
+  if (bundle && threshold !== FREE_SHIPPING_THRESHOLD_TL) {
+    const amount = Math.max(0, Number(subtotal) || 0);
+    bundle.reachesFreeShipping = bundle.projectedSubtotal >= threshold;
+    bundle.remaining = Math.max(0, threshold - amount);
+  }
+  return { bundle, eligible: subtotal < threshold, threshold };
 }

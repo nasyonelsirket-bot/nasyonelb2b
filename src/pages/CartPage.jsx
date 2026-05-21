@@ -26,6 +26,7 @@ import { useStore } from '@/context/StoreContext';
 import { getCartDiscount, PAYMENT_IBAN, PAYMENT_COD } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { normalizePromotions } from '@/utils/promotions';
+import { getBundleFreeShippingOverride } from '@/utils/bundleRules';
 import { validateCouponRemote } from '@/services/promotionApi';
 import { formatPrice } from '@/utils/whatsapp';
 import { submitOrderViaWhatsApp } from '@/utils/orderPdf';
@@ -79,10 +80,21 @@ export default function CartPage() {
       }),
     [totalPrice, paymentMethod, promos, couponApplied],
   );
-  const shipping = useMemo(
-    () => getFreeShippingStatus(discount.subtotal, promos.freeShippingThreshold || 750),
-    [discount.subtotal, promos.freeShippingThreshold],
-  );
+  const shipping = useMemo(() => {
+    const threshold = promos.freeShippingThreshold || 750;
+    const base = getFreeShippingStatus(discount.subtotal, threshold);
+    const bundleShip = getBundleFreeShippingOverride(items, promos.bundleRules, threshold);
+    if (bundleShip?.eligible) {
+      return {
+        ...base,
+        eligible: true,
+        shippingFee: 0,
+        successMessage: bundleShip.message,
+        upsellMessage: null,
+      };
+    }
+    return base;
+  }, [discount.subtotal, promos.freeShippingThreshold, promos.bundleRules, items]);
   const orderTotal = useMemo(
     () => getOrderPayableTotal(discount.grandTotal, shipping),
     [discount.grandTotal, shipping],

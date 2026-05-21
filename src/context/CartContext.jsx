@@ -46,18 +46,27 @@ export function CartProvider({ children }) {
   );
 
   const addUpsellToCart = useCallback(
-    (product, quantity = 1, promo) => {
+    (product, quantity = 1, promoOrMeta) => {
       const qty = Math.max(1, parseInt(quantity, 10) || 1);
+      const meta =
+        promoOrMeta && typeof promoOrMeta === 'object'
+          ? promoOrMeta
+          : { promo: promoOrMeta };
+      const lineExtras = {
+        upsellPromo: meta.promo || undefined,
+        upsellDiscountPercent: meta.upsellDiscountPercent,
+        upsellOfferPrice: meta.upsellOfferPrice,
+      };
       setItems((prev) => {
         const existing = prev.find((i) => i.id === product.id);
         if (existing) {
           return prev.map((i) =>
             i.id === product.id
-              ? { ...i, quantity: i.quantity + qty, upsellPromo: promo || i.upsellPromo }
+              ? { ...i, quantity: i.quantity + qty, ...lineExtras }
               : i,
           );
         }
-        return [...prev, { ...product, quantity: qty, upsellPromo: promo }];
+        return [...prev, { ...product, quantity: qty, ...lineExtras }];
       });
       trackAddToCart(product, qty);
       triggerAnimation();
