@@ -1,5 +1,6 @@
 const ORDER_SAVE = '/api/order-pdf/save';
 const ORDERS_LIST = '/api/orders/list';
+const ORDERS_GET = '/api/orders/get';
 const ORDERS_UPDATE = '/api/orders/update';
 
 function adminHeaders() {
@@ -36,11 +37,20 @@ export async function fetchOrders() {
   return data.orders || [];
 }
 
-export async function updateOrderStatus(id, status) {
+export async function fetchOrderDetail(id) {
+  const res = await fetch(`${ORDERS_GET}?id=${encodeURIComponent(id)}`, {
+    headers: adminHeaders(),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Sipariş detayı alınamadı');
+  return data.order;
+}
+
+export async function updateOrderStatus(id, status, extra = {}) {
   const res = await fetch(ORDERS_UPDATE, {
     method: 'POST',
     headers: adminHeaders(),
-    body: JSON.stringify({ id, status }),
+    body: JSON.stringify({ id, status, ...extra }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Güncellenemedi');

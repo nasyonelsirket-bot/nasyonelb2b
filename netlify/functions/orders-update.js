@@ -1,5 +1,5 @@
 /**
- * Admin: sipariş durumu güncelle (ör. IBAN kontrol edildi)
+ * Admin: sipariş durumu güncelle (onay / red / IBAN)
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 
@@ -58,8 +58,20 @@ exports.handler = async (event) => {
       return { statusCode: 404, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş bulunamadı' }) };
     }
 
+    const now = new Date().toISOString();
     order.status = status;
-    order.updatedAt = new Date().toISOString();
+    order.updatedAt = now;
+
+    if (status === 'cancelled') {
+      order.cancelReason = String(body.cancelReason || '').trim();
+      order.cancelNote = String(body.cancelNote || '').trim();
+      order.cancelledAt = now;
+    } else if (status === 'confirmed' || status === 'iban_verified') {
+      order.confirmedAt = now;
+      if (body.cancelReason) order.cancelReason = '';
+      if (body.cancelNote) order.cancelNote = '';
+    }
+
     await store.setJSON(key, order);
 
     let index = [];
@@ -70,7 +82,14 @@ exports.handler = async (event) => {
     }
     if (Array.isArray(index)) {
       const next = index.map((row) =>
-        row.id === id ? { ...row, status, updatedAt: order.updatedAt } : row,
+        row.id === id
+          ? {
+              ...row,
+              status,
+              updatedAt: now,
+              cancelReason: order.cancelReason || '',
+            }
+          : row,
       );
       await store.setJSON('order-index', next);
     }

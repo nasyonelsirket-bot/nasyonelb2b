@@ -49,6 +49,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/orders/get"
+  to = "/.netlify/functions/orders-get"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/orders/update"
   to = "/.netlify/functions/orders-update"
   status = 200

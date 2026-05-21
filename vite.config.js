@@ -267,6 +267,26 @@ function orderPdfDevProxy(env = {}) {
         res.end(JSON.stringify({ orders: Array.isArray(orders) ? orders : [] }))
       })
 
+      server.middlewares.use('/api/orders/get', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const url = new URL(req.url, 'http://localhost')
+        const id = url.searchParams.get('id') || ''
+        const jsonPath = path.join(ordersDir, `${id}.json`)
+        if (!id || !fs.existsSync(jsonPath)) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Sipariş bulunamadı' }))
+          return
+        }
+        const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ order }))
+      })
+
       server.middlewares.use('/api/orders/update', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405
@@ -293,15 +313,25 @@ function orderPdfDevProxy(env = {}) {
           return
         }
         const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+        const now = new Date().toISOString()
         order.status = status
-        order.updatedAt = new Date().toISOString()
+        order.updatedAt = now
+        if (status === 'cancelled') {
+          order.cancelReason = String(body.cancelReason || '').trim()
+          order.cancelNote = String(body.cancelNote || '').trim()
+          order.cancelledAt = now
+        } else if (status === 'confirmed' || status === 'iban_verified') {
+          order.confirmedAt = now
+        }
         fs.writeFileSync(jsonPath, JSON.stringify(order))
         const indexPath = path.join(ordersDir, '_index.json')
         if (fs.existsSync(indexPath)) {
           let index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
           if (Array.isArray(index)) {
             index = index.map((row) =>
-              row.id === id ? { ...row, status, updatedAt: order.updatedAt } : row,
+              row.id === id
+                ? { ...row, status, updatedAt: now, cancelReason: order.cancelReason || '' }
+                : row,
             )
             fs.writeFileSync(indexPath, JSON.stringify(index))
           }
