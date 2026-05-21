@@ -30,9 +30,12 @@ export default function Footer() {
               className="site-logo-footer mb-4"
             />
             <p className="text-brand-100 text-sm leading-relaxed">
-              Eğitici ve eğlenceli oyuncaklar — güvenli alışveriş, hızlı kargo, kolay iade.
+              Eğitici ve eğlenceli oyuncaklar — güvenli alışveriş, hızlı kargo ve kolay iade ile
+              ailelere güvenilir bir alışveriş deneyimi sunuyoruz.
             </p>
-            <p className="mt-3 text-xs text-accent-gold font-medium">14 iş günü içinde iade hakkı</p>
+            <p className="mt-3 text-xs text-accent-gold font-medium">
+              14 iş günü içinde iade hakkı · 750 TL üzeri kargo bedava
+            </p>
           </div>
 
           <div>
