@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart, User } from 'lucide-react';
+import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
 import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
 
 const NAV = [
   { to: '/', label: 'Ana Sayfa', end: true },
-  { to: '/kategoriler', label: 'Kategoriler', end: false },
   { to: '/en-cok-satanlar', label: 'En Çok Satanlar', end: false },
   { to: '/hakkimizda', label: 'Hakkımızda', end: false },
   { to: '/iletisim', label: 'İletişim', end: false },
@@ -47,6 +47,7 @@ export default function Header() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-5">
+            <CategoryMegaMenu />
             {NAV.map((item) => (
               <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>
                 {item.label}
@@ -88,12 +89,15 @@ export default function Header() {
         </div>
 
         {mobileOpen && (
-          <nav className="lg:hidden border-t border-brand-100 py-2 flex flex-col pb-4">
+          <nav className="lg:hidden border-t border-brand-100 py-2 flex flex-col pb-4 max-h-[70vh] overflow-y-auto">
             {!isHome && (
               <a href="/#urunler" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
                 Tüm Ürünler
               </a>
             )}
+            <Link to="/kategoriler" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
+              Kategoriler
+            </Link>
             {NAV.map((item) => (
               <NavLink
                 key={item.to}

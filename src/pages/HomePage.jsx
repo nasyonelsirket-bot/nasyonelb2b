@@ -3,7 +3,6 @@ import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
-import CategorySlider from '@/components/home/CategorySlider';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
@@ -106,8 +105,6 @@ export default function HomePage() {
           />
         </div>
       )}
-
-      <CategorySlider />
 
       {!q && educationalProducts.length > 0 && (
         <div id="egitici" className="scroll-mt-32">
