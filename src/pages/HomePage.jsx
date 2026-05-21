@@ -5,13 +5,14 @@ import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
 import CategorySlider from '@/components/home/CategorySlider';
 import ProductGrid from '@/components/home/ProductGrid';
+import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import { useStore } from '@/context/StoreContext';
 
 const FEATURES = [
-  { icon: Package, title: '500+ Ürün', desc: 'Geniş oyuncak kataloğu' },
-  { icon: Truck, title: 'Hızlı Sevkiyat', desc: 'Türkiye geneli teslimat' },
-  { icon: Shield, title: 'Güvenilir B2B', desc: '15+ yıl tecrübe' },
-  { icon: Headphones, title: 'WhatsApp Destek', desc: 'Anında sipariş' },
+  { icon: Package, title: '%50\'ye Varan İndirim', desc: 'Fırsat fiyatları' },
+  { icon: Truck, title: '750 TL Kargo Bedava', desc: 'Altında sadece 100 TL' },
+  { icon: Shield, title: 'Güvenli Alışveriş', desc: '15+ yıl tecrübe' },
+  { icon: Headphones, title: 'IBAN %10 İndirim', desc: 'WhatsApp ile sipariş' },
 ];
 
 export default function HomePage() {
@@ -44,13 +45,17 @@ export default function HomePage() {
     <>
       <SEO
         title="Ana Sayfa"
-        description="B2B oyuncak toptan katalog. Toplu sipariş, WhatsApp sipariş, bayi fiyatları."
+        description="Nasyonel Toys online oyuncak mağazası. Geniş katalog, güvenli alışveriş, WhatsApp ile sipariş."
         path="/"
       />
       <HeroBanner />
       <CategorySlider />
 
-      <section className="border-y border-brand-100 bg-white py-6 sm:py-8">
+      <section className="mx-auto max-w-7xl px-3 sm:px-4 py-4 animate-fade-in">
+        <FreeShippingBanner subtotal={0} />
+      </section>
+
+      <section className="border-y border-brand-100 bg-white py-6 sm:py-8 animate-slide-up">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           {FEATURES.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="flex items-center gap-3 sm:gap-4">

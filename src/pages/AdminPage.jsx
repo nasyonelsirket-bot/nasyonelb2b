@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, startTransition } from 'react';
-import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, FileText, CloudUpload } from 'lucide-react';
+import { Lock, Package, FolderOpen, Image, Settings, Upload, RefreshCw, Trash2, LogOut, CloudUpload, ClipboardList } from 'lucide-react';
+import OrdersAdmin from '@/components/admin/OrdersAdmin';
 import { getAdminPasswordForPublish, askPublishPassword } from '@/services/catalogApi';
-import PdfSettingsAdmin from '@/components/admin/PdfSettingsAdmin';
 import { bannerSpecText, logoSpecText } from '@/constants/mediaSpecs';
 import Button from '@/components/ui/Button';
 import AdminToast from '@/components/admin/AdminToast';
@@ -20,8 +20,8 @@ const TABS = [
   { id: 'products', label: 'Ürünler', icon: Package },
   { id: 'categories', label: 'Kategoriler', icon: FolderOpen },
   { id: 'banners', label: 'Bannerlar', icon: Image },
+  { id: 'orders', label: 'Siparişler', icon: ClipboardList },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
-  { id: 'pdf', label: 'PDF', icon: FileText },
   { id: 'excel', label: 'Excel', icon: Upload },
   { id: 'trendyol', label: 'Trendyol', icon: RefreshCw },
 ];
@@ -216,19 +216,19 @@ export default function AdminPage() {
               <BannerAdmin store={store} setMsg={showMsg} />
             )}
 
-            {tab === 'settings' && (
-              <SettingsAdmin store={store} setMsg={showMsg} />
+            {tab === 'orders' && (
+              <OrdersAdmin setMsg={showMsg} />
             )}
 
-            {tab === 'pdf' && (
-              <PdfSettingsAdmin store={store} setMsg={showMsg} />
+            {tab === 'settings' && (
+              <SettingsAdmin store={store} setMsg={showMsg} />
             )}
 
             {tab === 'excel' && (
               <div className="rounded-2xl bg-white p-8 shadow-card">
                 <h2 className="font-bold text-brand-900 mb-4">Excel Yükle</h2>
                 <p className="text-sm text-gray-600 mb-4">
-                  Kolonlar: ürün adı, stok kodu, kategori, fiyat, görsel url, açıklama, minimum sipariş (opsiyonel)
+                  Kolonlar: ürün adı, stok kodu, kategori, fiyat, görsel url, açıklama
                 </p>
                 <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcel} className="block w-full text-sm" />
               </div>
@@ -471,7 +471,7 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
     trendyolSupplierId: store.settings.trendyolSupplierId || '',
     trendyolApiKey: store.settings.trendyolApiKey || '',
     trendyolApiSecret: store.settings.trendyolApiSecret || '',
-    trendyolPriceDivisor: store.settings.trendyolPriceDivisor || '4',
+    trendyolPriceDivisor: store.settings.trendyolPriceDivisor || '2',
   });
 
   const saveCreds = () => {
@@ -492,7 +492,7 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
           ['trendyolSupplierId', 'Satıcı ID (Supplier ID)', 'text'],
           ['trendyolApiKey', 'API Key', 'text'],
           ['trendyolApiSecret', 'API Secret', 'password'],
-          ['trendyolPriceDivisor', 'Fiyat Bölücü (örn: 4 = fiyat/4)', 'number'],
+          ['trendyolPriceDivisor', 'Fiyat Bölücü (2 = Trendyol fiyatının yarısı)', 'number'],
         ].map(([key, label, type]) => (
           <div key={key}>
             <label className="text-xs text-gray-500">{label}</label>
@@ -511,7 +511,7 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
       <div className="rounded-2xl bg-white p-8 shadow-card">
         <h2 className="font-bold text-brand-900 mb-4">Aktif Ürünleri Çek</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Onaylı ürünler en büyük görsel URL’si ile çekilir (boyut küçültülmez). Toptan fiyat = Trendyol fiyatı ÷ bölücü.
+          Satış fiyatı = Trendyol fiyatı ÷ bölücü (varsayılan 2). Liste fiyatı Trendyol fiyatı; sitede %50 indirim görünür.
           Mevcut ürünler için görselleri güncellemek üzere yeniden senkronize edin.
         </p>
         {tyProgress && (
@@ -555,25 +555,34 @@ function SettingsAdmin({ store, setMsg }) {
         }
         aspect="logo"
       />
-      <div>
-        <label className="text-xs text-gray-500">Ürün başına minimum sipariş tutarı (₺)</label>
-        <input
-          type="number"
-          min="1"
-          step="100"
-          value={s.minOrderLineValue ?? 2000}
-          onChange={(e) => setS({ ...s, minOrderLineValue: e.target.value })}
-          className="w-full rounded-lg border px-3 py-2 text-sm mt-1"
-        />
-        <p className="text-xs text-gray-400 mt-1">Örn: 100 ₺ ürün → min. 20 adet (2.000 ₺)</p>
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+        <h3 className="text-sm font-bold text-emerald-900">Ödeme (IBAN)</h3>
+        {[
+          ['storeIbanName', 'Hesap sahibi adı'],
+          ['storeBankName', 'Banka adı'],
+          ['storeIban', 'IBAN'],
+        ].map(([key, label]) => (
+          <div key={key}>
+            <label className="text-xs text-gray-500">{label}</label>
+            <input
+              value={s[key] || ''}
+              onChange={(e) => setS({ ...s, [key]: e.target.value })}
+              className="w-full rounded-lg border px-3 py-2 text-sm mt-1 font-mono"
+            />
+          </div>
+        ))}
       </div>
+      <p className="text-xs text-gray-500">
+        E-posta: Netlify ortam değişkenlerine <code>RESEND_API_KEY</code>, <code>RESEND_FROM_EMAIL</code>,{' '}
+        <code>ORDER_NOTIFY_EMAIL</code> ekleyin.
+      </p>
       {[
         ['whatsappNumber', 'WhatsApp Numarası'],
         ['metaPixelId', 'Meta Pixel ID'],
         ['gaId', 'Google Analytics ID'],
         ['siteUrl', 'Site URL'],
         ['contactPhone', 'Telefon'],
-        ['contactEmail', 'E-posta'],
+        ['contactEmail', 'E-posta (sipariş bildirimi)'],
         ['contactAddress', 'Adres'],
       ].map(([key, label]) => (
         <div key={key}>

@@ -4,7 +4,7 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 7;
+export const BRAND_VERSION = 9;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
@@ -68,7 +68,10 @@ export function runBrandMigration() {
     ) {
       settings.aboutText = DEFAULT_SETTINGS.aboutText;
     }
-    settings.minOrderLineValue = Number(settings.minOrderLineValue) || DEFAULT_SETTINGS.minOrderLineValue || 2000;
+    delete settings.minOrderLineValue;
+    if (!settings.trendyolPriceDivisor || settings.trendyolPriceDivisor === '4') {
+      settings.trendyolPriceDivisor = '2';
+    }
     settings.pdfSettings = mergePdfSettings(settings.pdfSettings || DEFAULT_SETTINGS.pdfSettings);
 
     const storedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);

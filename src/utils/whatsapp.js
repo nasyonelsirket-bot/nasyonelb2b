@@ -1,6 +1,5 @@
-import { resolveMinQuantity } from '@/utils/orderRules';
-import { getCartDiscount } from '@/utils/cartDiscount';
-import { getFreeShippingStatus, getOrderPayableTotal, STANDARD_SHIPPING_FEE_TL } from '@/utils/cartShipping';
+import { getCartDiscount, PAYMENT_IBAN } from '@/utils/cartDiscount';
+import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 
 export function formatPrice(price) {
   return new Intl.NumberFormat('tr-TR', {
@@ -10,15 +9,23 @@ export function formatPrice(price) {
   }).format(price);
 }
 
-function padLine(text, width = 28) {
-  const s = String(text || '');
-  if (s.length >= width) return s.slice(0, width);
-  return s + ' '.repeat(width - s.length);
+function paymentLabel(method) {
+  if (method === PAYMENT_IBAN) return 'Havale / EFT (IBAN) — %10 indirim';
+  return 'Kapıda ödeme';
 }
 
-export function buildWhatsAppOrderMessage(cartItems, options = {}) {
-  const siteName = options.siteName || 'Nasyonel Toys';
-  const customer = options.customer || {};
+/** Perakende sipariş — WhatsApp mesajında tüm detaylar */
+export function buildRetailOrderWhatsAppMessage({
+  siteName = 'Nasyonel Toys',
+  customer = {},
+  items = [],
+  shipping,
+  discount,
+  orderTotal,
+  orderNumber,
+  paymentMethod = 'cod',
+  ibanInfo,
+}) {
   const dateStr = new Date().toLocaleDateString('tr-TR', {
     day: '2-digit',
     month: 'long',
@@ -27,121 +34,61 @@ export function buildWhatsAppOrderMessage(cartItems, options = {}) {
     minute: '2-digit',
   });
 
-  let subtotal = 0;
-  cartItems.forEach((item) => {
-    subtotal += item.price * item.quantity;
-  });
-  const discount = options.discount || getCartDiscount(subtotal);
-  const shipping = options.shipping || getFreeShippingStatus(discount.subtotal);
-  const orderTotal =
-    options.orderTotal ?? getOrderPayableTotal(discount.grandTotal, shipping);
-
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const lines = [
-    '╔══════════════════════════════════╗',
-    `║  ${padLine(siteName.toUpperCase() + ' · SİPARİŞ FORMU', 32)}║`,
-    '╚══════════════════════════════════╝',
+    `Merhaba, ${siteName} web sitesinden sipariş vermek istiyorum.`,
     '',
-    `📅 *Tarih:* ${dateStr}`,
+    orderNumber ? `Sipariş No: *${orderNumber}*` : '',
+    `📅 Tarih: ${dateStr}`,
     '',
-    '━━━━━━━━ *MÜŞTERİ BİLGİLERİ* ━━━━━━━━',
-    '🏢 *Firma / Bayi Adı:*',
-    `→ ${customer.companyName?.trim() || '................................'}`,
+    '👤 *Teslimat Bilgileri*',
+    `Ad Soyad: ${customer.name?.trim() || '-'}`,
+    `Telefon: ${customer.phone?.trim() || '-'}`,
+    `E-posta: ${customer.email?.trim() || '-'}`,
+    `Adres: ${customer.address?.trim() || '-'}`,
+    customer.city ? `İl: ${customer.city.trim()}` : '',
+    customer.district ? `İlçe: ${customer.district.trim()}` : '',
     '',
-    '👤 *Yetkili Kişi:*',
-    `→ ${customer.contactName?.trim() || '................................'}`,
+    `💳 *Ödeme:* ${paymentLabel(paymentMethod)}`,
     '',
-    '📞 *İletişim Telefonu:*',
-    `→ ${customer.phone?.trim() || '................................'}`,
+    '🛒 *Ürünler*',
     '',
-    '📍 *Teslimat Adresi:*',
-    `→ ${customer.address?.trim() || '................................'}`,
-    '',
-    '━━━━━━━━ *SİPARİŞ KALEMLERİ* ━━━━━━━━',
-    '',
-  ];
+  ].filter(Boolean);
 
-  cartItems.forEach((item, index) => {
+  items.forEach((item, index) => {
     const lineTotal = item.price * item.quantity;
-    const minQty = resolveMinQuantity(item);
-
     lines.push(
-      `*▸ KALEM ${index + 1}*`,
-      '┌────────────────────────────',
-      `│ *Ürün:* ${item.name}`,
-      `│ *Stok Kodu:* ${item.sku}`,
-      item.category ? `│ *Kategori:* ${item.category}` : null,
-      `│ *Birim Fiyat:* ${formatPrice(item.price)}`,
-      `│ *Adet:* ${item.quantity}`,
-      `│ *Satır Toplam:* ${formatPrice(lineTotal)}`,
-      minQty > 1 ? `│ _Min. sipariş: ${minQty} adet_` : null,
-      '└────────────────────────────',
+      `${index + 1}. ${item.name}`,
+      `   ${item.quantity} adet × ${formatPrice(item.price)} = ${formatPrice(lineTotal)}`,
+      item.sku ? `   SKU: ${item.sku}` : '',
       '',
     );
   });
 
+  lines.push(`Ara toplam: ${formatPrice(subtotal)}`);
+  if (discount?.discountAmount > 0) {
+    lines.push(`İndirim (${discount.tierLabel}): -${formatPrice(discount.discountAmount)}`);
+  }
   lines.push(
-    '━━━━━━━━ *SİPARİŞ ÖZETİ* ━━━━━━━━━',
-    `📦 *Ürün çeşidi:* ${cartItems.length}`,
-    `💵 *Ara Toplam:* ${formatPrice(discount.subtotal)}`,
-    `🏷️ *İskonto:* ${discount.tierLabel} (-${formatPrice(discount.discountAmount)})`,
-    discount.upsellMessage ? `💡 _${discount.upsellMessage}_` : null,
-    `🚚 *Kargo:* ${shipping.eligible ? '*Bedava* ✓' : formatPrice(shipping.shippingFee)}`,
-    `✅ *ÖDENECEK TUTAR:* *${formatPrice(orderTotal)}*`,
+    shipping?.eligible ? 'Kargo: Bedava' : `Kargo: ${formatPrice(shipping?.shippingFee || 0)}`,
+    `*Ödenecek tutar: ${formatPrice(orderTotal)}*`,
     '',
-    '━━━━━━━━ *KARGO* ━━━━━━━━━━━━━━━━━',
-    `• ${formatPrice(shipping.threshold)} altı: *${formatPrice(STANDARD_SHIPPING_FEE_TL)} kargo*`,
-    `• ${formatPrice(shipping.threshold)} ve üzeri: *kargo bedava*`,
-    shipping.eligible
-      ? '• Bu siparişe *kargo bedava* uygulandı ✓'
-      : `• Bu siparişe ${formatPrice(shipping.shippingFee)} kargo eklendi (${formatPrice(shipping.remaining)} daha eklenirse bedava)`,
-    '',
-    '━━━━━━━━ *İSKONTO KOŞULLARI* ━━━━━━━━',
-    `• ${formatPrice(discount.threshold)} altı sepet: *%5 iskonto*`,
-    `• ${formatPrice(discount.threshold)} ve üzeri sepet: *%10 iskonto*`,
-    discount.tier === 'high'
-      ? '• Bu siparişe *%10* uygulandı ✓'
-      : `• Bu siparişe *%5* uygulandı (${formatPrice(discount.remainingToHigh)} daha eklenirse %10)`,
-    '',
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    '✅ *Sipariş onayı için lütfen yanıtlayın.*',
-    'Teşekkürler — Nasyonel Toys 🧸',
   );
 
+  if (paymentMethod === PAYMENT_IBAN && ibanInfo?.iban) {
+    lines.push(
+      '🏦 *IBAN Bilgileri*',
+      `Alıcı: ${ibanInfo.accountName || '-'}`,
+      `IBAN: ${ibanInfo.iban}`,
+      ibanInfo.bankName ? `Banka: ${ibanInfo.bankName}` : '',
+      'Ödemeyi yaptıktan sonra dekontu bu sohbete ileteceğim.',
+      '',
+    );
+  }
+
+  lines.push('Siparişimi onaylamanızı rica ederim. Teşekkürler.');
+
   return lines.filter(Boolean).join('\n');
-}
-
-export function buildWhatsAppOrderUrl(phone, cartItems, options = {}) {
-  const cleanPhone = String(phone).replace(/\D/g, '');
-  const message = encodeURIComponent(buildWhatsAppOrderMessage(cartItems, options));
-  return `https://wa.me/${cleanPhone}?text=${message}`;
-}
-
-/** PDF linkli kısa sipariş mesajı — WhatsApp karakter sınırına uygun */
-export function buildOrderSubmitWhatsAppMessage({
-  siteName = 'Nasyonel Toys',
-  customer = {},
-  pdfUrl,
-  orderTotal,
-  itemCount = 0,
-}) {
-  return [
-    'Merhaba,',
-    '',
-    `Web sitenizden (${siteName}) yapmış olduğum siparişim:`,
-    '',
-    `Firma: ${customer.companyName || '-'}`,
-    customer.contactName ? `Yetkili: ${customer.contactName}` : '',
-    `Tel: ${customer.phone || '-'}`,
-    itemCount ? `Ürün: ${itemCount} kalem` : '',
-    orderTotal != null ? `Tutar: ${formatPrice(orderTotal)}` : '',
-    '',
-    'Sipariş formu (PDF):',
-    pdfUrl,
-    '',
-    'Onayınızı rica ederim. Teşekkürler.',
-  ]
-    .filter(Boolean)
-    .join('\n');
 }
 
 export function openWhatsAppWithMessage(phone, message) {
@@ -150,12 +97,26 @@ export function openWhatsAppWithMessage(phone, message) {
   window.location.href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
-export function openWhatsAppToBusiness(phone, cartItems, options = {}) {
-  const url = buildWhatsAppOrderUrl(phone, cartItems, options);
-  window.location.href = url;
+export function openWhatsApp(phone, cartItems, options = {}) {
+  const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const discount = getCartDiscount(subtotal, options.paymentMethod);
+  const shipping = options.shipping || getFreeShippingStatus(discount.subtotal);
+  const orderTotal =
+    options.orderTotal ?? getOrderPayableTotal(discount.grandTotal, shipping);
+  const message = buildRetailOrderWhatsAppMessage({
+    siteName: options.siteName,
+    customer: options.customer,
+    items: cartItems,
+    shipping,
+    discount,
+    orderTotal,
+    paymentMethod: options.paymentMethod,
+    orderNumber: options.orderNumber,
+    ibanInfo: options.ibanInfo,
+  });
+  openWhatsAppWithMessage(phone, message);
 }
 
-export function openWhatsApp(phone, cartItems, options = {}) {
-  const url = buildWhatsAppOrderUrl(phone, cartItems, options);
-  window.open(url, '_blank', 'noopener,noreferrer');
+export function buildOrderSubmitWhatsAppMessage(opts) {
+  return buildRetailOrderWhatsAppMessage(opts);
 }

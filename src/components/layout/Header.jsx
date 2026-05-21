@@ -39,7 +39,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-brand-100 shadow-sm">
       <div className="bg-brand-950 text-brand-100 text-center text-[11px] sm:text-xs py-1.5 sm:py-2 px-3">
         <span className="text-accent-gold font-semibold">Nasyonel Toys</span>
-        {' '}— Toptan katalog · WhatsApp sipariş
+        {' '}— 750 TL üzeri kargo bedava · WhatsApp sipariş
       </div>
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">

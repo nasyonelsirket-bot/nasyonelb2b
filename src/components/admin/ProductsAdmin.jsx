@@ -13,7 +13,6 @@ const EMPTY_PRODUCT = {
   price: 0,
   image: '',
   description: '',
-  minOrder: 1,
   slug: '',
   meta_title: '',
   meta_description: '',
@@ -61,17 +60,6 @@ function ProductFormFields({ form, setForm }) {
           }}
           className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
         />
-      </div>
-      <div>
-        <label className="text-xs text-gray-500">Min. adet (opsiyonel)</label>
-        <input
-          type="number"
-          min="1"
-          value={form.minOrder ?? 1}
-          onChange={(e) => setForm({ ...form, minOrder: parseInt(e.target.value, 10) || 1 })}
-          className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
-        />
-        <p className="text-xs text-gray-400 mt-1">Boş bırakılırsa minimum 1 adet uygulanır</p>
       </div>
       <div className="sm:col-span-2">
         <ImageDropzone
@@ -325,7 +313,6 @@ export default function ProductsAdmin({ store, showMsg }) {
                 <th className="p-3 text-left w-14">Görsel</th>
                 <th className="p-3 text-left">Ürün</th>
                 <th className="p-3">Stok kodu</th>
-                <th className="p-3">Min</th>
                 <th className="p-3">Fiyat</th>
                 <th className="p-3 w-28"></th>
               </tr>
@@ -419,7 +406,6 @@ function ProductRow({
         </td>
         <td className="p-3 font-medium">{p.name}</td>
         <td className="p-3 text-center text-gray-600">{p.sku}</td>
-        <td className="p-3 text-center">{p.minOrder || 1}</td>
         <td className="p-3 text-center font-semibold text-brand-700">{p.price} ₺</td>
         <td className="p-3">
           <div className="flex gap-2 justify-end">

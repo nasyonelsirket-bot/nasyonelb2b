@@ -1,36 +1,34 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye } from 'lucide-react';
-import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import ProductPriceDisplay from '@/components/product/ProductPriceDisplay';
 import QuantityControls from '@/components/product/QuantityControls';
 import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
-import { useStore } from '@/context/StoreContext';
 import KdvNotice from '@/components/ui/KdvNotice';
-import { getMinOrderInfo, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 import { getPrimaryImage } from '@/utils/productImage';
-import { formatPrice } from '@/utils/whatsapp';
+import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
 import { getProductLink } from '@/utils/productSeo';
 
 export default function ProductCard({ product }) {
-  const { settings } = useStore();
   const { addToCart } = useCart();
-  const minLineValue = Number(settings.minOrderLineValue) || DEFAULT_MIN_LINE_VALUE_TL;
-  const minInfo = useMemo(() => getMinOrderInfo(product, minLineValue), [product, minLineValue]);
-  const [qty, setQty] = useState(minInfo.minQty);
-
-  useEffect(() => {
-    setQty((q) => Math.max(q, minInfo.minQty));
-  }, [minInfo.minQty, product.id]);
+  const [qty, setQty] = useState(1);
+  const onSale = hasProductDiscount(product);
+  const pct = getDiscountPercent(product);
 
   const handleAdd = () => {
-    addToCart(product, Math.max(qty, minInfo.minQty));
+    addToCart(product, Math.max(1, qty));
   };
 
   return (
-    <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-shadow sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1 sm:hover:shadow-card-hover">
+    <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-all duration-300 sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1.5 sm:hover:shadow-card-hover">
       <Link to={getProductLink(product)} className="relative block min-w-0">
+        {onSale && (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md animate-pulse-soft sm:text-xs">
+            %{pct}
+          </span>
+        )}
         <ProductImage
           src={getPrimaryImage(product)}
           alt={product.name}
@@ -52,27 +50,18 @@ export default function ProductCard({ product }) {
             {product.name}
           </h3>
         </Link>
-        <p className="mt-0.5 hidden text-xs text-gray-500 sm:block">SKU: {product.sku}</p>
 
         <div className="mt-1 sm:mt-2">
-          <Badge variant="min" className="!px-1.5 !py-0 text-[9px] sm:!px-2.5 sm:!py-0.5 sm:text-xs">
-            {minInfo.label}
-          </Badge>
+          <ProductPriceDisplay product={product} size="sm" />
         </div>
-
-        <p className="mt-1 font-display text-sm font-bold text-brand-700 sm:mt-3 sm:text-xl">
-          {formatPrice(product.price)}
-        </p>
         <KdvNotice className="mt-0.5 hidden text-xs sm:block" />
 
         <div className="mt-2 hidden product-card-qty sm:block">
           <QuantityControls
             quantity={qty}
-            minOrder={minInfo.minQty}
-            minOrderHint={minInfo.label}
             onChange={setQty}
             onIncrement={(n) => setQty((q) => q + n)}
-            onDecrement={(n) => setQty((q) => Math.max(minInfo.minQty, q - n))}
+            onDecrement={(n) => setQty((q) => Math.max(1, q - n))}
             compact
           />
         </div>
@@ -84,7 +73,7 @@ export default function ProductCard({ product }) {
           onClick={handleAdd}
         >
           <ShoppingCart className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-          <span className="truncate sm:hidden">Ekle</span>
+          <span className="truncate sm:hidden">Sepete Ekle</span>
           <span className="truncate hidden sm:inline">Sepete Ekle</span>
         </Button>
       </div>

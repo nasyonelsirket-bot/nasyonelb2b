@@ -22,8 +22,8 @@ export const DEFAULT_PDF_SETTINGS = {
   fontSizeBody: 11,
   fontSizeSmall: 10,
   customerLabels: {
-    companyName: 'Firma / Bayi',
-    contactName: 'Yetkili',
+    companyName: 'Ad Soyad',
+    contactName: 'İletişim',
     phone: 'Telefon',
     address: 'Adres',
   },

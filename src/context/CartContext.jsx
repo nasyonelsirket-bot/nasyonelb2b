@@ -1,20 +1,8 @@
 import { createContext, useContext, useCallback, useState, useMemo, useEffect } from 'react';
-import { DEFAULT_SETTINGS } from '@/data/demoProducts';
 import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
-import { resolveMinQuantity, isLineValid, DEFAULT_MIN_LINE_VALUE_TL } from '@/utils/orderRules';
 import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics/ga4';
 
 const CartContext = createContext(null);
-
-function getMinLineValue() {
-  try {
-    const s = loadFromStorage(KEYS.SETTINGS, {});
-    const v = Number(s?.minOrderLineValue);
-    return Number.isFinite(v) && v > 0 ? v : DEFAULT_MIN_LINE_VALUE_TL;
-  } catch {
-    return DEFAULT_SETTINGS.minOrderLineValue || DEFAULT_MIN_LINE_VALUE_TL;
-  }
-}
 
 function loadCartItems() {
   try {
@@ -39,15 +27,13 @@ export function CartProvider({ children }) {
   }, []);
 
   const addToCart = useCallback(
-    (product, quantity = null) => {
-      const minLineValue = getMinLineValue();
-      const minQty = resolveMinQuantity(product, minLineValue);
-      const qty = Math.max(quantity ?? minQty, minQty);
+    (product, quantity = 1) => {
+      const qty = Math.max(1, parseInt(quantity, 10) || 1);
       setItems((prev) => {
         const existing = prev.find((i) => i.id === product.id);
         if (existing) {
           return prev.map((i) =>
-            i.id === product.id ? { ...i, quantity: Math.max(i.quantity + qty, minQty) } : i,
+            i.id === product.id ? { ...i, quantity: i.quantity + qty } : i,
           );
         }
         return [...prev, { ...product, quantity: qty }];
@@ -59,12 +45,10 @@ export function CartProvider({ children }) {
   );
 
   const setQuantity = useCallback((productId, quantity) => {
-    const minLineValue = getMinLineValue();
     setItems((prev) =>
       prev.map((i) => {
         if (i.id !== productId) return i;
-        const minQty = resolveMinQuantity(i, minLineValue);
-        const q = quantity <= 0 ? 0 : Math.max(quantity, minQty);
+        const q = quantity <= 0 ? 0 : Math.max(1, parseInt(quantity, 10) || 1);
         return { ...i, quantity: q };
       }),
     );
@@ -83,14 +67,9 @@ export function CartProvider({ children }) {
   );
 
   const decrement = useCallback((productId, amount = 1) => {
-    const minLineValue = getMinLineValue();
     setItems((prev) =>
       prev
-        .map((i) => {
-          if (i.id !== productId) return i;
-          const minQty = resolveMinQuantity(i, minLineValue);
-          return { ...i, quantity: i.quantity - amount };
-        })
+        .map((i) => (i.id === productId ? { ...i, quantity: i.quantity - amount } : i))
         .filter((i) => i.quantity > 0),
     );
   }, []);
@@ -120,28 +99,6 @@ export function CartProvider({ children }) {
     [items],
   );
 
-  const minOrderViolations = useMemo(() => {
-    const minLineValue = getMinLineValue();
-    return items
-      .filter((i) => !isLineValid(i, minLineValue))
-      .map((i) => {
-        const minQty = resolveMinQuantity(i, minLineValue);
-        const lineTotal = i.price * i.quantity;
-        const requiredTotal = i.price * minQty;
-        return {
-          id: i.id,
-          name: i.name,
-          minOrder: minQty,
-          quantity: i.quantity,
-          lineTotal,
-          requiredTotal,
-          minLineValue,
-        };
-      });
-  }, [items]);
-
-  const isCartValid = minOrderViolations.length === 0;
-
   return (
     <CartContext.Provider
       value={{
@@ -155,9 +112,6 @@ export function CartProvider({ children }) {
         clearCart,
         totalItems,
         totalPrice,
-        minOrderViolations,
-        isCartValid,
-        getMinLineValue,
       }}
     >
       {children}

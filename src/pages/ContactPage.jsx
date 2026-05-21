@@ -14,10 +14,10 @@ export default function ContactPage() {
 
   return (
     <>
-      <SEO title="İletişim" description="Nasyonel Toys B2B iletişim ve adres bilgileri" path="/iletisim" />
+      <SEO title="İletişim" description="Nasyonel Toys iletişim ve adres bilgileri" path="/iletisim" />
       <div className="mx-auto max-w-7xl px-4 py-16">
         <h1 className="font-display text-4xl font-bold text-brand-900">İletişim</h1>
-        <p className="mt-2 text-brand-600">Nasyonel Toys — B2B toptan oyuncak</p>
+        <p className="mt-2 text-brand-600">Nasyonel Toys — Online oyuncak mağazası</p>
 
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-6">
@@ -78,7 +78,7 @@ export default function ContactPage() {
           onSubmit={(e) => e.preventDefault()}
         >
           <h2 className="font-semibold text-brand-900">Mesaj gönderin</h2>
-          <input className="w-full rounded-lg border border-brand-200 px-4 py-2.5" placeholder="Firma Adı" />
+          <input className="w-full rounded-lg border border-brand-200 px-4 py-2.5" placeholder="Ad Soyad" />
           <input className="w-full rounded-lg border border-brand-200 px-4 py-2.5" placeholder="E-posta" type="email" />
           <textarea className="w-full rounded-lg border border-brand-200 px-4 py-2.5 h-32" placeholder="Mesajınız" />
           <Button variant="primary" className="w-full">Gönder</Button>

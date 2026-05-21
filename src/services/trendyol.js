@@ -12,7 +12,7 @@ function getCredentials(settings = {}) {
     supplierId: settings.trendyolSupplierId?.trim() || '',
     apiKey: settings.trendyolApiKey?.trim() || '',
     apiSecret: settings.trendyolApiSecret?.trim() || '',
-    priceDivisor: Number(settings.trendyolPriceDivisor) || 4,
+    priceDivisor: Number(settings.trendyolPriceDivisor) || 2,
   };
 }
 

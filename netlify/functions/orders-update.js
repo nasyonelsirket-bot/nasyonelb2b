@@ -1,0 +1,91 @@
+/**
+ * Admin: sipariş durumu güncelle (ör. IBAN kontrol edildi)
+ */
+const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+
+const HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
+  'Content-Type': 'application/json',
+};
+
+function allowedPasswords() {
+  return [
+    process.env.ADMIN_PASSWORD,
+    process.env.CATALOG_ADMIN_PASSWORD,
+    process.env.VITE_ADMIN_PASSWORD,
+  ]
+    .map((s) => String(s || '').trim())
+    .filter(Boolean);
+}
+
+function verifyAdmin(headers) {
+  const given = String(headers['x-admin-key'] || headers['X-Admin-Key'] || '').trim();
+  if (!given) return false;
+  return allowedPasswords().includes(given);
+}
+
+exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: HEADERS, body: '' };
+  }
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, headers: HEADERS, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  if (!verifyAdmin(event.headers)) {
+    return { statusCode: 401, headers: HEADERS, body: JSON.stringify({ error: 'Yetkisiz' }) };
+  }
+
+  let body = {};
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Geçersiz JSON' }) };
+  }
+
+  const id = String(body.id || '').trim();
+  const status = String(body.status || '').trim();
+  if (!id || !status) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'id ve status gerekli' }) };
+  }
+
+  try {
+    const store = getOrderStore(event);
+    const key = `order-${id}`;
+    const order = await store.get(key, { type: 'json' });
+    if (!order) {
+      return { statusCode: 404, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş bulunamadı' }) };
+    }
+
+    order.status = status;
+    order.updatedAt = new Date().toISOString();
+    await store.setJSON(key, order);
+
+    let index = [];
+    try {
+      index = await store.get('order-index', { type: 'json' });
+    } catch {
+      index = [];
+    }
+    if (Array.isArray(index)) {
+      const next = index.map((row) =>
+        row.id === id ? { ...row, status, updatedAt: order.updatedAt } : row,
+      );
+      await store.setJSON('order-index', next);
+    }
+
+    return {
+      statusCode: 200,
+      headers: HEADERS,
+      body: JSON.stringify({ ok: true, order }),
+    };
+  } catch (err) {
+    console.error('orders-update:', err);
+    return {
+      statusCode: 500,
+      headers: HEADERS,
+      body: JSON.stringify({ error: err.message || 'Güncellenemedi' }),
+    };
+  }
+};

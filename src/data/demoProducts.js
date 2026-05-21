@@ -35,6 +35,7 @@ export const DEMO_PRODUCTS = [
     sku: 'TW-AR-001',
     category: 'Oyuncak Arabalar',
     price: 189.9,
+    compareAtPrice: 379.8,
     image: 'https://images.unsplash.com/photo-1596461405077-7f0adf90f2b2?w=600&q=80',
     description: '4x4 çekiş, LED farlar, 2.4GHz kumanda. 6+ yaş. Kutu: 12 adet.',
     isNew: true,
@@ -177,7 +178,7 @@ export const DEMO_PRODUCTS = [
 
 export const DEFAULT_SETTINGS = {
   siteName: 'Nasyonel Toys',
-  tagline: 'Hayaller Oyunla Başlar — Toptan Oyuncak Katalog',
+  tagline: 'Hayaller Oyunla Başlar — Online Oyuncak Mağazası',
   logoUrl: '/nasyonel-logo.png?v=3',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
@@ -188,11 +189,13 @@ export const DEFAULT_SETTINGS = {
   contactAddress: 'Oruçreis, Giyimkent 17. Sk. 35/a, 34000 Esenler/İstanbul',
   contactMapQuery: 'Oruçreis, Giyimkent 17. Sk. 35/a, Esenler İstanbul',
   aboutText:
-    'Nasyonel Toys, Nasyonel Grup bünyesinde toptan oyuncak tedariki sunan B2B kataloğunuzdur. Geniş ürün yelpazesi, WhatsApp ile hızlı sipariş ve güvenilir bayi hizmeti.',
+    'Nasyonel Toys online oyuncak mağazası. Geniş ürün yelpazesi, güvenli alışveriş ve WhatsApp ile kolay sipariş.',
   trendyolSupplierId: '',
   trendyolApiKey: '',
   trendyolApiSecret: '',
-  trendyolPriceDivisor: '4',
-  minOrderLineValue: 2000,
+  trendyolPriceDivisor: '2',
+  storeIbanName: 'Nasyonel Toys',
+  storeBankName: '',
+  storeIban: '',
   pdfSettings: DEFAULT_PDF_SETTINGS,
 };

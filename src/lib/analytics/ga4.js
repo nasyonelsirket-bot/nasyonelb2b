@@ -4,7 +4,7 @@ import { productFlatParams, aggregateFlatParams } from './ga4Params';
 const eventQueue = [];
 let initializedId = null;
 
-const ORDER_FORM_NAME = 'b2b_order_customer';
+const ORDER_FORM_NAME = 'retail_order_customer';
 
 function gtag(...args) {
   if (typeof window === 'undefined') return;

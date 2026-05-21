@@ -35,7 +35,7 @@ exports.handler = async (event) => {
       supplierId: bodyCreds.supplierId || process.env.TRENDYOL_SUPPLIER_ID,
       apiKey: bodyCreds.apiKey || process.env.TRENDYOL_API_KEY,
       apiSecret: bodyCreds.apiSecret || process.env.TRENDYOL_API_SECRET,
-      priceDivisor: bodyCreds.priceDivisor ?? process.env.TRENDYOL_PRICE_DIVISOR ?? 4,
+      priceDivisor: bodyCreds.priceDivisor ?? process.env.TRENDYOL_PRICE_DIVISOR ?? 2,
     };
 
     const clientIp =

@@ -1,8 +1,9 @@
 /**
- * Sipariş verisini kaydeder, PDF linki döner (PDF sunucuda üretilir).
+ * Sipariş kaydı + e-posta bildirimi (Resend)
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,11 @@ function siteBaseUrl(event) {
   const host = event.headers['x-forwarded-host'] || event.headers.host || '';
   const proto = event.headers['x-forwarded-proto'] || 'https';
   return `${proto}://${host}`.replace(/\/$/, '');
+}
+
+function makeOrderNumber() {
+  const t = Date.now().toString(36).toUpperCase();
+  return `NT-${t.slice(-8)}`;
 }
 
 exports.handler = async (event) => {
@@ -38,21 +44,47 @@ exports.handler = async (event) => {
   }
 
   const customer = body.customer && typeof body.customer === 'object' ? body.customer : {};
-  if (!String(customer.companyName || '').trim()) {
-    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Firma adı gerekli' }) };
+  const customerName = String(customer.name || customer.companyName || '').trim();
+  if (!customerName) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Ad soyad gerekli' }) };
+  }
+  if (!String(customer.phone || '').trim()) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Telefon gerekli' }) };
+  }
+  if (!String(customer.email || '').trim()) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'E-posta gerekli' }) };
+  }
+  if (!String(customer.address || '').trim()) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Adres gerekli' }) };
   }
 
   const id = crypto.randomBytes(10).toString('hex');
+  const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod';
+  const orderNumber = body.orderNumber || makeOrderNumber();
+  const status =
+    paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod';
+
   const payload = {
+    id,
+    orderNumber,
     siteName: body.siteName || 'Nasyonel Toys',
     siteLogoUrl: body.siteLogoUrl || '',
-    pdfSettings: body.pdfSettings || null,
-    customer,
+    customer: {
+      name: customerName,
+      phone: String(customer.phone || '').trim(),
+      email: String(customer.email || '').trim(),
+      address: String(customer.address || '').trim(),
+      city: String(customer.city || '').trim(),
+      district: String(customer.district || '').trim(),
+    },
     items,
     discount: body.discount || null,
     shipping: body.shipping || null,
+    paymentMethod,
     orderTotal: body.orderTotal,
-    fileName: String(body.fileName || 'siparis.pdf').slice(0, 120),
+    ibanInfo: body.ibanInfo || null,
+    notifyEmail: body.notifyEmail || process.env.ORDER_NOTIFY_EMAIL || '',
+    status,
     createdAt: new Date().toISOString(),
   };
 
@@ -60,13 +92,48 @@ exports.handler = async (event) => {
     const store = getOrderStore(event);
     await store.setJSON(`order-${id}`, payload);
 
+    let index = [];
+    try {
+      index = await store.get('order-index', { type: 'json' });
+    } catch {
+      index = [];
+    }
+    if (!Array.isArray(index)) index = [];
+
+    index.unshift({
+      id,
+      orderNumber,
+      createdAt: payload.createdAt,
+      customerName,
+      customerEmail: payload.customer.email,
+      orderTotal: payload.orderTotal,
+      paymentMethod,
+      status,
+      itemCount: items.length,
+    });
+    await store.setJSON('order-index', index.slice(0, 500));
+
+    let emailResult = { skipped: true };
+    try {
+      emailResult = await sendOrderEmails(payload);
+    } catch (emailErr) {
+      console.error('order email:', emailErr);
+      emailResult = { error: emailErr.message };
+    }
+
     const base = siteBaseUrl(event);
     const url = `${base}/api/order-pdf?id=${id}`;
 
     return {
       statusCode: 200,
       headers: HEADERS,
-      body: JSON.stringify({ ok: true, id, url }),
+      body: JSON.stringify({
+        ok: true,
+        id,
+        orderNumber,
+        url,
+        email: emailResult,
+      }),
     };
   } catch (err) {
     console.error('order-pdf-save:', err);

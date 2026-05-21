@@ -48,7 +48,7 @@ export default function CategoriesPage() {
 
   return (
     <>
-      <SEO title="Kategoriler" description="Nasyonel Toys oyuncak kategorileri - B2B toptan fiyatlar" path="/kategoriler" />
+      <SEO title="Kategoriler" description="Nasyonel Toys oyuncak kategorileri ve ürün fiyatları" path="/kategoriler" />
       <div className="bg-brand-900 text-white py-12">
         <div className="mx-auto max-w-7xl px-4">
           <h1 className="font-display text-3xl font-bold">Kategoriler</h1>

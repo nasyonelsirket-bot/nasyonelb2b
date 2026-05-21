@@ -1,8 +1,21 @@
-const ORDER_PDF_SAVE = '/api/order-pdf/save';
+const ORDER_SAVE = '/api/order-pdf/save';
+const ORDERS_LIST = '/api/orders/list';
+const ORDERS_UPDATE = '/api/orders/update';
 
-/** Sipariş verisini sunucuya kaydeder, PDF linki döner (PDF sunucuda üretilir) */
-export async function uploadOrderForPdfLink(order) {
-  const res = await fetch(ORDER_PDF_SAVE, {
+function adminHeaders() {
+  const pass =
+    typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('b2b_admin_pass') || ''
+      : '';
+  return {
+    'Content-Type': 'application/json',
+    'X-Admin-Key': pass,
+  };
+}
+
+/** Sipariş sunucuya kaydedilir; e-posta (Resend) tetiklenir */
+export async function saveOrder(order) {
+  const res = await fetch(ORDER_SAVE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(order),
@@ -13,6 +26,28 @@ export async function uploadOrderForPdfLink(order) {
     const msg = [data.error, data.hint].filter(Boolean).join(' — ') || 'Sipariş kaydedilemedi';
     throw new Error(msg);
   }
-  if (!data?.url) throw new Error('Sipariş linki alınamadı');
   return data;
+}
+
+export async function fetchOrders() {
+  const res = await fetch(ORDERS_LIST, { headers: adminHeaders() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Siparişler yüklenemedi');
+  return data.orders || [];
+}
+
+export async function updateOrderStatus(id, status) {
+  const res = await fetch(ORDERS_UPDATE, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify({ id, status }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Güncellenemedi');
+  return data;
+}
+
+/** @deprecated use saveOrder */
+export async function uploadOrderForPdfLink(order) {
+  return saveOrder(order);
 }

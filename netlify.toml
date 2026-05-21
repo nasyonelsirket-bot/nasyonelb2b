@@ -42,6 +42,18 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/orders/list"
+  to = "/.netlify/functions/orders-list"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/orders/update"
+  to = "/.netlify/functions/orders-update"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"

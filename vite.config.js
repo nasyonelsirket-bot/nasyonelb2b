@@ -139,8 +139,15 @@ function catalogDevProxy(env) {
   }
 }
 
-function orderPdfDevProxy() {
+function applyResendEnv(env = {}) {
+  if (env.RESEND_API_KEY) process.env.RESEND_API_KEY = env.RESEND_API_KEY
+  if (env.RESEND_FROM_EMAIL) process.env.RESEND_FROM_EMAIL = env.RESEND_FROM_EMAIL
+  if (env.ORDER_NOTIFY_EMAIL) process.env.ORDER_NOTIFY_EMAIL = env.ORDER_NOTIFY_EMAIL
+}
+
+function orderPdfDevProxy(env = {}) {
   const ordersDir = path.join(process.cwd(), '.data', 'orders')
+  applyResendEnv(env)
 
   return {
     name: 'order-pdf-dev-proxy',
@@ -178,18 +185,120 @@ function orderPdfDevProxy() {
         }
 
         const id = crypto.randomBytes(10).toString('hex')
+        const customer = body.customer || {}
+        const customerName = String(customer.name || customer.companyName || '').trim()
+        const orderNumber = body.orderNumber || `NT-${Date.now().toString(36).toUpperCase().slice(-8)}`
+        const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod'
         const payload = {
           ...body,
+          id,
+          orderNumber,
+          customer: { ...customer, name: customerName },
           items,
+          paymentMethod,
+          status: paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod',
           createdAt: new Date().toISOString(),
         }
         fs.mkdirSync(ordersDir, { recursive: true })
         fs.writeFileSync(path.join(ordersDir, `${id}.json`), JSON.stringify(payload))
 
+        const indexPath = path.join(ordersDir, '_index.json')
+        let index = []
+        try {
+          if (fs.existsSync(indexPath)) index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+        } catch {
+          index = []
+        }
+        if (!Array.isArray(index)) index = []
+        index.unshift({
+          id,
+          orderNumber,
+          createdAt: payload.createdAt,
+          customerName,
+          customerEmail: customer.email,
+          orderTotal: payload.orderTotal,
+          paymentMethod,
+          status: payload.status,
+          itemCount: items.length,
+        })
+        fs.writeFileSync(indexPath, JSON.stringify(index.slice(0, 500)))
+
+        let emailResult = { skipped: true }
+        try {
+          const { sendOrderEmails } = require('./lib/orderEmail.cjs')
+          emailResult = await sendOrderEmails({
+            ...payload,
+            notifyEmail: body.notifyEmail || env.ORDER_NOTIFY_EMAIL,
+          })
+        } catch (emailErr) {
+          console.error('[dev] order email:', emailErr)
+          emailResult = { ok: false, error: emailErr.message }
+        }
+
         const host = req.headers.host || 'localhost:5173'
         const url = `http://${host}/api/order-pdf?id=${id}`
         res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({ ok: true, id, url }))
+        res.end(JSON.stringify({ ok: true, id, orderNumber, url, email: emailResult }))
+      })
+
+      server.middlewares.use('/api/orders/list', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const indexPath = path.join(ordersDir, '_index.json')
+        let orders = []
+        try {
+          if (fs.existsSync(indexPath)) orders = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+        } catch {
+          orders = []
+        }
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ orders: Array.isArray(orders) ? orders : [] }))
+      })
+
+      server.middlewares.use('/api/orders/update', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+        const id = String(body.id || '').trim()
+        const status = String(body.status || '').trim()
+        const jsonPath = path.join(ordersDir, `${id}.json`)
+        if (!id || !status || !fs.existsSync(jsonPath)) {
+          res.statusCode = 404
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Sipariş bulunamadı' }))
+          return
+        }
+        const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
+        order.status = status
+        order.updatedAt = new Date().toISOString()
+        fs.writeFileSync(jsonPath, JSON.stringify(order))
+        const indexPath = path.join(ordersDir, '_index.json')
+        if (fs.existsSync(indexPath)) {
+          let index = JSON.parse(fs.readFileSync(indexPath, 'utf8'))
+          if (Array.isArray(index)) {
+            index = index.map((row) =>
+              row.id === id ? { ...row, status, updatedAt: order.updatedAt } : row,
+            )
+            fs.writeFileSync(indexPath, JSON.stringify(index))
+          }
+        }
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ ok: true, order }))
       })
 
       server.middlewares.use('/api/order-pdf', (req, res) => {
@@ -227,7 +336,7 @@ function orderPdfDevProxy() {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
-  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env), orderPdfDevProxy()],
+  plugins: [react(), tailwindcss(), trendyolDevProxy(), catalogDevProxy(env), orderPdfDevProxy(env)],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
