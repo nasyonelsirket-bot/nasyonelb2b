@@ -43,6 +43,7 @@ function buildLabelPrintHtml(order) {
   <dl class="body">
     <div class="row"><dt>Sipariş No</dt><dd>${orderNo}</dd></div>
     <div class="row"><dt>Ad-Soyad</dt><dd>${escapeHtml(c.name || '—')}</dd></div>
+    <div class="row"><dt>Telefon</dt><dd>${escapeHtml(c.phone || '—')}</dd></div>
     <div class="row addr"><dt>Adres</dt><dd>${escapeHtml(formatAddress(c))}</dd></div>
     ${codHtml}
   </dl>
@@ -97,6 +98,10 @@ function LabelPreview({ order }) {
           <div className="grid grid-cols-[88px_1fr] gap-1">
             <span className="font-semibold">Ad-Soyad</span>
             <span className="font-bold text-sm">{c.name || '—'}</span>
+          </div>
+          <div className="grid grid-cols-[88px_1fr] gap-1">
+            <span className="font-semibold">Telefon</span>
+            <span className="font-bold text-sm">{c.phone || '—'}</span>
           </div>
           <div className="grid grid-cols-[88px_1fr] gap-1 items-start">
             <span className="font-semibold">Adres</span>
