@@ -96,11 +96,12 @@ export default function ShippingAdmin({ setMsg }) {
   const handleShip = async (order, carrier, tracking) => {
     setBusyId(order.id);
     try {
-      await updateOrderStatus(order.id, 'shipped', {
+      const data = await updateOrderStatus(order.id, 'shipped', {
         shippingCarrier: carrier,
         trackingNumber: tracking,
       });
-      setMsg('Kargoya verildi');
+      const mailNote = data.shippedEmail?.summary;
+      setMsg(['Kargoya verildi', mailNote].filter(Boolean).join(' · '));
       setDetail(await fetchOrderDetail(order.id));
       load();
     } catch (err) {

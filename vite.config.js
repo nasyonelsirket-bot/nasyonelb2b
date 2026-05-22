@@ -741,6 +741,9 @@ function orderPdfDevProxy(env = {}) {
         }
         const order = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
         const now = new Date().toISOString()
+        const prevStatus = order.status
+        const prevCarrier = String(order.shippingCarrier || '').trim()
+        const prevTracking = String(order.trackingNumber || '').trim()
         order.status = status
         order.updatedAt = now
         if (status === 'cancelled') {
@@ -758,6 +761,27 @@ function orderPdfDevProxy(env = {}) {
         }
         if (body.shippingCarrier != null) order.shippingCarrier = String(body.shippingCarrier).trim()
         if (body.trackingNumber != null) order.trackingNumber = String(body.trackingNumber).trim()
+        let shippedEmail = null
+        if (status === 'shipped') {
+          const newCarrier = String(order.shippingCarrier || '').trim()
+          const newTracking = String(order.trackingNumber || '').trim()
+          const shouldNotify =
+            prevStatus !== 'shipped' ||
+            newCarrier !== prevCarrier ||
+            newTracking !== prevTracking
+          if (shouldNotify) {
+            try {
+              const { sendShippedEmail } = require('./lib/orderEmail.cjs')
+              shippedEmail = await sendShippedEmail(order, {
+                siteUrl: order.siteUrl || 'http://localhost:5173',
+                isUpdate: prevStatus === 'shipped',
+              })
+            } catch (mailErr) {
+              console.error('[dev] shipped-email:', mailErr)
+              shippedEmail = { ok: false, summary: mailErr.message }
+            }
+          }
+        }
         let rewardCoupon = null
         if (status === 'completed') {
           try {
@@ -809,7 +833,7 @@ function orderPdfDevProxy(env = {}) {
           }
         }
         res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({ ok: true, order, rewardCoupon }))
+        res.end(JSON.stringify({ ok: true, order, rewardCoupon, shippedEmail }))
       })
 
       server.middlewares.use('/api/order-pdf', (req, res) => {

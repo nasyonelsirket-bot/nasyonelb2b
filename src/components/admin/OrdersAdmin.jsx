@@ -357,8 +357,12 @@ export default function OrdersAdmin({ setMsg }) {
   const handleShip = async (order, carrier, trackingNumber) => {
     setBusyId(order.id);
     try {
-      await updateOrderStatus(order.id, 'shipped', { shippingCarrier: carrier, trackingNumber });
-      setMsg('Kargo bilgisi kaydedildi');
+      const data = await updateOrderStatus(order.id, 'shipped', {
+        shippingCarrier: carrier,
+        trackingNumber,
+      });
+      const mailNote = data.shippedEmail?.summary;
+      setMsg(['Kargo bilgisi kaydedildi', mailNote].filter(Boolean).join(' · '));
       const refreshed = await fetchOrderDetail(order.id);
       setDetail(refreshed);
       load();

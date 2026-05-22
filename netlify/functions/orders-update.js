@@ -4,6 +4,7 @@
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { loadPromotions, appendCouponAndSave } = require('../../lib/catalogPromotions.cjs');
 const { buildDeliveryRewardCoupon } = require('../../lib/promotions.cjs');
+const { sendShippedEmail } = require('../../lib/orderEmail.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +62,9 @@ exports.handler = async (event) => {
     }
 
     const now = new Date().toISOString();
+    const prevStatus = order.status;
+    const prevCarrier = String(order.shippingCarrier || '').trim();
+    const prevTracking = String(order.trackingNumber || '').trim();
     order.status = status;
     order.updatedAt = now;
 
@@ -88,6 +92,28 @@ exports.handler = async (event) => {
     }
 
     await store.setJSON(key, order);
+
+    let shippedEmail = null;
+    if (status === 'shipped') {
+      const newCarrier = String(order.shippingCarrier || '').trim();
+      const newTracking = String(order.trackingNumber || '').trim();
+      const shouldNotify =
+        prevStatus !== 'shipped' ||
+        newCarrier !== prevCarrier ||
+        newTracking !== prevTracking;
+      if (shouldNotify) {
+        try {
+          const siteUrl = String(process.env.URL || order.siteUrl || '').trim();
+          shippedEmail = await sendShippedEmail(order, {
+            siteUrl,
+            isUpdate: prevStatus === 'shipped',
+          });
+        } catch (mailErr) {
+          console.error('shipped-email:', mailErr);
+          shippedEmail = { ok: false, summary: mailErr.message || 'Kargo maili gönderilemedi' };
+        }
+      }
+    }
 
     let rewardCoupon = null;
     if (status === 'completed') {
@@ -137,6 +163,7 @@ exports.handler = async (event) => {
         ok: true,
         order,
         rewardCoupon: rewardCoupon?.code || null,
+        shippedEmail,
       }),
     };
   } catch (err) {

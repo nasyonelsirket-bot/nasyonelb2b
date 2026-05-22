@@ -72,6 +72,16 @@ Sonra `npm run dev` ile test siparişi verin.
 3. Sepet mesajında «Onay e-postası gönderildi» görünmeli
 4. Görünmüyorsa: «E-posta: Resend ayarlarını kontrol edin» → Netlify değişkenleri veya domain doğrulama eksik
 
+## Kargo bildirimi
+
+Admin panelde sipariş **Kargoya ver** yapıldığında müşteriye otomatik e-posta gider:
+
+- Konu: `Siparişiniz kargoda — NT-XXXX`
+- İçerik: kargo firması, takip numarası, kargo takip linki, sipariş takip sayfası linki
+- Takip no sonradan girilirse **güncelleme** maili gider (`Kargo bilgileri güncellendi`)
+
+`RESEND_FROM_EMAIL` doğru ve domain Verified olmalı (sipariş onay maili ile aynı ayarlar).
+
 ---
 
 ## Sık sorunlar

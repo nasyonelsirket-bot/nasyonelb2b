@@ -669,6 +669,9 @@ function SettingsAdmin({ store, setMsg }) {
           </Button>
         </div>
         <p className="text-[11px] text-gray-600">
+          Sipariş onayı ve <strong>kargoya verildi</strong> bildirimi bu ayarlarla gider. Kargo maili admin
+          panelden &quot;Kargoya ver&quot; yapılınca müşteriye otomatik gider.
+          <br />
           Hata mesajı burada görünür. Sık neden: domain Resend&apos;de Verified değil, API key eksik,
           deploy yapılmadı, spam klasörü.
         </p>
