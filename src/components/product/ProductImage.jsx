@@ -6,7 +6,9 @@ export default function ProductImage({
   variant = 'card',
   className = '',
   imgClassName = '',
+  loading,
 }) {
+  const imgLoading = loading ?? (variant === 'detail' ? 'eager' : 'lazy');
   const variantClass =
     variant === 'detail'
       ? 'product-media--detail'
@@ -29,7 +31,7 @@ export default function ProductImage({
       <img
         src={src}
         alt={alt}
-        loading="lazy"
+        loading={imgLoading}
         decoding="async"
         draggable={false}
         className={`${PRODUCT_MEDIA_IMG} ${imgClassName}`}

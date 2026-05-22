@@ -18,6 +18,8 @@ import { getProductPath } from '@/utils/productSeo';
 import ProductRatingStars from '@/components/product/ProductRatingStars';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import { getProductRatingSummary } from '@/utils/productReviews';
+import { trackRecentlyViewed } from '@/utils/recentlyViewed';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 
 export default function ProductDetailPage() {
   const { id: idOrSlug } = useParams();
@@ -35,7 +37,10 @@ export default function ProductDetailPage() {
   }, [product?.id]);
 
   useEffect(() => {
-    if (product) trackViewItem(product);
+    if (product) {
+      trackViewItem(product);
+      trackRecentlyViewed(product);
+    }
   }, [product?.id]);
 
   useEffect(() => {
@@ -61,10 +66,19 @@ export default function ProductDetailPage() {
   const onSale = hasProductDiscount(product);
   const { avg: ratingAvg, count: reviewCount } = getProductRatingSummary(product);
 
+  const productPath = getProductPath(product);
+
   return (
     <>
       <ProductSEO product={product} />
       <ProductSchema product={product} />
+      <BreadcrumbSchema
+        items={[
+          { name: 'Ana Sayfa', href: '/' },
+          { name: product.category || 'Ürünler', href: '/kategoriler' },
+          { name: product.name, href: productPath },
+        ]}
+      />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
         <Link

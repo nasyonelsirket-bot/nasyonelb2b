@@ -50,6 +50,7 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
 
   const sectionMeta = HOMEPAGE_SECTIONS.find((s) => s.id === activeSection);
   const isBanner = isBannerSectionId(activeSection);
+  const isTrust = activeSection === 'trust';
   const isStrip = sectionMeta?.type === 'strip';
   const activeCfg = localLayout.sections[activeSection];
   const pinnedIds = isStrip ? activeCfg?.productIds || [] : [];
@@ -352,7 +353,7 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
 
       <div className="flex flex-wrap gap-2">
         {localLayout.order
-          .filter((id) => !isBannerSectionId(id))
+          .filter((id) => !isBannerSectionId(id) && id !== 'trust')
           .map((id) => {
             const s = HOMEPAGE_SECTIONS.find((sec) => sec.id === id);
             if (!s) return null;
@@ -374,7 +375,20 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
               </button>
             );
           })}
-        {localLayout.order.filter(isBannerSectionId).map((id, i) => (
+        {localLayout.order.includes('trust') && (
+          <button
+            type="button"
+            onClick={() => setActiveSection('trust')}
+            className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+              activeSection === 'trust'
+                ? 'bg-brand-900 text-white border-brand-900'
+                : 'bg-white text-brand-800 border-brand-200 hover:bg-brand-50'
+            }`}
+          >
+            Güven Alanı
+          </button>
+        )}
+        {localLayout.order.filter(isBannerSectionId).map((id) => (
           <button
             key={id}
             type="button"
@@ -476,7 +490,14 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
         </div>
       )}
 
-      {!isBanner && (
+      {isTrust && (
+        <p className="text-sm text-gray-600 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+          Güven alanı içeriği otomatik gösterilir (SSL, kargo, müşteri memnuniyeti). Sıradan konumunu
+          yukarı/aşağı oklarıyla değiştirebilir veya silebilirsiniz.
+        </p>
+      )}
+
+      {!isBanner && !isTrust && (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl border border-brand-100 p-4 bg-brand-50/50">
         <label className="block sm:col-span-2">
           <span className="text-xs font-semibold text-brand-800">Başlık</span>

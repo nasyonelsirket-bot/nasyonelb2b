@@ -106,6 +106,13 @@
     scroll-margin-top: 8rem;
   }
 
+  .shadow-card {
+    box-shadow: 0 4px 14px rgba(10, 31, 77, 0.08);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 12px 28px rgba(10, 31, 77, 0.14);
+  }
+
   /* Banner — mobilde görünür yükseklik (12:5) */
   .hero-banner-frame {
     padding-bottom: 41.667%;

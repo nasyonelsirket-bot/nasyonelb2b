@@ -5,6 +5,10 @@ import HeroBanner from '@/components/home/HeroBanner';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
+import HomeTrustSection from '@/components/home/HomeTrustSection';
+import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
+import RecentlyViewedStrip from '@/components/home/RecentlyViewedStrip';
+import HomeSocialProof from '@/components/home/HomeSocialProof';
 import { useStore } from '@/context/StoreContext';
 import { hasTrendyolSalesData } from '@/utils/productBestseller';
 import {
@@ -134,8 +138,18 @@ export default function HomePage() {
     );
   };
 
+  const renderTrust = () => {
+    const cfg = homepageLayout.sections.trust;
+    if (cfg?.enabled === false) return null;
+    return (
+      <div key="trust" id="guven" className="scroll-mt-32">
+        <HomeTrustSection />
+      </div>
+    );
+  };
+
   return (
-    <div className="pb-8 bg-gray-50">
+    <div className="pb-24 lg:pb-8 bg-gray-50">
       <SEO
         title="Ana Sayfa"
         description="Nasyonel Toys — eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
@@ -145,12 +159,27 @@ export default function HomePage() {
       {!q &&
         homepageLayout.order.map((sectionId) => {
           if (isBannerSectionId(sectionId)) return renderBanner(sectionId);
-          if (sectionId === 'allProducts') return renderAllProducts();
+          if (sectionId === 'trust') return renderTrust();
+          if (sectionId === 'allProducts') {
+            return (
+              <div key="all-products-block">
+                {renderAllProducts()}
+                <RecentlyViewedStrip />
+                <HomeSocialProof />
+              </div>
+            );
+          }
           return renderStrip(sectionId);
         })}
 
-      {q && renderAllProducts()}
+      {q && (
+        <>
+          {renderAllProducts()}
+          <RecentlyViewedStrip />
+        </>
+      )}
 
+      {!q && <HomeStickyCartBar onOpenCart={openCart} />}
       <HomeCartDrawer open={cartOpen} onClose={closeCart} />
     </div>
   );

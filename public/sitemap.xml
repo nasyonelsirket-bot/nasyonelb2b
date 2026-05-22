@@ -1,28 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://your-site.netlify.app/</loc>
+    <loc>https://www.nasyoneltoys.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://your-site.netlify.app/kategoriler</loc>
+    <loc>https://www.nasyoneltoys.com/en-cok-satanlar</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/kategoriler</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://your-site.netlify.app/sepet</loc>
+    <loc>https://www.nasyoneltoys.com/hakkimizda</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/iletisim</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sss</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://your-site.netlify.app/hakkimizda</loc>
+    <loc>https://www.nasyoneltoys.com/siparis-takip</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://your-site.netlify.app/iletisim</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.5</priority>
   </url>
 </urlset>

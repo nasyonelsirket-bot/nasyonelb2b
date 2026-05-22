@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
 import { getProductMetaDescription, getProductCanonical } from '@/utils/productSeo';
 import { getCompareAtPrice, hasProductDiscount } from '@/utils/productPricing';
+import { getProductRatingSummary } from '@/utils/productReviews';
 
 export default function ProductSchema({ product }) {
   const { settings } = useStore();
@@ -28,6 +29,8 @@ export default function ProductSchema({ product }) {
     };
   }
 
+  const { avg, count } = getProductRatingSummary(product);
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -38,6 +41,16 @@ export default function ProductSchema({ product }) {
     url: productUrl,
     offers,
   };
+
+  if (count > 0 && avg > 0) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: Number(avg.toFixed(1)),
+      reviewCount: count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
 
   return (
     <Helmet>

@@ -4,7 +4,7 @@ import {
   filterEducationalProducts,
 } from '@/utils/productBestseller';
 
-export const HOMEPAGE_SECTION_IDS = ['bestsellers', 'educational', 'deals', 'allProducts'];
+export const HOMEPAGE_SECTION_IDS = ['bestsellers', 'educational', 'deals', 'trust', 'allProducts'];
 
 export const HOMEPAGE_SECTIONS = [
   {
@@ -30,6 +30,13 @@ export const HOMEPAGE_SECTIONS = [
     limit: 24,
     hashId: 'firsatlar',
     hint: 'İndirimli ürünler bandı.',
+  },
+  {
+    id: 'trust',
+    label: 'Güven Alanı',
+    type: 'trust',
+    hashId: 'guven',
+    hint: 'SSL, kargo, müşteri memnuniyeti rozetleri.',
   },
   {
     id: 'allProducts',
@@ -79,6 +86,9 @@ const DEFAULT_SECTIONS = {
     autoFill: true,
     productIds: [],
   },
+  trust: {
+    enabled: true,
+  },
   allProducts: {
     enabled: true,
     title: 'Tüm Ürünler',
@@ -102,6 +112,7 @@ export function createBannerSectionId() {
 }
 
 export function getSectionDisplayLabel(sectionId, sections = {}) {
+  if (sectionId === 'trust') return 'Güven Alanı';
   if (isBannerSectionId(sectionId)) {
     const cfg = sections[sectionId];
     const custom = String(cfg?.label || '').trim();
@@ -164,6 +175,11 @@ export function normalizeHomepageLayout(settings) {
     bestsellers: normalizeStripSection('bestsellers', raw?.sections?.bestsellers, legacySlots.bestsellers),
     educational: normalizeStripSection('educational', raw?.sections?.educational, legacySlots.educational),
     deals: normalizeStripSection('deals', raw?.sections?.deals, legacySlots.deals),
+    trust: {
+      ...DEFAULT_SECTIONS.trust,
+      ...(raw?.sections?.trust || {}),
+      enabled: raw?.sections?.trust?.enabled !== false,
+    },
     allProducts: {
       ...DEFAULT_SECTIONS.allProducts,
       ...(raw?.sections?.allProducts || {}),

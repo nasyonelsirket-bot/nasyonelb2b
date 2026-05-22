@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import MobileBottomNav from './MobileBottomNav';
 import CartAddedToast from '@/components/cart/CartAddedToast';
 import MetaPixel from '@/components/analytics/MetaPixel';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -11,12 +12,13 @@ export default function Layout() {
       <MetaPixel />
       <Header />
       <CartAddedToast />
-      <main className="flex-1 w-full min-w-0 pb-4">
+      <main className="flex-1 w-full min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-4">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }

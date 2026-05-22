@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://your-site.netlify.app/sitemap.xml
+Sitemap: https://www.nasyoneltoys.com/sitemap.xml
 
 Disallow: /admin
+Disallow: /hesabim
+Disallow: /giris
+Disallow: /kayit

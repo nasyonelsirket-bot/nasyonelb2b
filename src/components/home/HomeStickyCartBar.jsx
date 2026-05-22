@@ -18,7 +18,7 @@ export default function HomeStickyCartBar({ onOpenCart }) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[55] border-t border-brand-200 bg-white/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(15,23,42,0.12)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pr-[5.5rem] sm:pr-28 lg:pr-32 animate-slide-up"
+      className="fixed bottom-[calc(3.25rem+env(safe-area-inset-bottom))] lg:bottom-0 left-0 right-0 z-[44] border-t border-brand-200 bg-white/95 backdrop-blur-md shadow-[0_-8px_30px_rgba(15,23,42,0.12)] pb-[max(0.5rem,env(safe-area-inset-bottom))] animate-slide-up"
       role="region"
       aria-label="Hızlı sepet"
     >

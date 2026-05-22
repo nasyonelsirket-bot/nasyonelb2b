@@ -25,7 +25,7 @@ export default function SEO({
     canonicalOverride?.trim() ||
     (base ? `${base}${path}` : path);
 
-  const schema = {
+  const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteName,
@@ -39,6 +39,23 @@ export default function SEO({
       availableLanguage: 'Turkish',
     },
   };
+
+  const websiteSchema = base
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: siteName,
+        url: siteUrl,
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: `${base}/?q={search_term_string}#urunler`,
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      }
+    : null;
 
   return (
     <Helmet>
@@ -61,10 +78,18 @@ export default function SEO({
       <meta name="twitter:image" content={ogImage} />
 
       {!noindex && !skipOrganizationSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
+        <>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          />
+          {websiteSchema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+            />
+          )}
+        </>
       )}
     </Helmet>
   );
