@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Search,
   X,
+  Printer,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
@@ -25,6 +26,7 @@ import {
   ADMIN_STATUS_FILTERS,
 } from '@/constants/orderStatus';
 import { matchesOrderNumberSearch, matchesCustomerNameSearch } from '@/utils/orderNumberSearch';
+import ShippingLabelPrint from '@/components/admin/ShippingLabelPrint';
 
 function StatusBadge({ status }) {
   const meta = getStatusMeta(status);
@@ -41,9 +43,11 @@ function StatusBadge({ status }) {
 function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
+  const [labelOpen, setLabelOpen] = useState(false);
 
   return (
     <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4 space-y-4 text-sm">
+      <ShippingLabelPrint order={order} open={labelOpen} onClose={() => setLabelOpen(false)} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <h4 className="font-bold text-brand-900 flex items-center gap-2">
@@ -103,6 +107,13 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-100">
+        <Button type="button" variant="secondary" size="sm" onClick={() => setLabelOpen(true)}>
+          <Printer className="h-4 w-4" />
+          Kargo şablonu / Yazdır
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4 text-sm border-t border-brand-100 pt-3">
