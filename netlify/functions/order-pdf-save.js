@@ -4,6 +4,7 @@
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
+const { allocateOrderNumber } = require('../../lib/orderNumber.cjs');
 const { loadPromotions, markCouponUsed } = require('../../lib/catalogPromotions.cjs');
 const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
 
@@ -18,11 +19,6 @@ function siteBaseUrl(event) {
   const host = event.headers['x-forwarded-host'] || event.headers.host || '';
   const proto = event.headers['x-forwarded-proto'] || 'https';
   return `${proto}://${host}`.replace(/\/$/, '');
-}
-
-function makeOrderNumber() {
-  const t = Date.now().toString(36).toUpperCase();
-  return `NT-${t.slice(-8)}`;
 }
 
 exports.handler = async (event) => {
@@ -62,7 +58,6 @@ exports.handler = async (event) => {
 
   const id = crypto.randomBytes(10).toString('hex');
   const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod';
-  const orderNumber = body.orderNumber || makeOrderNumber();
   const status =
     paymentMethod === 'iban' ? 'pending_iban_check' : 'pending_cod';
 
@@ -128,7 +123,7 @@ exports.handler = async (event) => {
 
   const payload = {
     id,
-    orderNumber,
+    orderNumber: null,
     siteName: body.siteName || 'Nasyonel Toys',
     siteUrl: String(body.siteUrl || '').trim() || base,
     siteLogoUrl: body.siteLogoUrl || '',
@@ -156,6 +151,9 @@ exports.handler = async (event) => {
 
   try {
     const store = getOrderStore(event);
+    const orderNumber = String(body.orderNumber || '').trim() || (await allocateOrderNumber(store));
+    payload.orderNumber = orderNumber;
+
     await store.setJSON(`order-${id}`, payload);
 
     let index = [];

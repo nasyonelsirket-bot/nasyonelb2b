@@ -484,7 +484,29 @@ function orderPdfDevProxy(env = {}) {
         const id = crypto.randomBytes(10).toString('hex')
         const customer = body.customer || {}
         const customerName = String(customer.name || customer.companyName || '').trim()
-        const orderNumber = body.orderNumber || `NT-${Date.now().toString(36).toUpperCase().slice(-8)}`
+        const indexPathEarly = path.join(ordersDir, '_index.json')
+        let indexEarly = []
+        try {
+          if (fs.existsSync(indexPathEarly)) indexEarly = JSON.parse(fs.readFileSync(indexPathEarly, 'utf8'))
+        } catch {
+          indexEarly = []
+        }
+        if (!Array.isArray(indexEarly)) indexEarly = []
+        const seqPath = path.join(ordersDir, '_seq.json')
+        let savedSeq = 0
+        try {
+          if (fs.existsSync(seqPath)) savedSeq = Number(JSON.parse(fs.readFileSync(seqPath, 'utf8')).value) || 0
+        } catch {
+          savedSeq = 0
+        }
+        const { allocateOrderNumberFromIndex } = require('./lib/orderNumber.cjs')
+        const allocated = allocateOrderNumberFromIndex(indexEarly, savedSeq)
+        const orderNumber = String(body.orderNumber || '').trim() || allocated.orderNumber
+        try {
+          fs.writeFileSync(seqPath, JSON.stringify({ value: allocated.nextSeq }))
+        } catch {
+          /* ignore */
+        }
         const paymentMethod = body.paymentMethod === 'iban' ? 'iban' : 'cod'
         const itemsSubtotal = items.reduce(
           (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
@@ -670,9 +692,10 @@ function orderPdfDevProxy(env = {}) {
         } catch {
           index = []
         }
+        const { orderNumbersMatch } = require('./lib/orderNumber.cjs')
         const row = (Array.isArray(index) ? index : []).find(
           (r) =>
-            String(r.orderNumber || '').toUpperCase() === orderNumber ||
+            orderNumbersMatch(r.orderNumber, orderNumber) ||
             String(r.id || '').toUpperCase() === orderNumber,
         )
         if (!row) {

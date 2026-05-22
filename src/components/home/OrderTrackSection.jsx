@@ -62,7 +62,7 @@ export default function OrderTrackSection({ variant = 'page' }) {
               required
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="NT-XXXXXXX"
+              placeholder="NT00001"
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"
             />
           </div>

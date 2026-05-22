@@ -76,7 +76,7 @@ Sonra `npm run dev` ile test siparişi verin.
 
 Admin panelde sipariş **Kargoya ver** yapıldığında müşteriye otomatik e-posta gider:
 
-- Konu: `Siparişiniz kargoda — NT-XXXX`
+- Konu: `Siparişiniz kargoda — NT00042`
 - İçerik: kargo firması, takip numarası, kargo takip linki, sipariş takip sayfası linki
 - Takip no sonradan girilirse **güncelleme** maili gider (`Kargo bilgileri güncellendi`)
 

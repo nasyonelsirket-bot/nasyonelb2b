@@ -2,6 +2,7 @@
  * Müşteri sipariş takibi — sipariş no + e-posta
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+const { orderNumbersMatch } = require('../../lib/orderNumber.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -47,7 +48,7 @@ exports.handler = async (event) => {
 
     const row = index.find(
       (r) =>
-        String(r.orderNumber || '').toUpperCase() === orderNumber ||
+        orderNumbersMatch(r.orderNumber, orderNumber) ||
         String(r.id || '').toUpperCase() === orderNumber,
     );
 
