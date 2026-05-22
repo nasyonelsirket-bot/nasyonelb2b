@@ -33,7 +33,7 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <article className="product-card group relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-all duration-300 sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1.5 sm:hover:shadow-card-hover">
+    <article className="@container product-card group relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-brand-100 bg-white shadow-sm transition-all duration-300 sm:rounded-2xl sm:border-0 sm:shadow-card sm:hover:-translate-y-1.5 sm:hover:shadow-card-hover">
       <Link to={getProductLink(product)} className="relative block min-w-0">
         <div className="absolute left-2 top-2 z-10 flex flex-col gap-1 max-w-[45%]">
           {badges.map((b) => (
@@ -96,11 +96,11 @@ export default function ProductCard({ product }) {
           />
         </div>
 
-        <div className="mt-1.5 sm:mt-3 flex gap-1.5">
+        <div className="mt-1.5 sm:mt-3 grid grid-cols-1 gap-1.5 @[17rem]:grid-cols-2">
           <Button
             type="button"
             variant="yellow"
-            className="flex-1 h-8 touch-manipulation gap-1 px-2 text-[10px] sm:min-h-[44px] sm:text-sm sm:px-3"
+            className="w-full min-w-0 h-9 touch-manipulation gap-1 px-2 text-[11px] sm:min-h-[44px] sm:text-sm sm:px-3"
             onClick={handleAdd}
           >
             <ShoppingCart className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
@@ -109,11 +109,11 @@ export default function ProductCard({ product }) {
           <Button
             type="button"
             variant="outline"
-            className="hidden sm:inline-flex shrink-0 h-8 sm:min-h-[44px] px-2.5 text-xs gap-1"
+            className="w-full min-w-0 inline-flex h-9 sm:min-h-[44px] px-2 text-[11px] sm:text-xs gap-1 whitespace-nowrap"
             onClick={handleQuickBuy}
             title="Hızlı satın al"
           >
-            <Zap className="h-3.5 w-3.5" />
+            <Zap className="h-3.5 w-3.5 shrink-0" />
             Hızlı Al
           </Button>
         </div>

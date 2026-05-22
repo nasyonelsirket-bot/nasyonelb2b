@@ -157,12 +157,21 @@
     padding: 0.5rem;
   }
 
+  /* Ürün şeridi — kart genişliği butonlar için yeterli */
+  .product-strip-item {
+    container-type: inline-size;
+  }
+
   /* Mobil ürün grid — Trendyol tarzı 2 sütun, kompakt kart */
   @media (max-width: 639px) {
     .product-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.5rem;
+    }
+
+    .product-grid .product-card {
+      container-type: inline-size;
     }
 
     .product-grid .product-card {

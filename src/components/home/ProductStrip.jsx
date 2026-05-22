@@ -127,7 +127,7 @@ export default function ProductStrip({
             {list.map((p) => (
               <div
                 key={p.id}
-                className="product-strip-item shrink-0 snap-start w-[calc(50%-0.25rem)] sm:w-[220px] md:w-[240px]"
+                className="product-strip-item shrink-0 snap-start w-[calc(50%-0.25rem)] min-w-[9.5rem] sm:min-w-[17.5rem] sm:w-[17.75rem] md:w-[19rem] lg:w-[20rem]"
               >
                 <ProductCard product={p} />
               </div>

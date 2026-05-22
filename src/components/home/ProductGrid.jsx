@@ -87,7 +87,7 @@ export default function ProductGrid({
             </div>
           </div>
         )}
-        <div className="product-grid grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="product-grid grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {visible.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
