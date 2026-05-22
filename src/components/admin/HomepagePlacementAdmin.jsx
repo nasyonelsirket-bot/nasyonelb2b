@@ -400,7 +400,6 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
             }`}
           >
             {getSectionDisplayLabel(id, localLayout.sections)}
-            {i > 0 ? '' : ''}
           </button>
         ))}
       </div>
