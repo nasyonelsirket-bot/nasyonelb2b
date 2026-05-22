@@ -17,10 +17,14 @@ Admin: **Siparişler** sekmesi
 1. Projeyi GitHub’a push edin (`nasyonelb2b-main` klasörünün içindeki proje)
 2. Netlify otomatik build yapar
 3. **Site settings → Environment variables** (canlıda da ekleyin):
-   - `RESEND_API_KEY`
-   - `RESEND_FROM_EMAIL`
-   - `ORDER_NOTIFY_EMAIL`
+   - `RESEND_API_KEY` — [Resend.com](https://resend.com) API anahtarı
+   - `RESEND_FROM_EMAIL` — örn. `siparis@nasyoneltoys.com` (domain Resend’de doğrulanmalı)
+   - `ORDER_NOTIFY_EMAIL` — size gelen sipariş bildirimi, örn. `info@nasyoneltoys.com`
    - `TRENDYOL_PRICE_DIVISOR` = `2`
+   - Değişkenlerden sonra **Clear cache and deploy**
+
+   E-posta kurulum detayı: `docs/EMAIL_SETUP.md`  
+   Admin → Ayarlar → **E-posta durumunu kontrol et**
 
 ## Netlify (manuel / drag & drop)
 

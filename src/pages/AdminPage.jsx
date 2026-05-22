@@ -565,6 +565,25 @@ function TrendyolAdmin({ store, setMsg, tyLoading, tyProgress, onSync }) {
 
 function SettingsAdmin({ store, setMsg }) {
   const [s, setS] = useState({ ...store.settings });
+  const [emailStatus, setEmailStatus] = useState(null);
+  const [emailChecking, setEmailChecking] = useState(false);
+
+  const checkEmailStatus = async () => {
+    setEmailChecking(true);
+    try {
+      const res = await fetch('/api/email/status');
+      const data = await res.json();
+      setEmailStatus(data);
+      if (data.active) setMsg('E-posta sunucusu yapılandırılmış görünüyor', 'success');
+      else setMsg(data.message || 'E-posta ayarları eksik', 'error');
+    } catch {
+      setEmailStatus(null);
+      setMsg('E-posta durumu alınamadı (Netlify Functions çalışıyor mu?)', 'error');
+    } finally {
+      setEmailChecking(false);
+    }
+  };
+
   const save = () => {
     startTransition(() => {
       store.updateSettings(s);
@@ -574,6 +593,28 @@ function SettingsAdmin({ store, setMsg }) {
   return (
     <div className="rounded-2xl bg-white p-6 shadow-card space-y-4">
       <h2 className="font-bold">Site Ayarları</h2>
+
+      <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4 space-y-3">
+        <h3 className="text-sm font-bold text-sky-900">Sipariş e-postası (Resend)</h3>
+        <p className="text-xs text-gray-700 leading-relaxed">
+          Netlify → <strong>Environment variables</strong> bölümüne ekleyin:{' '}
+          <code className="text-[11px]">RESEND_API_KEY</code>,{' '}
+          <code className="text-[11px]">RESEND_FROM_EMAIL</code> (ör. siparis@nasyoneltoys.com),{' '}
+          <code className="text-[11px]">ORDER_NOTIFY_EMAIL</code>. Resend.com&apos;da domain doğrulaması
+          şart. Detay: <code className="text-[11px]">docs/EMAIL_SETUP.md</code>
+        </p>
+        <Button type="button" variant="outline" size="sm" onClick={checkEmailStatus} disabled={emailChecking}>
+          {emailChecking ? 'Kontrol ediliyor...' : 'E-posta durumunu kontrol et'}
+        </Button>
+        {emailStatus && (
+          <ul className="text-xs space-y-1 text-gray-800">
+            <li>API anahtarı: {emailStatus.resendApiKeySet ? '✓ Tanımlı' : '✗ Eksik'}</li>
+            <li>Gönderen: {emailStatus.fromEmail || '—'}</li>
+            <li>Bildirim: {emailStatus.notifyEmail || '—'}</li>
+            <li className="text-gray-600 pt-1">{emailStatus.message}</li>
+          </ul>
+        )}
+      </div>
       <ImageDropzone
         label="Site logosu"
         hint={`${logoSpecText()} — şeffaf PNG, beyaz kutu/çerçeve eklemeyin`}
@@ -607,10 +648,6 @@ function SettingsAdmin({ store, setMsg }) {
           </div>
         ))}
       </div>
-      <p className="text-xs text-gray-500">
-        E-posta: Netlify ortam değişkenlerine <code>RESEND_API_KEY</code>, <code>RESEND_FROM_EMAIL</code>,{' '}
-        <code>ORDER_NOTIFY_EMAIL</code> ekleyin.
-      </p>
       {[
         ['whatsappNumber', 'WhatsApp Numarası'],
         ['metaPixelId', 'Meta Pixel ID'],

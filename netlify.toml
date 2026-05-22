@@ -73,6 +73,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/email/status"
+  to = "/.netlify/functions/email-status"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/members/register"
   to = "/.netlify/functions/members-register"
   status = 200
