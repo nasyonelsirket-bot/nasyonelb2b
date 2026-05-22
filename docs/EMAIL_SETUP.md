@@ -83,3 +83,13 @@ Sonra `npm run dev` ile test siparişi verin.
 | Müşteriye gitmiyor | Siparişte e-posta dolu mu; Resend domain doğrulandı mı |
 | Spam’a düşüyor | Domain SPF/DKIM kayıtlarını tamamlayın |
 | Yerelde çalışmıyor | `.env` + `npm run dev` yeniden başlatın |
+| Sipariş var mail yok | Admin → Ayarlar → **Test gönder** — çıkan hata metnini okuyun |
+
+### Resend’de domain “Verified” değilse
+Mail **hiç gitmez**. DNS kayıtlarından sonra Resend’de yeşil **Verified** bekleyin.
+
+### Netlify env sonrası deploy unutulursa
+Değişkenleri ekledikten sonra mutlaka **Clear cache and deploy site**.
+
+### `RESEND_FROM_EMAIL` yanlışsa
+Sadece doğrulanmış adresten gönderin: `siparis@nasyoneltoys.com` (Resend’de onaylı subdomain `send` yeterli).

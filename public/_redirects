@@ -2,6 +2,7 @@
 /api/catalog  /.netlify/functions/catalog-get  200!
 /api/catalog/save  /.netlify/functions/catalog-save  200!
 /api/email/status  /.netlify/functions/email-status  200!
+/api/email/test  /.netlify/functions/email-test-send  200!
 /api/order-pdf/save  /.netlify/functions/order-pdf-save  200!
 /api/order-pdf  /.netlify/functions/order-pdf-get  200!
 /api/orders/list  /.netlify/functions/orders-list  200!

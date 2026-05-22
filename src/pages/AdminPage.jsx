@@ -567,6 +567,8 @@ function SettingsAdmin({ store, setMsg }) {
   const [s, setS] = useState({ ...store.settings });
   const [emailStatus, setEmailStatus] = useState(null);
   const [emailChecking, setEmailChecking] = useState(false);
+  const [testEmailTo, setTestEmailTo] = useState(store.settings?.contactEmail || '');
+  const [testEmailSending, setTestEmailSending] = useState(false);
 
   const checkEmailStatus = async () => {
     setEmailChecking(true);
@@ -581,6 +583,37 @@ function SettingsAdmin({ store, setMsg }) {
       setMsg('E-posta durumu alınamadı (Netlify Functions çalışıyor mu?)', 'error');
     } finally {
       setEmailChecking(false);
+    }
+  };
+
+  const sendTestEmail = async () => {
+    const to = testEmailTo.trim();
+    if (!to) {
+      setMsg('Test için e-posta adresi girin', 'error');
+      return;
+    }
+    const pass =
+      typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('b2b_admin_pass') : '';
+    setTestEmailSending(true);
+    try {
+      const res = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Key': pass || '',
+        },
+        body: JSON.stringify({ to, siteName: s.siteName || 'Nasyonel Toys' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMsg(`Test maili gönderildi: ${to}. Gelen kutusu + spam kontrol edin.`, 'success');
+      } else {
+        setMsg(data.error || data.hint || 'Test maili gönderilemedi', 'error');
+      }
+    } catch {
+      setMsg('Test maili isteği başarısız (Functions deploy edildi mi?)', 'error');
+    } finally {
+      setTestEmailSending(false);
     }
   };
 
@@ -614,6 +647,31 @@ function SettingsAdmin({ store, setMsg }) {
             <li className="text-gray-600 pt-1">{emailStatus.message}</li>
           </ul>
         )}
+        <div className="flex flex-wrap gap-2 items-end pt-1">
+          <label className="flex-1 min-w-[200px]">
+            <span className="text-xs font-semibold text-brand-800">Test maili gönder</span>
+            <input
+              type="email"
+              value={testEmailTo}
+              onChange={(e) => setTestEmailTo(e.target.value)}
+              placeholder="info@nasyoneltoys.com"
+              className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            />
+          </label>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={testEmailSending}
+            onClick={sendTestEmail}
+          >
+            {testEmailSending ? 'Gönderiliyor...' : 'Test gönder'}
+          </Button>
+        </div>
+        <p className="text-[11px] text-gray-600">
+          Hata mesajı burada görünür. Sık neden: domain Resend&apos;de Verified değil, API key eksik,
+          deploy yapılmadı, spam klasörü.
+        </p>
       </div>
       <ImageDropzone
         label="Site logosu"
