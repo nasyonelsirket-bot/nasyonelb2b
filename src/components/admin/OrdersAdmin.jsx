@@ -1,11 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Package,
   RefreshCw,
   CheckCircle,
-  Clock,
-  Building2,
-  Banknote,
   XCircle,
   ChevronDown,
   ChevronUp,
@@ -14,6 +11,8 @@ import {
   Phone,
   Mail,
   ExternalLink,
+  Search,
+  X,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
@@ -25,6 +24,7 @@ import {
   matchesStatusFilter,
   ADMIN_STATUS_FILTERS,
 } from '@/constants/orderStatus';
+import { matchesOrderNumberSearch, matchesCustomerNameSearch } from '@/utils/orderNumberSearch';
 
 function StatusBadge({ status }) {
   const meta = getStatusMeta(status);
@@ -292,6 +292,8 @@ export default function OrdersAdmin({ setMsg }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
+  const [orderNoQuery, setOrderNoQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -413,7 +415,23 @@ export default function OrdersAdmin({ setMsg }) {
     }
   };
 
-  const filtered = orders.filter((o) => matchesStatusFilter(o, filter));
+  const hasSearch = Boolean(orderNoQuery.trim() || customerQuery.trim());
+
+  const filtered = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          matchesStatusFilter(o, filter) &&
+          matchesOrderNumberSearch(o, orderNoQuery) &&
+          matchesCustomerNameSearch(o, customerQuery),
+      ),
+    [orders, filter, orderNoQuery, customerQuery],
+  );
+
+  const clearSearch = () => {
+    setOrderNoQuery('');
+    setCustomerQuery('');
+  };
 
   return (
     <div className="rounded-2xl bg-white p-4 sm:p-6 shadow-card space-y-4">
@@ -452,10 +470,65 @@ export default function OrdersAdmin({ setMsg }) {
         ))}
       </div>
 
+      <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-3">
+        <p className="text-xs font-semibold text-brand-800 flex items-center gap-1.5">
+          <Search className="h-3.5 w-3.5" />
+          Sipariş ara
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="block text-xs">
+            <span className="font-medium text-gray-700">Sipariş numarası</span>
+            <input
+              type="search"
+              value={orderNoQuery}
+              onChange={(e) => setOrderNoQuery(e.target.value)}
+              placeholder="NT00001 veya 42"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+              autoComplete="off"
+            />
+          </label>
+          <label className="block text-xs">
+            <span className="font-medium text-gray-700">Müşteri adı</span>
+            <input
+              type="search"
+              value={customerQuery}
+              onChange={(e) => setCustomerQuery(e.target.value)}
+              placeholder="Ad soyad (kısmi yazın)"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+              autoComplete="off"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+          <span>
+            {loading
+              ? '…'
+              : `${filtered.length} sipariş listeleniyor`}
+            {!loading && orders.length > 0 ? ` (toplam ${orders.length})` : ''}
+          </span>
+          {hasSearch && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-brand-700 hover:bg-brand-100 font-medium"
+            >
+              <X className="h-3.5 w-3.5" />
+              Aramayı temizle
+            </button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <p className="text-sm text-gray-500 py-8 text-center">Yükleniyor...</p>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Henüz sipariş yok veya filtre boş.</p>
+        <p className="text-sm text-gray-500 py-8 text-center">
+          {orders.length === 0
+            ? 'Henüz sipariş yok.'
+            : hasSearch
+              ? 'Arama veya durum filtresine uygun sipariş bulunamadı.'
+              : 'Bu durumda sipariş yok.'}
+        </p>
       ) : (
         <ul className="divide-y divide-brand-50">
           {filtered.map((o) => {
