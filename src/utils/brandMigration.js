@@ -4,13 +4,14 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 9;
+export const BRAND_VERSION = 10;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
   if (!logoUrl) return true;
   if (logoUrl.startsWith('data:')) return false;
   if (logoUrl.endsWith('/logo.svg') && !logoUrl.includes('?')) return true;
+  if (logoUrl.includes('nasyonel-logo.png')) return true;
   return false;
 }
 
@@ -40,7 +41,7 @@ export function runBrandMigration() {
     const settings = { ...DEFAULT_SETTINGS, ...safeSettings };
 
     if (shouldResetLogo(settings.logoUrl)) {
-      settings.logoUrl = '/logo.svg';
+      settings.logoUrl = '/nasyonel-logo.svg?v=1';
     }
     if (
       !settings.siteName ||
