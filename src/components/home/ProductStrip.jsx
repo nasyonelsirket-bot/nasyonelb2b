@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import { markBestSellerFlags } from '@/utils/productBestseller';
+import { useAxisScrollLock } from '@/utils/useAxisScrollLock';
 
 const SCROLL_STEP = 0.82;
 
@@ -17,6 +18,7 @@ export default function ProductStrip({
   markBestsellers = true,
 }) {
   const trackRef = useRef(null);
+  useAxisScrollLock(trackRef);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
 
@@ -122,7 +124,7 @@ export default function ProductStrip({
 
           <div
             ref={trackRef}
-            className="product-strip-track flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth touch-pan-x"
+            className="product-strip-track flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-proximity sm:snap-mandatory scroll-smooth overscroll-x-contain"
             role="list"
             aria-label={`${title} ürün listesi`}
           >

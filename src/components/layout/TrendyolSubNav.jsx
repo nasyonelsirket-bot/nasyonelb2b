@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useRef } from 'react';
 import {
   Flame,
   Percent,
@@ -6,6 +7,7 @@ import {
   LayoutGrid,
   ShoppingBag,
 } from 'lucide-react';
+import { useAxisScrollLock } from '@/utils/useAxisScrollLock';
 
 const LINKS = [
   { href: '/en-cok-satanlar', label: 'Çok Satanlar', icon: Flame, style: 'hot' },
@@ -37,11 +39,16 @@ function linkClass(style, active) {
 
 export default function TrendyolSubNav() {
   const { pathname, hash } = useLocation();
+  const trackRef = useRef(null);
+  useAxisScrollLock(trackRef);
 
   return (
     <nav className="border-b border-gray-200 bg-white shadow-sm" aria-label="Hızlı menü">
       <div className="mx-auto max-w-7xl px-2 sm:px-4">
-        <div className="flex gap-2 overflow-x-auto py-2.5 scrollbar-hide snap-x snap-mandatory touch-pan-x">
+        <div
+          ref={trackRef}
+          className="flex gap-2 overflow-x-auto py-2.5 scrollbar-hide snap-x snap-proximity sm:snap-mandatory overscroll-x-contain"
+        >
           {LINKS.map(({ href, label, icon: Icon, style }) => {
             const isHome = pathname === '/';
             const active =

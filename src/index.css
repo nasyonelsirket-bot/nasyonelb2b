@@ -148,6 +148,8 @@
   .product-strip-track {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
   .product-strip-track::-webkit-scrollbar {
     display: none;
