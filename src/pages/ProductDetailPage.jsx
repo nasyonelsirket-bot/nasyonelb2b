@@ -105,7 +105,7 @@ export default function ProductDetailPage() {
         ]}
       />
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in pb-28 lg:pb-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
         <Breadcrumbs
           variant="light"
           className="mb-4"
@@ -225,27 +225,6 @@ export default function ProductDetailPage() {
         </div>
 
         <ProductReviewsSection product={product} />
-      </div>
-
-      {/* Mobil sticky satın al */}
-      <div className="lg:hidden fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-0 right-0 z-[45] border-t border-brand-200 bg-white/95 backdrop-blur-md px-3 py-2.5 shadow-[0_-4px_20px_rgba(10,31,77,0.12)]">
-        <div className="flex items-center gap-3 max-w-7xl mx-auto">
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-bold text-brand-900 truncate">{formatPrice(lineTotal)}</p>
-            <p className="text-[10px] text-gray-500">{inStock ? 'Stokta' : 'Stok yok'}</p>
-          </div>
-          <QuantityControls
-            quantity={qty}
-            onChange={setQty}
-            onIncrement={(n) => setQty((q) => q + n)}
-            onDecrement={(n) => setQty((q) => Math.max(1, q - n))}
-            compact
-          />
-          <Button variant="yellow" size="sm" className="shrink-0 h-11 px-4" onClick={handleAdd} disabled={!inStock}>
-            <ShoppingCart className="h-4 w-4" />
-            Ekle
-          </Button>
-        </div>
       </div>
     </>
   );
