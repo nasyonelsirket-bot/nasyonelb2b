@@ -16,6 +16,7 @@ import {
   TIKTOK_URL,
   YOUTUBE_URL,
   LEGAL_ROUTES,
+  FOOTER_PRIMARY_LEGAL,
 } from '@/constants/siteLinks';
 import {
   BUSINESS_HOURS,
@@ -43,6 +44,10 @@ export default function Footer() {
   const email = settings.contactEmail || SUPPORT_EMAIL;
   const address = settings.contactAddress || COMPANY_ADDRESS;
   const waLink = whatsAppHref(settings.whatsappNumber);
+
+  const secondaryLegal = LEGAL_ROUTES.filter(
+    (r) => !FOOTER_PRIMARY_LEGAL.some((p) => p.path === r.path),
+  );
 
   return (
     <footer className="gradient-hero text-white mt-auto">
@@ -100,10 +105,17 @@ export default function Footer() {
 
           <div className="lg:col-span-3">
             <h4 className="font-display font-bold mb-4 text-accent-gold">Yasal</h4>
-            <ul className="space-y-2 text-sm text-brand-100">
-              {LEGAL_ROUTES.map((r) => (
+            <ul className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-2 text-sm text-brand-100">
+              {FOOTER_PRIMARY_LEGAL.map((r) => (
                 <li key={r.path}>
-                  <Link to={r.path} className="hover:text-white transition-colors">
+                  <Link to={r.path} className="hover:text-white transition-colors inline-block py-0.5">
+                    {r.label}
+                  </Link>
+                </li>
+              ))}
+              {secondaryLegal.map((r) => (
+                <li key={r.path} className="hidden lg:list-item">
+                  <Link to={r.path} className="hover:text-white transition-colors inline-block py-0.5">
                     {r.label}
                   </Link>
                 </li>

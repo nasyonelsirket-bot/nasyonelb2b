@@ -32,13 +32,13 @@ export default function AboutPage() {
           <h1 className="mt-4 font-display text-3xl sm:text-5xl font-bold">{ABOUT_HERO.title}</h1>
           <p className="mt-4 text-base sm:text-lg text-orange-50/95 max-w-2xl mx-auto">{ABOUT_HERO.subtitle}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/#cok-satanlar">
+            <Link to="/en-cok-satanlar">
               <Button type="button" variant="gold" size="lg">
                 En Çok Satanlar
                 <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/#egitici">
+            <Link to="/egitici-oyuncaklar">
               <Button
                 type="button"
                 size="lg"

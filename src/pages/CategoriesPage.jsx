@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
+import EmptyCategoryFallback from '@/components/category/EmptyCategoryFallback';
 import { useStore } from '@/context/StoreContext';
 import { getCategorySearchScore } from '@/data/categorySearchRank';
+import { getBestSellerProducts } from '@/utils/productBestseller';
 
 export default function CategoriesPage() {
   const { products, categories } = useStore();
@@ -14,6 +16,18 @@ export default function CategoriesPage() {
     if (!cat) return products;
     return products.filter((p) => p.category === cat);
   }, [products, cat]);
+
+  const suggestions = useMemo(() => getBestSellerProducts(products, 8), [products]);
+
+  const activeCategoryList = useMemo(() => {
+    const cats = Array.isArray(categories) ? categories : [];
+    const counts = {};
+    products.forEach((p) => {
+      const key = p.category || 'Genel';
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return cats.filter((c) => (counts[c.name] || 0) > 0);
+  }, [categories, products]);
 
   const grouped = useMemo(() => {
     if (cat) return null;
@@ -46,6 +60,8 @@ export default function CategoriesPage() {
       });
   }, [cat, categories, products]);
 
+  const catHasProducts = !cat || filtered.length > 0;
+
   return (
     <>
       <SEO title="Kategoriler" description="Nasyonel Toys oyuncak kategorileri ve ürün fiyatları" path="/kategoriler" />
@@ -62,9 +78,9 @@ export default function CategoriesPage() {
             >
               Tümü
             </Link>
-            {(Array.isArray(categories) ? categories : []).map((c) => (
+            {activeCategoryList.map((c) => (
               <Link
-                key={c.id}
+                key={c.id || c.name}
                 to={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium ${cat === c.name ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
               >
@@ -75,7 +91,14 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {cat ? (
+      {cat && !catHasProducts ? (
+        <EmptyCategoryFallback
+          title={`"${cat}" kategorisinde ürün yok`}
+          message="Bu kategoride şu an listelenecek ürün bulunmuyor. Diğer kategorilerdeki ürünleri inceleyebilirsiniz."
+          products={products}
+          suggestions={suggestions}
+        />
+      ) : cat ? (
         <ProductGrid products={filtered} title={cat} />
       ) : (
         <div className="mx-auto max-w-7xl px-4 py-10 space-y-12">
@@ -98,7 +121,10 @@ export default function CategoriesPage() {
             </section>
           ))}
           {!grouped?.length && (
-            <p className="text-center text-gray-500 py-12">Henüz ürün bulunmuyor. Yakında yeni ürünler eklenecek.</p>
+            <EmptyCategoryFallback
+              products={products}
+              suggestions={suggestions}
+            />
           )}
         </div>
       )}

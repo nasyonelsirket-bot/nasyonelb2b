@@ -346,49 +346,109 @@ export const LEGAL_PAGES = {
     ],
   },
   'teslimat-kargo': {
-    title: 'Teslimat ve Kargo Politikası',
+    title: 'Teslimat ve Kargo Koşulları',
+    seoTitle: 'Teslimat ve Kargo Koşulları | Nasyonel Toys',
+    seoDescription:
+      'Sipariş hazırlık süresi, kargo teslim süresi, hafta sonu gönderim, hasarlı ürün ve teslim alınmayan kargo prosedürleri. Türkiye geneli hızlı teslimat.',
     intro:
-      'Siparişlerinizin güvenli ve hızlı şekilde adresinize ulaşması için aşağıdaki teslimat ve kargo koşulları geçerlidir.',
+      'Nasyonel Toys olarak siparişlerinizi özenle hazırlayıp güvenilir kargo firmalarıyla adresinize ulaştırıyoruz. Aşağıda teslimat süreçleri, kargo koşulları ve özel durumlar detaylı şekilde açıklanmıştır.',
     highlights: [
       `${FREE_SHIPPING_MIN} TL ve üzeri siparişlerde ücretsiz kargo`,
-      'Türkiye geneli gönderim',
-      'Kargo takip numarası ile sipariş takibi',
+      'Ödeme onayı sonrası hızlı hazırlık',
+      'Kargo takip numarası ile anlık takip',
+      'Türkiye geneli teslimat',
     ],
     sections: [
       {
         heading: 'Teslimat bölgeleri',
         paragraphs: [
-          'Türkiye Cumhuriyeti sınırları içindeki tüm illere kargo ile teslimat yapılmaktadır.',
-          'Adres bilgilerinizin eksiksiz ve doğru olması teslimat süresini kısaltır.',
+          'Türkiye Cumhuriyeti sınırları içindeki tüm illere anlaşmalı kargo firmaları aracılığıyla teslimat yapılmaktadır.',
+          'Adres bilgilerinizin (il, ilçe, mahalle, cadde/sokak, bina ve daire no, telefon) eksiksiz ve doğru girilmesi teslimat süresini kısaltır. Hatalı adres nedeniyle oluşan gecikmelerden satıcı sorumlu tutulamaz.',
         ],
       },
       {
-        heading: 'Teslimat süresi',
+        heading: 'Sipariş hazırlık süresi',
         paragraphs: [
-          'Ödeme onayı alındıktan sonra siparişler stok durumuna göre hazırlanır ve kargoya verilir.',
-          'Standart teslimat süresi 1–5 iş günü arasında değişebilir; yoğun dönemlerde veya uzak bölgelerde süre uzayabilir.',
-          'Kargo firması ve takip numarası sipariş kargoya verildiğinde e-posta ile bildirilir; ayrıca sipariş takip sayfasından kontrol edebilirsiniz.',
+          'PayTR üzerinden ödemeniz onaylandıktan sonra siparişiniz depo ekibimize iletilir ve hazırlık süreci başlar.',
+          'Stokta bulunan ürünler için standart hazırlık süresi 1–2 iş günüdür. Yoğun kampanya dönemlerinde (bayram, yılbaşı, okul dönemi vb.) bu süre 3 iş gününe kadar uzayabilir.',
+          'Siparişinizde birden fazla ürün varsa tüm kalemler hazır olduğunda tek paket halinde kargoya verilir; kısmi gönderim yapılmaz.',
+          'Hazırlık tamamlandığında kargo bilgisi e-posta ile paylaşılır; ayrıca sipariş takip sayfasından durumu kontrol edebilirsiniz.',
+        ],
+      },
+      {
+        heading: 'Kargo teslim süresi',
+        paragraphs: [
+          'Sipariş kargoya verildikten sonra teslimat süresi bulunduğunuz ile ve kargo firmasının dağıtım yoğunluğuna göre değişir.',
+          'Büyükşehir ve merkez ilçelerde genellikle 1–3 iş günü; diğer il ve ilçelerde 2–5 iş günü içinde teslimat hedeflenir.',
+          'Uzak bölge, adalar ve köy servisi gerektiren adreslerde süre 7 iş gününe kadar uzayabilir.',
+          'Kargo takip numaranızı kullanarak paketinizin güzergâhını anlık olarak izleyebilirsiniz.',
+        ],
+      },
+      {
+        heading: 'Hafta sonu gönderim bilgisi',
+        paragraphs: [
+          'Kargo firmalarının operasyon takvimine bağlı olarak cumartesi günleri birçok bölgede teslimat yapılabilir; pazar günleri genellikle dağıtım yapılmaz.',
+          'Cuma günü öğleden sonra veya hafta sonu verilen siparişler, stok ve hazırlık durumuna göre en erken pazartesi iş günü kargoya verilir.',
+          'Hafta sonu kargoya verilen paketlerin teslimatı, kargo firmasının bölgesel çalışma saatlerine tabidir.',
+        ],
+      },
+      {
+        heading: 'Kargo firması bilgisi',
+        paragraphs: [
+          'Gönderilerimiz; Yurtiçi Kargo, Aras Kargo, MNG Kargo veya Sürat Kargo gibi anlaşmalı taşıyıcı firmalardan biriyle yapılır. Bölge, hacim ve operasyonel uygunluğa göre firma seçimi Nasyonel Toys tarafından belirlenir.',
+          'Kargo firması ve takip numarası, siparişiniz kargoya verildiğinde kayıtlı e-posta adresinize iletilir.',
+          'Teslimat sırasında kargo görevlisinden kimlik veya imza talep edilebilir; bu, güvenli teslimat prosedürünün parçasıdır.',
         ],
       },
       {
         heading: 'Kargo ücreti',
         paragraphs: [
           `${FREE_SHIPPING_MIN} TL ve üzeri siparişlerde kargo bedeli alıcıya yansıtılmaz.`,
-          'Altındaki siparişlerde kargo bedeli sepet ve ödeme adımında açıkça gösterilir.',
+          'Bu tutarın altındaki siparişlerde kargo ücreti sepet ve ödeme adımında açıkça gösterilir; onay vermeden önce toplam tutarı görebilirsiniz.',
+        ],
+      },
+      {
+        heading: 'Hasarlı ürün prosedürü',
+        paragraphs: [
+          'Kargo tesliminde paket dışında ezilme, yırtılma veya ıslanma gibi belirgin hasar varsa ürünü teslim almadan önce kargo görevlisiyle birlikte tutanak tutturmanızı öneririz.',
+          'Hasarlı veya eksik ürün teslim alındıysa, teslimattan itibaren en geç 48 saat içinde paket ve ürün fotoğraflarıyla birlikte bize ulaşın.',
+          'Doğrulanan hasarlı gönderilerde yeniden gönderim veya tam iade seçenekleri sunulur; bu durumlarda iade kargo masrafı Nasyonel Toys tarafından karşılanır.',
+        ],
+        bullets: [
+          'Fotoğrafta kargo etiketi, paket dışı ve ürün hasarı net görünmelidir.',
+          'Sipariş numaranızı iletişimde mutlaka belirtin.',
+        ],
+      },
+      {
+        heading: 'Teslim alınmayan kargo süreci',
+        paragraphs: [
+          'Adreste bulunulmaması, yanlış adres veya teslimat reddi nedeniyle kargo firmasına iade dönen paketler depomuza geri alınır.',
+          'İade kargosu tarafımıza ulaştıktan sonra müşteri hizmetleri sizinle iletişime geçer; adres doğrulaması yapılarak yeniden gönderim planlanır.',
+          'Yeniden gönderimde ek kargo ücreti talep edilebilir; ücretsiz yeniden gönderim yalnızca satıcı kaynaklı hatalarda uygulanır.',
+          'Teslim alınmayan siparişlerde 15 gün içinde işlem yapılmazsa sipariş iptal edilerek ücret iadesi değerlendirilebilir.',
+        ],
+      },
+      {
+        heading: 'Resmi tatil bilgilendirmesi',
+        paragraphs: [
+          'Resmi tatil günlerinde (bayramlar, 1 Ocak, 23 Nisan, 1 Mayıs, 19 Mayıs, 15 Temmuz, 30 Ağustos, 29 Ekim vb.) kargo firmaları dağıtım yapmaz; bu günlerde verilen siparişler tatil sonrası ilk iş gününde işleme alınır.',
+          'Bayram öncesi ve sonrası yoğunluk nedeniyle hazırlık ve teslimat süreleri uzayabilir; bu dönemlerde sipariş onay e-postasında güncel tahmini süre paylaşılır.',
+          'Tatil dönemlerinde müşteri hizmetleri e-posta yanıt süreleri uzayabilir; acil durumlarda WhatsApp hattımızı kullanabilirsiniz.',
         ],
       },
       {
         heading: 'Teslimat sırasında dikkat edilecekler',
         bullets: [
-          'Kargo tesliminde paketin dışında hasar varsa tutanak tutturarak teslim almayı değerlendirin.',
-          'Teslim alınamayan siparişler kargo firması prosedürüne göre iade edilir; yeniden gönderim için bizimle iletişime geçin.',
-          'Teslimat adresi değişikliği, sipariş kargoya verilmeden önce mümkün olabilir.',
+          'Teslimat adresi değişikliği yalnızca sipariş kargoya verilmeden önce mümkün olabilir.',
+          'Kapıda ödeme seçeneği bulunmamaktadır; tüm ödemeler PayTR güvenli kart altyapısı ile alınır.',
+          'Teslimat sorunlarında öncelikle sipariş takip sayfasını ve kargo firmasının çağrı merkezini kontrol edin; çözülmezse bize yazın.',
         ],
       },
       {
         heading: 'İletişim',
         paragraphs: [
-          `Teslimat ve kargo sorularınız için ${EMAIL} veya ${PHONE} üzerinden bize ulaşabilirsiniz.`,
+          `Teslimat ve kargo ile ilgili tüm sorularınız için ${EMAIL} e-posta adresine yazabilir veya ${PHONE} numarasından bize ulaşabilirsiniz.`,
+          'Sipariş numaranızı ve kargo takip kodunuzu iletişimde belirtmeniz süreci hızlandırır.',
         ],
       },
     ],

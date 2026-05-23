@@ -4,12 +4,15 @@ import SEO from '@/components/seo/SEO';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import ProductGrid from '@/components/home/ProductGrid';
+import EmptyCategoryFallback from '@/components/category/EmptyCategoryFallback';
 import { useStore } from '@/context/StoreContext';
+import { getBestSellerProducts } from '@/utils/productBestseller';
 import {
   getMainCategoryBySlug,
   productMatchesMainCategory,
   filterProductsBySubcategory,
   getSubcategoriesForMain,
+  countProductsInMainCategory,
 } from '@/data/mainCategories';
 
 export default function CategoryLandingPage() {
@@ -32,19 +35,68 @@ export default function CategoryLandingPage() {
     [products, main],
   );
 
+  const suggestions = useMemo(
+    () => getBestSellerProducts(products, 8),
+    [products],
+  );
+
+  const mainHasProducts = main ? countProductsInMainCategory(products, main) > 0 : false;
+  const isEmpty = filtered.length === 0;
+
   if (!main) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-        <p className="text-gray-500">Kategori bulunamadı.</p>
-        <Link to="/kategoriler" className="mt-4 inline-block text-brand-600 hover:underline">
-          Tüm kategorilere dön
-        </Link>
-      </div>
+      <EmptyCategoryFallback
+        title="Kategori bulunamadı"
+        message="Aradığınız kategori mevcut değil. Diğer kategorilerimize göz atabilir veya ana sayfaya dönebilirsiniz."
+        products={products}
+        suggestions={suggestions}
+      />
     );
   }
 
   const path = `/${main.slug}`;
   const title = subFilter ? `${subFilter} — ${main.name}` : main.name;
+
+  if (!mainHasProducts || (subFilter && isEmpty)) {
+    return (
+      <>
+        <SEO
+          title={main.seoTitle}
+          description={main.seoDescription}
+          path={subFilter ? `${path}?alt=${encodeURIComponent(subFilter)}` : path}
+          noindex
+        />
+        <div className="bg-brand-900 text-white py-8 sm:py-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <Breadcrumbs
+              className="mb-4 text-brand-200"
+              items={[
+                { label: 'Ana Sayfa', to: '/' },
+                { label: main.name, to: path },
+                ...(subFilter ? [{ label: subFilter }] : []),
+              ]}
+            />
+            <h1 className="font-display text-2xl sm:text-3xl font-bold">{title}</h1>
+          </div>
+        </div>
+        <EmptyCategoryFallback
+          title={
+            subFilter
+              ? `"${subFilter}" alt kategorisinde ürün yok`
+              : `${main.name} kategorisinde henüz ürün yok`
+          }
+          message={
+            subFilter
+              ? 'Bu alt kategoride şu an ürün bulunmuyor. Ana kategori veya diğer kategorilerdeki ürünleri inceleyebilirsiniz.'
+              : 'Bu kategoride şu an listelenecek ürün bulunmuyor. Aşağıdaki önerilerden devam edebilirsiniz.'
+          }
+          products={products}
+          suggestions={suggestions}
+          categorySlug={main.slug}
+        />
+      </>
+    );
+  }
 
   return (
     <>

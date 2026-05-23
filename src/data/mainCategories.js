@@ -145,3 +145,21 @@ export function filterProductsBySubcategory(products, mainCategory, subcategoryN
       String(p.category || '').trim() === String(subcategoryName || '').trim(),
   );
 }
+
+/** Ana kategorideki ürün sayısı */
+export function countProductsInMainCategory(products, mainCategory) {
+  return (Array.isArray(products) ? products : []).filter((p) =>
+    productMatchesMainCategory(p, mainCategory),
+  ).length;
+}
+
+/** En az bir ürünü olan ana kategoriler */
+export function getActiveMainCategories(products) {
+  const list = Array.isArray(products) ? products : [];
+  return MAIN_CATEGORIES.filter((mc) => countProductsInMainCategory(list, mc) > 0);
+}
+
+/** Alt kategoride ürün var mı */
+export function hasProductsInSubcategory(products, mainCategory, subcategoryName) {
+  return filterProductsBySubcategory(products, mainCategory, subcategoryName).length > 0;
+}

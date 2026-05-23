@@ -6,6 +6,7 @@ import MobileCategoryDrawer from '@/components/layout/MobileCategoryDrawer';
 import TopAnnouncementBar from '@/components/layout/TopAnnouncementBar';
 import HeaderTrustBar from '@/components/layout/HeaderTrustBar';
 import HeaderSearch from '@/components/layout/HeaderSearch';
+import { HEADER_LEGAL_LINKS } from '@/constants/siteLinks';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
 import { useMember } from '@/context/MemberContext';
@@ -138,6 +139,16 @@ export default function Header() {
                 {item.label}
               </NavLink>
             ))}
+            <span className="ml-auto hidden xl:flex items-center gap-3 text-[11px] text-gray-500">
+              {HEADER_LEGAL_LINKS.slice(0, 3).map((link) => (
+                <Link key={link.path} to={link.path} className="hover:text-brand-800 hover:underline whitespace-nowrap">
+                  {link.label}
+                </Link>
+              ))}
+              <Link to="/iletisim" className="hover:text-brand-800 hover:underline whitespace-nowrap">
+                İletişim
+              </Link>
+            </span>
           </nav>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useParams, Link, NavLink } from 'react-router-dom';
 import { FileText, Shield, Truck, RotateCcw } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
+import LegalPageSchema from '@/components/seo/LegalPageSchema';
 import { LEGAL_PAGES } from '@/data/legalContent';
 import { LEGAL_ROUTES } from '@/constants/siteLinks';
 
@@ -42,13 +43,22 @@ export default function LegalPage() {
   }
 
   const updatedYear = new Date().getFullYear();
+  const pagePath = `/sozlesme/${slug}`;
+  const metaDescription = page.seoDescription || page.intro?.slice(0, 160) || page.title;
 
   return (
     <>
       <SEO
-        title={page.title}
-        description={page.intro?.slice(0, 160) || page.title}
-        path={`/sozlesme/${slug}`}
+        title={page.seoTitle || page.title}
+        metaTitle={page.seoTitle || undefined}
+        description={metaDescription}
+        path={pagePath}
+      />
+      <LegalPageSchema
+        title={page.seoTitle || page.title}
+        description={metaDescription}
+        path={pagePath}
+        slug={slug}
       />
       <div className="bg-gray-50 min-h-[60vh]">
         <div className="bg-gradient-to-br from-brand-900 to-brand-800 text-white">

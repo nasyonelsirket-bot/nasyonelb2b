@@ -24,6 +24,10 @@ export default function CheckoutLegalConsent({ accepted, onChange, error }) {
           ,{' '}
           <Link to="/sozlesme/mesafeli-satis" target="_blank" className="text-brand-700 underline hover:text-brand-900">
             mesafeli satış sözleşmesini
+          </Link>
+          ,{' '}
+          <Link to="/sozlesme/teslimat-kargo" target="_blank" className="text-brand-700 underline hover:text-brand-900">
+            teslimat koşullarını
           </Link>{' '}
           ve{' '}
           <Link to="/sozlesme/kvkk" target="_blank" className="text-brand-700 underline hover:text-brand-900">

@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 
 const LINKS = [
-  { href: '/#cok-satanlar', label: 'Çok Satanlar', icon: Flame, style: 'hot' },
+  { href: '/en-cok-satanlar', label: 'Çok Satanlar', icon: Flame, style: 'hot' },
   { href: '/#firsatlar', label: 'Flaş Fırsatlar', icon: Percent, style: 'deal' },
-  { href: '/#egitici', label: 'Eğitici Oyuncaklar', icon: GraduationCap, style: 'edu' },
+  { href: '/egitici-oyuncaklar', label: 'Eğitici Oyuncaklar', icon: GraduationCap, style: 'edu' },
   { href: '/kategoriler', label: 'Kategoriler', icon: LayoutGrid, style: 'default' },
   { href: '/sepet', label: 'Sepetim', icon: ShoppingBag, style: 'cart' },
 ];

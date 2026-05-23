@@ -14,7 +14,7 @@ export function buildFlatCategoryList(categories, products) {
       ...c,
       productCount: counts[c.name] || 0,
     }))
-    .filter((c) => c.name)
+    .filter((c) => c.name && (counts[c.name] || 0) > 0)
     .sort((a, b) => {
       const score = getCategorySearchScore(b.name) - getCategorySearchScore(a.name);
       if (score !== 0) return score;
