@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
 import EmptyCategoryFallback from '@/components/category/EmptyCategoryFallback';
@@ -9,6 +9,7 @@ import { getBestSellerProducts } from '@/utils/productBestseller';
 
 export default function CategoriesPage() {
   const { products, categories } = useStore();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   const cat = params.get('cat');
   const hepsi = params.get('hepsi') === '1';
@@ -74,17 +75,17 @@ export default function CategoriesPage() {
         }
         path={hepsi ? '/kategoriler?hepsi=1' : '/kategoriler'}
       />
-      <div className="bg-brand-900 text-white py-12">
+      <div className="bg-brand-900 text-white py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4">
-          <h1 className="font-display text-3xl font-bold">{hepsi ? 'Tüm Ürünler' : 'Kategoriler'}</h1>
-          <p className="mt-2 text-brand-200">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">{hepsi ? 'Tüm Ürünler' : 'Kategoriler'}</h1>
+          <p className="mt-2 text-sm sm:text-base text-brand-200">
             {hepsi
               ? `${products.length} ürün listeleniyor`
               : cat
                 ? cat
                 : 'Ürünler kategorilere göre listelenir'}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link
               to="/kategoriler"
               className={`rounded-full px-4 py-1.5 text-sm font-medium ${!cat && !hepsi ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
@@ -97,16 +98,49 @@ export default function CategoriesPage() {
             >
               Tüm Ürünler
             </Link>
-            {activeCategoryList.map((c) => (
-              <Link
-                key={c.id || c.name}
-                to={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium ${cat === c.name ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
-              >
-                {c.name}
-              </Link>
-            ))}
           </div>
+
+          {cat && (
+            <div className="mt-3 sm:mt-4">
+              <label htmlFor="category-switch" className="sr-only">
+                Kategori değiştir
+              </label>
+              <select
+                id="category-switch"
+                value={cat}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  if (next) navigate(`/kategoriler?cat=${encodeURIComponent(next)}`);
+                }}
+                className="w-full sm:max-w-md rounded-xl border border-brand-700 bg-brand-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-accent-gold/40"
+              >
+                {activeCategoryList.map((c) => (
+                  <option key={c.id || c.name} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {!cat && !hepsi && activeCategoryList.length > 0 && (
+            <div className="mt-3 hidden lg:flex flex-wrap gap-2 max-h-[4.5rem] overflow-hidden">
+              {activeCategoryList.slice(0, 10).map((c) => (
+                <Link
+                  key={c.id || c.name}
+                  to={`/kategoriler?cat=${encodeURIComponent(c.name)}`}
+                  className="rounded-full px-4 py-1.5 text-sm font-medium bg-brand-800 text-white hover:bg-brand-700"
+                >
+                  {c.name}
+                </Link>
+              ))}
+              {activeCategoryList.length > 10 && (
+                <span className="self-center text-xs text-brand-300">
+                  +{activeCategoryList.length - 10} kategori aşağıda
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
