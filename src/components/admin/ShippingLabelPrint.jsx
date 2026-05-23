@@ -1,6 +1,11 @@
 import { Printer, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { formatPrice } from '@/utils/whatsapp';
+import {
+  FREE_SHIPPING_THRESHOLD_TL,
+  STANDARD_SHIPPING_FEE_TL,
+} from '@/utils/cartShipping';
+
+const LABEL_MM = 100;
 
 function formatAddress(customer) {
   const parts = [
@@ -18,122 +23,224 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+function orderSubtotal(order) {
+  const fromDiscount = Number(order.discount?.subtotal);
+  if (fromDiscount > 0) return fromDiscount;
+  const items = Array.isArray(order.items) ? order.items : [];
+  return items.reduce(
+    (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+    0,
+  );
+}
+
+/** 10×10 cm kargo etiketi — kargo ücreti: 500 TL üzeri peşin, altı alıcı 100 TL */
+export function getLabelShippingPayment(order) {
+  const shipping = order.shipping;
+  if (shipping && typeof shipping.eligible === 'boolean') {
+    return shipping.eligible
+      ? { mode: 'prepaid', text: 'Peşin ödeme' }
+      : { mode: 'recipient', text: `Ücret alıcı ${STANDARD_SHIPPING_FEE_TL} TL` };
+  }
+
+  const subtotal = orderSubtotal(order);
+  const eligible = subtotal >= FREE_SHIPPING_THRESHOLD_TL;
+  return eligible
+    ? { mode: 'prepaid', text: 'Peşin ödeme' }
+    : { mode: 'recipient', text: `Ücret alıcı ${STANDARD_SHIPPING_FEE_TL} TL` };
+}
+
+function summarizeProducts(items) {
+  if (!items.length) return 'Ürün yok';
+  if (items.length === 1) {
+    const name = String(items[0].name || 'Ürün');
+    return name.length > 42 ? `${name.slice(0, 40)}…` : name;
+  }
+  const first = String(items[0].name || 'Ürün');
+  const short = first.length > 28 ? `${first.slice(0, 26)}…` : first;
+  return `${short} +${items.length - 1} ürün`;
+}
+
 function buildLabelPrintHtml(order) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
-  const isCod = order.paymentMethod !== 'iban';
   const orderNo = escapeHtml(order.orderNumber || order.id || '—');
-
-  const productsHtml = items.length
-    ? items
-        .map(
-          (item, i) =>
-            `<li><span class="num">${i + 1}</span><span class="pname">${escapeHtml(item.name || 'Ürün')}</span></li>`,
-        )
-        .join('')
-    : '<li><span class="pname">Ürün yok</span></li>';
-
-  const codHtml = isCod
-    ? `<div class="cod"><strong>Kapıda ödeme</strong><span>Tahsil edilecek: ${escapeHtml(formatPrice(order.orderTotal))}</span></div>`
-    : '';
+  const payment = getLabelShippingPayment(order);
+  const paymentClass = payment.mode === 'prepaid' ? 'payment prepaid' : 'payment recipient';
+  const productsLine = escapeHtml(summarizeProducts(items));
 
   return `<div class="sheet">
-  <div class="head"><p class="brand">nasyonel toys.com</p></div>
-  <div class="section-title">Alıcı bilgileri</div>
-  <dl class="body">
-    <div class="row"><dt>Sipariş No</dt><dd>${orderNo}</dd></div>
-    <div class="row"><dt>Ad-Soyad</dt><dd>${escapeHtml(c.name || '—')}</dd></div>
-    <div class="row"><dt>Telefon</dt><dd>${escapeHtml(c.phone || '—')}</dd></div>
-    <div class="row addr"><dt>Adres</dt><dd>${escapeHtml(formatAddress(c))}</dd></div>
-    ${codHtml}
-  </dl>
-  <div class="section-title">Ürün bilgileri</div>
-  <ul class="products">${productsHtml}</ul>
+  <div class="head">
+    <p class="brand">nasyonel toys</p>
+    <p class="order-no">${orderNo}</p>
+  </div>
+  <div class="block">
+    <p class="label">Alıcı</p>
+    <p class="name">${escapeHtml(c.name || '—')}</p>
+    <p class="phone">${escapeHtml(c.phone || '—')}</p>
+    <p class="addr">${escapeHtml(formatAddress(c))}</p>
+  </div>
+  <div class="${paymentClass}">${escapeHtml(payment.text)}</div>
+  <div class="products">
+    <span class="label">Ürün</span>
+    <span class="value">${productsLine}</span>
+  </div>
+  <div class="barcode-zone">10×10 cm barkod alanı</div>
 </div>`;
 }
 
 const PRINT_STYLES = `
+  @page { size: ${LABEL_MM}mm ${LABEL_MM}mm; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; padding: 8mm; color: #000; }
-  .sheet { max-width: 100mm; border: 2px solid #000; }
-  .head { border-bottom: 2px solid #000; padding: 8px 12px; text-align: center; }
-  .brand { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; }
-  .section-title { background: #eee; border-bottom: 1px solid #000; padding: 4px 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-  .body { padding: 10px 12px; font-size: 11px; line-height: 1.35; }
-  .row { display: grid; grid-template-columns: 78px 1fr; gap: 4px; margin-bottom: 6px; }
-  .row dt { font-weight: 600; }
-  .row dd { font-weight: 700; }
-  .addr dd { font-weight: 600; white-space: pre-wrap; font-size: 12px; }
-  .cod { margin-top: 8px; border: 2px solid #000; background: #fff8e1; padding: 8px; text-align: center; }
-  .cod strong { display: block; font-size: 12px; text-transform: uppercase; }
-  .cod span { display: block; font-size: 16px; font-weight: 900; margin-top: 4px; }
-  .products { list-style: none; }
-  .products li { display: flex; gap: 8px; padding: 8px 12px; border-top: 1px solid #ccc; align-items: flex-start; }
-  .num { width: 22px; height: 22px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-  .pname { font-weight: 600; font-size: 12px; }
-  @media print { body { padding: 0; } }
+  html, body { width: ${LABEL_MM}mm; height: ${LABEL_MM}mm; overflow: hidden; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .sheet {
+    width: ${LABEL_MM}mm;
+    height: ${LABEL_MM}mm;
+    border: 1px solid #000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .head {
+    border-bottom: 1px solid #000;
+    padding: 2mm 2.5mm 1.5mm;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .brand {
+    font-size: 9pt;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    text-transform: lowercase;
+  }
+  .order-no {
+    font-size: 8pt;
+    font-weight: 800;
+    margin-top: 0.5mm;
+  }
+  .block {
+    padding: 2mm 2.5mm;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .block .label,
+  .products .label {
+    font-size: 6pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #333;
+    margin-bottom: 0.8mm;
+  }
+  .block .name {
+    font-size: 9.5pt;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 0.8mm;
+  }
+  .block .phone {
+    font-size: 8pt;
+    font-weight: 700;
+    margin-bottom: 1mm;
+  }
+  .block .addr {
+    font-size: 7.5pt;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: pre-wrap;
+    max-height: 22mm;
+    overflow: hidden;
+  }
+  .payment {
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    padding: 2mm 2.5mm;
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .payment.prepaid { background: #e8f5e9; }
+  .payment.recipient { background: #fff8e1; }
+  .products {
+    display: flex;
+    gap: 2mm;
+    align-items: flex-start;
+    padding: 1.5mm 2.5mm;
+    border-bottom: 1px dashed #666;
+    min-height: 0;
+  }
+  .products .value {
+    flex: 1;
+    font-size: 7pt;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .barcode-zone {
+    height: 26mm;
+    min-height: 26mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6.5pt;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  @media print {
+    html, body { margin: 0; padding: 0; }
+  }
 `;
 
 function LabelPreview({ order }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
-  const isCod = order.paymentMethod !== 'iban';
   const orderNo = order.orderNumber || order.id || '—';
+  const payment = getLabelShippingPayment(order);
 
   return (
-    <div className="mx-auto bg-white text-black font-sans text-[11px] leading-snug border-2 border-black w-full max-w-[420px]">
-      <div className="border-b-2 border-black px-3 py-2 text-center">
-        <p className="text-[22px] font-black tracking-tight lowercase">nasyonel toys.com</p>
+    <div
+      className="mx-auto bg-white text-black font-sans border border-black overflow-hidden flex flex-col"
+      style={{ width: `${LABEL_MM}mm`, height: `${LABEL_MM}mm`, maxWidth: '100%' }}
+    >
+      <div className="border-b border-black px-2 py-1.5 text-center shrink-0">
+        <p className="text-[11px] font-black lowercase leading-tight">nasyonel toys</p>
+        <p className="text-[10px] font-extrabold mt-0.5">{orderNo}</p>
       </div>
 
-      <div className="border-b-2 border-black">
-        <div className="bg-gray-100 border-b border-black px-2 py-1 font-bold text-xs uppercase">
-          Alıcı bilgileri
-        </div>
-        <div className="px-3 py-2 space-y-1.5">
-          <div className="grid grid-cols-[88px_1fr] gap-1">
-            <span className="font-semibold">Sipariş No</span>
-            <span className="font-bold">{orderNo}</span>
-          </div>
-          <div className="grid grid-cols-[88px_1fr] gap-1">
-            <span className="font-semibold">Ad-Soyad</span>
-            <span className="font-bold text-sm">{c.name || '—'}</span>
-          </div>
-          <div className="grid grid-cols-[88px_1fr] gap-1">
-            <span className="font-semibold">Telefon</span>
-            <span className="font-bold text-sm">{c.phone || '—'}</span>
-          </div>
-          <div className="grid grid-cols-[88px_1fr] gap-1 items-start">
-            <span className="font-semibold">Adres</span>
-            <span className="whitespace-pre-wrap font-medium text-sm">{formatAddress(c)}</span>
-          </div>
-          {isCod && (
-            <div className="mt-2 rounded border-2 border-black bg-amber-50 px-2 py-2 text-center">
-              <p className="font-black text-sm uppercase tracking-wide">Kapıda ödeme</p>
-              <p className="text-lg font-black mt-0.5">Tahsil edilecek: {formatPrice(order.orderTotal)}</p>
-            </div>
-          )}
-        </div>
+      <div className="px-2 py-1.5 flex-1 min-h-0 overflow-hidden">
+        <p className="text-[8px] font-bold uppercase tracking-wide text-gray-600">Alıcı</p>
+        <p className="text-[11px] font-extrabold leading-tight mt-0.5">{c.name || '—'}</p>
+        <p className="text-[10px] font-bold mt-0.5">{c.phone || '—'}</p>
+        <p className="text-[9px] font-semibold leading-snug mt-1 whitespace-pre-wrap line-clamp-4">
+          {formatAddress(c)}
+        </p>
       </div>
 
-      <div>
-        <div className="bg-gray-100 border-b border-black px-2 py-1 font-bold text-xs uppercase">
-          Ürün bilgileri
-        </div>
-        <ul className="divide-y divide-black/20">
-          {items.length === 0 ? (
-            <li className="px-3 py-2 text-gray-500">Ürün yok</li>
-          ) : (
-            items.map((item, i) => (
-              <li key={item.id || i} className="px-3 py-2 flex gap-2 items-start">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-black text-xs font-bold">
-                  {i + 1}
-                </span>
-                <span className="font-semibold text-sm flex-1">{item.name || 'Ürün'}</span>
-              </li>
-            ))
-          )}
-        </ul>
+      <div
+        className={`border-y-2 border-black px-2 py-1.5 text-center shrink-0 ${
+          payment.mode === 'prepaid' ? 'bg-emerald-50' : 'bg-amber-50'
+        }`}
+      >
+        <p className="text-sm font-black uppercase tracking-wide">{payment.text}</p>
+      </div>
+
+      <div className="px-2 py-1 flex gap-2 items-start border-b border-dashed border-gray-500 shrink-0">
+        <span className="text-[8px] font-bold uppercase text-gray-600 shrink-0">Ürün</span>
+        <span className="text-[9px] font-semibold leading-snug">{summarizeProducts(items)}</span>
+      </div>
+
+      <div className="h-[26mm] flex items-center justify-center text-[9px] font-semibold text-gray-500 uppercase tracking-wide shrink-0">
+        10×10 cm barkod alanı
       </div>
     </div>
   );
@@ -152,7 +259,7 @@ export default function ShippingLabelPrint({ order, open, onClose }) {
 <body>${labelHtml}</body>
 </html>`;
 
-    const win = window.open('', '_blank', 'width=480,height=720');
+    const win = window.open('', '_blank', 'width=420,height=420');
     if (!win) return;
     win.document.write(doc);
     win.document.close();
@@ -164,11 +271,13 @@ export default function ShippingLabelPrint({ order, open, onClose }) {
 
   if (!open || !order) return null;
 
+  const payment = getLabelShippingPayment(order);
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[92vh] overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-3">
-          <h3 className="font-bold text-brand-900">Kargo şablonu</h3>
+          <h3 className="font-bold text-brand-900">Kargo etiketi (10×10 cm)</h3>
           <button
             type="button"
             onClick={onClose}
@@ -181,7 +290,11 @@ export default function ShippingLabelPrint({ order, open, onClose }) {
 
         <div className="p-4 space-y-4">
           <p className="text-xs text-gray-600">
-            Kargo firması ve barkod yok. Kapıda ödemede tahsil tutarı gösterilir.
+            Etiket <strong>10×10 cm</strong> barkod boyutuna göre ayarlanmıştır.{' '}
+            {FREE_SHIPPING_THRESHOLD_TL} TL ve üzeri siparişlerde{' '}
+            <strong>Peşin ödeme</strong>, altında{' '}
+            <strong>Ücret alıcı {STANDARD_SHIPPING_FEE_TL} TL</strong> yazılır. Bu sipariş:{' '}
+            <strong>{payment.text}</strong>
           </p>
 
           <LabelPreview order={order} />
