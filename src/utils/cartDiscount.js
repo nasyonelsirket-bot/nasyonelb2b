@@ -5,13 +5,14 @@ export const IBAN_DISCOUNT_RATE = 0.1;
 
 export const PAYMENT_IBAN = 'iban';
 export const PAYMENT_COD = 'cod';
+export const PAYMENT_PAYTR = 'paytr';
 
 /**
  * @param {number} subtotal
- * @param {'iban'|'cod'} paymentMethod
+ * @param {'iban'|'cod'|'paytr'} paymentMethod
  * @param {{ promotions?: object, couponResult?: object }} opts
  */
-export function getCartDiscount(subtotal, paymentMethod = PAYMENT_COD, opts = {}) {
+export function getCartDiscount(subtotal, paymentMethod = PAYMENT_PAYTR, opts = {}) {
   const promos = normalizePromotions(opts.promotions);
   const totals = computeCartTotals({
     subtotal,

@@ -5,10 +5,18 @@ import {
   Package,
   Truck,
   XCircle,
+  CreditCard,
 } from 'lucide-react';
 
 /** Sipariş + kargo yaşam döngüsü */
 export const ORDER_STATUS_META = {
+  pending_payment: {
+    label: 'Kart ödemesi bekleniyor',
+    shortLabel: 'Ödeme bekliyor',
+    phase: 'payment',
+    color: 'text-amber-700 bg-amber-50',
+    icon: CreditCard,
+  },
   pending_iban_check: {
     label: 'IBAN ödemesi bekleniyor',
     shortLabel: 'Ödeme bekliyor',
@@ -77,7 +85,7 @@ export function getStatusMeta(status) {
 }
 
 export function isPendingStatus(status) {
-  return status === 'pending_cod' || status === 'pending_iban_check';
+  return status === 'pending_cod' || status === 'pending_iban_check' || status === 'pending_payment';
 }
 
 /** Admin: mevcut duruma göre önerilen sonraki adımlar */

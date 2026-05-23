@@ -109,6 +109,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/paytr/token"
+  to = "/.netlify/functions/paytr-token"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/paytr/callback"
+  to = "/.netlify/functions/paytr-callback"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/members/orders"
   to = "/.netlify/functions/members-orders"
   status = 200

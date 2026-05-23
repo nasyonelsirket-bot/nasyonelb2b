@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  MessageCircle,
   Trash2,
   Truck,
   ChevronRight,
@@ -9,9 +8,6 @@ import {
   ShoppingBag,
   MapPin,
   CreditCard,
-  Building2,
-  Banknote,
-  Sparkles,
   Ticket,
 } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -30,20 +26,18 @@ import {
   isCheckoutCustomerComplete,
   EMPTY_CHECKOUT_CUSTOMER,
 } from '@/utils/checkoutCustomer';
-import { getCartDiscount, PAYMENT_IBAN, PAYMENT_COD } from '@/utils/cartDiscount';
+import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { normalizePromotions } from '@/utils/promotions';
 import { getBundleFreeShippingOverride } from '@/utils/bundleRules';
 import { validateCouponRemote } from '@/services/promotionApi';
 import { formatPrice } from '@/utils/whatsapp';
-import { submitOrderViaWhatsApp } from '@/utils/orderPdf';
+import { startPaytrPayment } from '@/services/paytrApi';
 import {
   trackBeginCheckout,
-  trackPurchase,
   trackFormView,
   trackFormStart,
   trackFormSubmit,
-  trackGenerateLead,
 } from '@/lib/analytics/ga4';
 
 const STEPS = [
@@ -53,6 +47,7 @@ const STEPS = [
 ];
 
 export default function CartPage() {
+  const navigate = useNavigate();
   const { items, totalPrice, removeFromCart, setQuantity, increment, decrement, clearCart } =
     useCart();
   const { settings } = useStore();
@@ -61,9 +56,7 @@ export default function CartPage() {
   const [step, setStep] = useState(1);
   const [customer, setCustomer] = useState(() => ({ ...EMPTY_CHECKOUT_CUSTOMER }));
   const [customerPrefillSource, setCustomerPrefillSource] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_COD);
   const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [couponInput, setCouponInput] = useState('');
   const [couponApplied, setCouponApplied] = useState(null);
@@ -74,11 +67,11 @@ export default function CartPage() {
 
   const discount = useMemo(
     () =>
-      getCartDiscount(totalPrice, paymentMethod, {
+      getCartDiscount(totalPrice, PAYMENT_PAYTR, {
         promotions: promos,
         couponResult: couponApplied,
       }),
-    [totalPrice, paymentMethod, promos, couponApplied],
+    [totalPrice, promos, couponApplied],
   );
   const shipping = useMemo(() => {
     const threshold = promos.freeShippingThreshold || 750;
@@ -98,32 +91,6 @@ export default function CartPage() {
   const orderTotal = useMemo(
     () => getOrderPayableTotal(discount.grandTotal, shipping),
     [discount.grandTotal, shipping],
-  );
-
-  const codDiscount = useMemo(
-    () => getCartDiscount(totalPrice, PAYMENT_COD, { promotions: promos, couponResult: couponApplied }),
-    [totalPrice, promos, couponApplied],
-  );
-  const ibanDiscount = useMemo(
-    () => getCartDiscount(totalPrice, PAYMENT_IBAN, { promotions: promos, couponResult: couponApplied }),
-    [totalPrice, promos, couponApplied],
-  );
-  const codTotal = useMemo(
-    () => getOrderPayableTotal(codDiscount.grandTotal, shipping),
-    [codDiscount.grandTotal, shipping],
-  );
-  const ibanTotal = useMemo(
-    () => getOrderPayableTotal(ibanDiscount.grandTotal, shipping),
-    [ibanDiscount.grandTotal, shipping],
-  );
-
-  const ibanInfo = useMemo(
-    () => ({
-      iban: settings.storeIban || '',
-      accountName: settings.storeIbanName || settings.siteName || 'Nasyonel Toys',
-      bankName: settings.storeBankName || '',
-    }),
-    [settings],
   );
 
   const checkoutTracked = useRef(false);
@@ -231,26 +198,22 @@ export default function CartPage() {
 
   const handleSubmit = async () => {
     setFormError('');
-    setFormSuccess('');
     const err = validateDelivery();
     if (err) {
       setFormError(err);
       setStep(2);
-      return;
-    }
-    if (paymentMethod === PAYMENT_IBAN && !ibanInfo.iban) {
-      setFormError('IBAN bilgisi henüz tanımlanmamış. Lütfen kapıda ödeme seçin veya bizimle iletişime geçin.');
+      trackFormSubmit(items, { success: false, errorMessage: err });
       return;
     }
 
     setSubmitting(true);
     try {
-      const result = await submitOrderViaWhatsApp({
-        phone: settings.whatsappNumber,
+      const result = await startPaytrPayment({
         siteName: settings.siteName || 'Nasyonel Toys',
         siteUrl: settings.siteUrl || import.meta.env.VITE_SITE_URL || window.location.origin,
         siteLogoUrl: settings.logoUrl,
         pdfSettings: settings.pdfSettings,
+        notifyEmail: settings.contactEmail,
         customer: {
           name: customer.name.trim(),
           phone: customer.phone.trim(),
@@ -263,24 +226,20 @@ export default function CartPage() {
         discount,
         shipping,
         orderTotal,
-        paymentMethod,
-        ibanInfo: paymentMethod === PAYMENT_IBAN ? ibanInfo : null,
-        notifyEmail: settings.contactEmail,
         couponCode: discount.couponCode || undefined,
       });
       saveCheckoutCustomer(customer);
-      setFormSuccess(result.message);
       trackFormSubmit(items, { success: true });
-      trackPurchase({
-        transactionId: result.orderNumber || result.orderId,
-        items,
-        value: orderTotal,
-        shipping: shipping.shippingFee,
-        coupon: discount.couponCode || paymentMethod,
+      navigate('/odeme', {
+        state: {
+          token: result.token,
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          orderTotal,
+        },
       });
-      trackGenerateLead({ transactionId: result.orderNumber, items, value: orderTotal });
     } catch (submitErr) {
-      const msg = submitErr?.message || 'Sipariş gönderilemedi.';
+      const msg = submitErr?.message || 'Ödeme başlatılamadı.';
       setFormError(msg);
       trackFormSubmit(items, { success: false, errorMessage: msg });
     } finally {
@@ -455,73 +414,22 @@ export default function CartPage() {
             {step === 3 && (
               <div className="space-y-4 animate-slide-up">
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme Yöntemi
+                  <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme
                 </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod(PAYMENT_IBAN)}
-                    className={`text-left rounded-2xl border-2 p-5 transition-all hover:scale-[1.02] ${
-                      paymentMethod === PAYMENT_IBAN
-                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200'
-                        : 'border-brand-100 bg-white hover:border-brand-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 text-emerald-700 font-bold">
-                      <Building2 className="h-5 w-5" />
-                      Havale / EFT (IBAN)
-                    </div>
-                    <p className="mt-2 text-sm text-emerald-800 font-semibold">%10 indirim</p>
-                    <p className="mt-2 text-2xl font-bold text-brand-900">{formatPrice(ibanTotal)}</p>
-                    <p className="text-xs text-gray-500 line-through">{formatPrice(codTotal)}</p>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod(PAYMENT_COD)}
-                    className={`text-left rounded-2xl border-2 p-5 transition-all hover:scale-[1.02] ${
-                      paymentMethod === PAYMENT_COD
-                        ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-200'
-                        : 'border-brand-100 bg-white hover:border-brand-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 text-brand-800 font-bold">
-                      <Banknote className="h-5 w-5" />
-                      Kapıda Ödeme
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">Normal fiyat</p>
-                    <p className="mt-2 text-2xl font-bold text-brand-900">{formatPrice(codTotal)}</p>
-                  </button>
-                </div>
-
-                {paymentMethod === PAYMENT_IBAN && ibanInfo.iban && (
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5">
-                    <p className="font-semibold text-emerald-900 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" /> Ödeme bilgileri
-                    </p>
-                    <dl className="mt-3 space-y-2 text-sm text-emerald-900">
-                      <div>
-                        <dt className="text-emerald-700">Alıcı</dt>
-                        <dd className="font-medium">{ibanInfo.accountName}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-emerald-700">IBAN</dt>
-                        <dd className="font-mono font-bold text-base select-all">{ibanInfo.iban}</dd>
-                      </div>
-                      {ibanInfo.bankName && (
-                        <div>
-                          <dt className="text-emerald-700">Banka</dt>
-                          <dd>{ibanInfo.bankName}</dd>
-                        </div>
-                      )}
-                    </dl>
-                    <p className="mt-3 text-xs text-emerald-800">
-                      Ödemeyi yaptıktan sonra WhatsApp mesajına dekont ekleyin. Siparişiniz IBAN kontrolünden
-                      sonra onaylanır.
-                    </p>
+                <div className="rounded-2xl border-2 border-brand-600 bg-brand-50 p-5 ring-2 ring-brand-200">
+                  <div className="flex items-center gap-2 text-brand-900 font-bold">
+                    <CreditCard className="h-5 w-5 text-accent-gold" />
+                    Kredi / Banka Kartı
                   </div>
-                )}
+                  <p className="mt-2 text-sm text-brand-700">
+                    PayTR güvenli ödeme altyapısı ile anında ödeme yapın.
+                  </p>
+                  <p className="mt-3 text-2xl font-bold text-brand-900">{formatPrice(orderTotal)}</p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Havale/EFT ve kapıda ödeme kabul edilmemektedir.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -548,12 +456,6 @@ export default function CartPage() {
                 {formError}
               </p>
             )}
-            {formSuccess && (
-              <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                {formSuccess}
-              </p>
-            )}
-
             <div className="flex flex-col gap-2">
               {step > 1 && (
                 <Button variant="secondary" onClick={() => setStep((s) => s - 1)}>
@@ -565,14 +467,14 @@ export default function CartPage() {
                   Devam Et <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
-                <Button variant="whatsapp" size="lg" onClick={handleSubmit} disabled={submitting}>
-                  <MessageCircle className="h-5 w-5" />
-                  {submitting ? 'Kaydediliyor...' : 'Siparişi WhatsApp ile Tamamla'}
+                <Button variant="gold" size="lg" onClick={handleSubmit} disabled={submitting}>
+                  <CreditCard className="h-5 w-5" />
+                  {submitting ? 'Ödeme hazırlanıyor...' : 'Kredi Kartı ile Öde'}
                 </Button>
               )}
             </div>
             <p className="text-xs text-gray-500 text-center">
-              Sipariş kaydedilir, e-posta gönderilir ve WhatsApp açılır.
+              Ödeme PayTR güvenli altyapısı ile alınır.
             </p>
           </div>
         </div>
