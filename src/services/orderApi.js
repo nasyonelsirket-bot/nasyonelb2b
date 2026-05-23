@@ -2,6 +2,7 @@ const ORDER_SAVE = '/api/order-pdf/save';
 const ORDERS_LIST = '/api/orders/list';
 const ORDERS_GET = '/api/orders/get';
 const ORDERS_UPDATE = '/api/orders/update';
+const ORDERS_DELETE = '/api/orders/delete';
 const ORDERS_TRACK = '/api/orders/track';
 
 function adminHeaders() {
@@ -55,6 +56,17 @@ export async function updateOrderStatus(id, status, extra = {}) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Güncellenemedi');
+  return data;
+}
+
+export async function deleteOrder(id) {
+  const res = await fetch(ORDERS_DELETE, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify({ id }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Sipariş silinemedi');
   return data;
 }
 

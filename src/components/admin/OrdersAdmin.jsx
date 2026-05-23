@@ -14,9 +14,10 @@ import {
   Search,
   X,
   Printer,
+  Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
+import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder } from '@/services/orderApi';
 import { ORDER_CANCEL_PRESETS } from '@/data/orderCancelReasons';
 import { formatPrice } from '@/utils/whatsapp';
 import {
@@ -42,7 +43,7 @@ function StatusBadge({ status }) {
   );
 }
 
-function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy }) {
+function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, onDelete, busy }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
   const [labelOpen, setLabelOpen] = useState(false);
@@ -190,6 +191,15 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
         <p className="text-xs text-emerald-800">
           Müşteri kuponu: <code className="font-mono">{order.rewardCouponCode}</code>
         </p>
+      )}
+
+      {onDelete && (
+        <div className="flex flex-wrap gap-2 pt-3 border-t border-brand-100">
+          <Button type="button" variant="danger" size="sm" disabled={busy} onClick={onDelete}>
+            <Trash2 className="h-4 w-4" />
+            Siparişi sil
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -419,6 +429,30 @@ export default function OrdersAdmin({ setMsg }) {
     }
   };
 
+  const handleDelete = async (order) => {
+    const label = order.orderNumber || order.id;
+    if (
+      !window.confirm(
+        `${label} siparişi kalıcı olarak silinsin mi? Bu işlem geri alınamaz; eski kayıtlar listeden kaldırılır.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(order.id);
+    try {
+      await deleteOrder(order.id);
+      setMsg('Sipariş silindi');
+      setRejectTarget(null);
+      setExpandedId(null);
+      setDetail(null);
+      load();
+    } catch (err) {
+      setMsg(err.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const handleRejectConfirm = async (cancelReason, cancelNote) => {
     if (!rejectTarget) return;
     setBusyId(rejectTarget.id);
@@ -484,7 +518,8 @@ export default function OrdersAdmin({ setMsg }) {
         <strong>Bekleyen:</strong> ödeme yapılmamış siparişler (kart ekranında bekleyenler yalnızca
         görüntülenir). <strong>Kargoya hazır:</strong> ödeme alınmış siparişler. Kargo verildikten sonra{' '}
         <strong>Kargoda</strong>, teslim sonrası <strong>Teslim</strong> sekmesine geçer. Müşteri yeni
-        sipariş verirse eski bekleyen kayıt otomatik kapanır.
+        sipariş verirse eski bekleyen kayıt otomatik kapanır. İstenmeyen eski kayıtları sipariş
+        detayından <strong>Siparişi sil</strong> ile kalıcı kaldırabilirsiniz.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -620,6 +655,7 @@ export default function OrdersAdmin({ setMsg }) {
                         onReject={() => setRejectTarget(detail)}
                         onShip={(carrier, trackingNumber) => handleShip(detail, carrier, trackingNumber)}
                         onComplete={() => handleComplete(detail)}
+                        onDelete={() => handleDelete(detail)}
                       />
                     )}
                   </>

@@ -859,6 +859,42 @@ function orderPdfDevProxy(env = {}) {
         res.end(JSON.stringify({ ok: true, order, rewardCoupon, shippedEmail }))
       })
 
+      server.middlewares.use('/api/orders/delete', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        const chunks = []
+        for await (const chunk of req) chunks.push(chunk)
+        let body = {}
+        try {
+          body = JSON.parse(Buffer.concat(chunks).toString() || '{}')
+        } catch {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
+          return
+        }
+        const id = String(body.id || '').trim()
+        if (!id) {
+          res.statusCode = 400
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'id gerekli' }))
+          return
+        }
+        try {
+          const { deleteOrderFromFilesystem } = require('./lib/orderDelete.cjs')
+          const result = deleteOrderFromFilesystem(ordersDir, id, fs)
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(result))
+        } catch (err) {
+          res.statusCode = 500
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: err.message || 'Silinemedi' }))
+        }
+      })
+
       server.middlewares.use('/api/order-pdf', (req, res) => {
         if (req.method === 'OPTIONS') {
           res.statusCode = 204

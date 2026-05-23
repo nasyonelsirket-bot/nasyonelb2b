@@ -80,6 +80,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/orders/delete"
+  to = "/.netlify/functions/orders-delete"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/orders/track"
   to = "/.netlify/functions/orders-track"
   status = 200

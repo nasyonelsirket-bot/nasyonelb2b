@@ -8,6 +8,7 @@
 /api/orders/list  /.netlify/functions/orders-list  200!
 /api/orders/get  /.netlify/functions/orders-get  200!
 /api/orders/update  /.netlify/functions/orders-update  200!
+/api/orders/delete  /.netlify/functions/orders-delete  200!
 /api/orders/track  /.netlify/functions/orders-track  200!
 /api/members/register  /.netlify/functions/members-register  200!
 /api/members/login  /.netlify/functions/members-login  200!

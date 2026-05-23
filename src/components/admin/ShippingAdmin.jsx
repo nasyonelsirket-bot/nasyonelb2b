@@ -10,9 +10,10 @@ import {
   Phone,
   Mail,
   User,
+  Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { fetchOrders, fetchOrderDetail, updateOrderStatus } from '@/services/orderApi';
+import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder } from '@/services/orderApi';
 import { formatPrice } from '@/utils/whatsapp';
 import { getStatusMeta } from '@/constants/orderStatus';
 
@@ -123,6 +124,29 @@ export default function ShippingAdmin({ setMsg }) {
         : '';
       setMsg(`Teslim edildi${note}`);
       setDetail(await fetchOrderDetail(order.id));
+      load();
+    } catch (err) {
+      setMsg(err.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (order) => {
+    const label = order.orderNumber || order.id;
+    if (
+      !window.confirm(
+        `${label} siparişi kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,
+      )
+    ) {
+      return;
+    }
+    setBusyId(order.id);
+    try {
+      await deleteOrder(order.id);
+      setMsg('Sipariş silindi');
+      setExpandedId(null);
+      setDetail(null);
       load();
     } catch (err) {
       setMsg(err.message, 'error');
@@ -262,6 +286,16 @@ export default function ShippingAdmin({ setMsg }) {
                         {detail.status === 'shipped' && (
                           <ShipBlock order={detail} onShip={handleShip} busy={busy} label="Kargo güncelle" />
                         )}
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => handleDelete(detail)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Siparişi sil
+                        </Button>
                       </>
                     )}
                   </div>
