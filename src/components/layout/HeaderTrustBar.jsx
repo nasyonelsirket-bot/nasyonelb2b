@@ -4,7 +4,7 @@ import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 const ITEMS = [
   { icon: Truck, label: 'Aynı Gün Kargo' },
   { icon: Shield, label: 'Güvenli Ödeme' },
-  { icon: CreditCard, label: 'Kapıda Ödeme' },
+  { icon: CreditCard, label: 'Kredi Kartı' },
   {
     icon: Package,
     label: `${FREE_SHIPPING_THRESHOLD_TL} TL Üzeri Kargo Bedava`,

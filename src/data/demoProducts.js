@@ -207,7 +207,7 @@ export const DEFAULT_SETTINGS = {
   /** Ana sayfa bölüm sırası, başlıklar ve ürün listeleri */
   homepageLayout: null,
   promotions: {
-    ibanDiscountPercent: 10,
+    ibanDiscountPercent: 0,
     freeShippingThreshold: 750,
     standardShippingFee: 100,
     deliveryReward: {
@@ -219,14 +219,6 @@ export const DEFAULT_SETTINGS = {
       label: '2. siparişe özel',
     },
     campaigns: [
-      {
-        id: 'camp-iban',
-        type: 'payment_iban',
-        title: 'Havale / EFT %10',
-        description: 'Ödeme adımında havale seçeneği ile otomatik indirim.',
-        active: true,
-        percent: 10,
-      },
       {
         id: 'camp-bundle',
         type: 'bundle',

@@ -426,9 +426,6 @@ export default function CartPage() {
                     PayTR güvenli ödeme altyapısı ile anında ödeme yapın.
                   </p>
                   <p className="mt-3 text-2xl font-bold text-brand-900">{formatPrice(orderTotal)}</p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    Havale/EFT ve kapıda ödeme kabul edilmemektedir.
-                  </p>
                 </div>
               </div>
             )}

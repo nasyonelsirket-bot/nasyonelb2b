@@ -134,16 +134,11 @@ export function computeCartTotals({ subtotal, paymentMethod, couponResult, promo
         : couponResult?.ok
           ? couponResult.label
           : '',
-    upsellMessage:
-      paymentMethod !== 'iban' && amount > 0
-        ? `IBAN ile ödeyin, %${promos.ibanDiscountPercent} indirim kazanın!`
-        : null,
+    upsellMessage: null,
     currentDiscountMessage:
-      paymentMethod === 'iban'
-        ? `Havale/EFT ile %${promos.ibanDiscountPercent} indirim uygulandı.`
-        : couponResult?.ok
-          ? couponResult.label
-          : null,
+      couponResult?.ok
+        ? couponResult.label
+        : null,
   };
 }
 

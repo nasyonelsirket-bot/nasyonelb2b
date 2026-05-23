@@ -33,8 +33,8 @@ const PERKS = [
   },
   {
     icon: CreditCard,
-    label: 'IBAN %10 indirim',
-    sub: 'Havale / EFT',
+    label: 'Güvenli ödeme',
+    sub: 'PayTR · kredi kartı',
     cardClass:
       'bg-gradient-to-br from-sky-500/25 to-blue-600/20 border-sky-400/40 hover:from-sky-500/35',
     iconClass: 'text-sky-300',
@@ -75,9 +75,9 @@ export default function HomeShopCTA({ onOpenCart }) {
             Sepetinizi görün, hemen tamamlayın
           </h2>
           <p className="mt-2 text-sm sm:text-base text-brand-100/95 max-w-2xl">
-            {thresholdLabel} üzeri <strong className="text-emerald-300">kargo bedava</strong> · Havale ile{' '}
-            <strong className="text-amber-300">%10 ek indirim</strong> ·{' '}
-            <strong className="text-[#7dffb8]">WhatsApp</strong> ile onay
+            {thresholdLabel} üzeri <strong className="text-emerald-300">kargo bedava</strong> ·{' '}
+            <strong className="text-sky-300">güvenli kart ödemesi</strong> ·{' '}
+            <strong className="text-[#7dffb8]">hızlı sipariş</strong>
           </p>
 
           <div className="mt-5 flex flex-col sm:flex-row flex-wrap gap-3">

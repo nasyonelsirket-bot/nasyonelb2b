@@ -2,7 +2,7 @@
 export const TOP_ANNOUNCEMENTS = [
   { highlight: '750 TL üzeri KARGO BEDAVA', rest: 'Tüm siparişlerde' },
   { highlight: '14 iş günü', rest: 'iade hakkı · koşulsuz kolaylık' },
-  { highlight: 'Havale/EFT %10 indirim', rest: 'Ödeme adımında otomatik' },
+  { highlight: 'Güvenli kart ödemesi', rest: 'PayTR altyapısı ile' },
   { highlight: 'Eğitici oyuncaklar', rest: 'güvenli alışveriş · hızlı kargo' },
   { highlight: 'Sepette %5 indirim', rest: '750 TL\'yi tamamlayan uyumlu ürün önerisi' },
   { highlight: 'En çok satanlar', rest: 'Trendyol satış verilerine göre sıralama' },

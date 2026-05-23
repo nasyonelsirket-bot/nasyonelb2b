@@ -1,5 +1,3 @@
-import { PAYMENT_IBAN } from '@/utils/cartDiscount';
-
 export function formatPrice(price) {
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
@@ -9,8 +7,9 @@ export function formatPrice(price) {
 }
 
 function paymentLabel(method) {
-  if (method === PAYMENT_IBAN) return 'Havale / EFT (IBAN) — %10 indirim';
-  return 'Kapıda ödeme';
+  if (method === 'paytr') return 'Kredi / banka kartı (PayTR)';
+  if (method === 'iban') return 'Online ödeme';
+  return 'Online ödeme';
 }
 
 /** WhatsApp — kısa mesaj + PDF linki (toptan akışı gibi) */

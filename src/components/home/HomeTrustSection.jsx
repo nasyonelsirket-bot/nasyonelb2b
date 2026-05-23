@@ -31,7 +31,7 @@ export default function HomeTrustSection() {
             Güvenle alışveriş yapın
           </h2>
           <p className="text-sm text-gray-600 mt-1 max-w-xl mx-auto">
-            {FREE_SHIPPING_THRESHOLD_TL} TL üzeri kargo bedava · kapıda ödeme · hızlı iade süreci
+            {FREE_SHIPPING_THRESHOLD_TL} TL üzeri kargo bedava · güvenli kart ödemesi · hızlı iade süreci
           </p>
         </div>
         <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">

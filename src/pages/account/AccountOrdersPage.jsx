@@ -122,7 +122,9 @@ export default function AccountOrdersPage() {
                       </p>
                       <p>
                         <span className="text-gray-500">Ödeme:</span>{' '}
-                        {detail.paymentMethod === 'iban' ? 'Havale/EFT' : 'Kapıda ödeme'}
+                        {detail.paymentMethod === 'paytr'
+                          ? 'Kredi / banka kartı'
+                          : 'Online ödeme'}
                       </p>
                       <p>
                         <span className="text-gray-500">Ürün:</span> {detail.itemCount} kalem

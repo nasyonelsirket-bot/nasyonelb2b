@@ -32,12 +32,8 @@ export const FAQ_ITEMS = [
     a: 'Evet. Üye olmadan sipariş verebilirsiniz. Üyelik yalnızca isteğe bağlıdır.',
   },
   {
-    q: 'Kapıda ödeme seçeneğiniz var mı?',
-    a: 'Evet. Kapıda ödeme veya havale/EFT (IBAN) ile %10 ek indirimli ödeme seçenekleri mevcuttur.',
-  },
-  {
-    q: 'IBAN ile ödeme nasıl yapılır?',
-    a: 'Ödeme adımında IBAN bilgileri gösterilir. Ödemeyi yaptıktan sonra sipariş onayı için WhatsApp üzerinden dekont paylaşabilirsiniz.',
+    q: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',
+    a: 'Ödemeler yalnızca kredi veya banka kartı ile PayTR güvenli ödeme altyapısı üzerinden alınır.',
   },
   {
     q: 'Sipariş iptalini nasıl gerçekleştirebilirim?',

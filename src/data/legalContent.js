@@ -15,7 +15,7 @@ export const LEGAL_PAGES = {
     title: 'Mesafeli Satış Sözleşmesi',
     intro: BRAND_INTRO,
     highlights: [
-      'Güvenli ödeme: havale/EFT ve kapıda ödeme seçenekleri',
+      'Güvenli ödeme: kredi ve banka kartı (PayTR)',
       `${FREE_SHIPPING_MIN} TL ve üzeri siparişlerde ücretsiz kargo`,
       `${RETURN_DAYS} iş günü içinde cayma ve iade hakkı`,
     ],
@@ -48,11 +48,11 @@ export const LEGAL_PAGES = {
       {
         heading: '4. Ödeme yöntemleri',
         paragraphs: [
-          'Ödeme; havale/EFT (IBAN) veya kapıda ödeme yöntemleriyle yapılabilir. Havale/EFT siparişlerinde ödeme onayı sonrası hazırlık süreci başlar.',
+          'Ödeme; kredi veya banka kartı ile PayTR güvenli ödeme altyapısı üzerinden yapılır. Ödeme onayı sonrası hazırlık süreci başlar.',
         ],
         bullets: [
-          'Havale/EFT: Sipariş sonrası paylaşılan IBAN bilgisine, sipariş numarası açıklamada belirtilerek ödeme yapılır.',
-          'Kapıda ödeme: Teslimat sırasında kargo görevlisine nakit veya POS ile ödeme (seçenek siparişte belirtilir).',
+          'Kart bilgileriniz PayTR tarafından işlenir; sitemizde saklanmaz.',
+          '3D Secure ve güvenli bağlantı (SSL) ile korunursunuz.',
         ],
       },
       {
@@ -110,8 +110,7 @@ export const LEGAL_PAGES = {
       {
         heading: 'Ücret iadesi süresi',
         paragraphs: [
-          'Onaylanan iadelerde bedel, bankanızın veya ödeme kuruluşunun işlem süresine bağlı olarak genellikle 3–14 iş günü içinde hesabınıza yansır.',
-          'Kapıda ödeme siparişlerinde iade, alıcının bildirdiği IBAN hesabına EFT/havale ile gerçekleştirilir.',
+          'Onaylanan iadelerde bedel, bankanızın veya ödeme kuruluşunun işlem süresine bağlı olarak genellikle 3–14 iş günü içinde kartınıza iade edilir.',
         ],
       },
       {
@@ -130,7 +129,7 @@ export const LEGAL_PAGES = {
         heading: 'Sipariş iptali',
         paragraphs: [
           'Siparişiniz henüz kargoya verilmediyse iptal talebinizi müşteri hizmetlerine iletebilirsiniz. Hazırlığa alınmış siparişlerde iptal mümkün olmayabilir; bu durumda iade prosedürü uygulanır.',
-          'Havale/EFT ödemesi yapılmış ancak ürün gönderilmemiş siparişlerde iptal sonrası tam iade yapılır.',
+          'Kart ile ödenmiş ancak ürün gönderilmemiş siparişlerde iptal sonrası tam iade yapılır.',
         ],
       },
       {
@@ -322,7 +321,7 @@ export const LEGAL_PAGES = {
         heading: 'Ürün ve bedel',
         paragraphs: [
           'Sipariş özetinde her ürün için ad, adet, birim fiyat ve ara toplam gösterilir. Varsa indirim, kupon ve kargo bedeli ayrı satırlarda belirtilir.',
-          'Ödeme yöntemine göre (havale veya kapıda ödeme) nihai ödenecek tutar onay ekranında yer alır.',
+          'Ödeme yöntemine göre nihai ödenecek tutar onay ekranında yer alır; ödeme PayTR güvenli altyapısı ile alınır.',
         ],
       },
       {
