@@ -7,7 +7,6 @@ import ProductStrip from '@/components/home/ProductStrip';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
 import TrustBadges from '@/components/home/TrustBadges';
 import HomeTrustSection from '@/components/home/HomeTrustSection';
-import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
 import RecentlyViewedStrip from '@/components/home/RecentlyViewedStrip';
 import HomeSocialProof from '@/components/home/HomeSocialProof';
 import { useStore } from '@/context/StoreContext';
@@ -157,7 +156,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="pb-24 lg:pb-8 bg-gray-50">
+    <div className="pb-8 bg-gray-50">
       <SEO
         title="Ana Sayfa"
         description="Nasyonel Toys — eğitici oyuncaklar, çok satanlar, güvenli PayTR ödeme ve hızlı kargo. Türkiye geneli gönderim."
@@ -189,7 +188,6 @@ export default function HomePage() {
         </>
       )}
 
-      {!q && <HomeStickyCartBar onOpenCart={openCart} />}
       <HomeCartDrawer open={cartOpen} onClose={closeCart} />
     </div>
   );
