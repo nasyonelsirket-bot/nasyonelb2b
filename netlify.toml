@@ -151,6 +151,27 @@
   status = 200
   force = true
 
+# Eksik statik asset — SPA fallback yerine 404 (HTML as JS MIME hatasını önler)
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/*.js"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/*.css"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/*.mjs"
+  to = "/404.html"
+  status = 404
+
 # SPA fallback
 [[redirects]]
   from = "/*"
@@ -195,14 +216,26 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/assets/*.css"
+  [headers.values]
+    Content-Type = "text/css; charset=utf-8"
+
+[[headers]]
   for = "/*.js"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+    Content-Type = "application/javascript; charset=utf-8"
 
 [[headers]]
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+    Content-Type = "text/css; charset=utf-8"
 
 [[headers]]
   for = "/index.html"

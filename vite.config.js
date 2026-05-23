@@ -958,5 +958,5 @@ export default defineConfig(({ mode }) => {
       },
     },
   },
-}
+  }
 })

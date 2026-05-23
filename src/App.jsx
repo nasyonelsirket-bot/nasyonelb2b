@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { StoreProvider } from '@/context/StoreContext';
@@ -11,30 +11,33 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
 import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
 import MemberActivityTracker from '@/components/account/MemberActivityTracker';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 
 import { MAIN_CATEGORIES } from '@/data/mainCategories';
 
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
-const CategoryLandingPage = lazy(() => import('@/pages/CategoryLandingPage'));
-const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
-const CartPage = lazy(() => import('@/pages/CartPage'));
-const PaymentPage = lazy(() => import('@/pages/PaymentPage'));
-const PaymentSuccessPage = lazy(() => import('@/pages/PaymentSuccessPage'));
-const PaymentFailPage = lazy(() => import('@/pages/PaymentFailPage'));
-const AboutPage = lazy(() => import('@/pages/AboutPage'));
-const ContactPage = lazy(() => import('@/pages/ContactPage'));
-const BestSellersPage = lazy(() => import('@/pages/BestSellersPage'));
-const LegalPage = lazy(() => import('@/pages/LegalPage'));
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
-const OrderTrackPage = lazy(() => import('@/pages/OrderTrackPage'));
-const FaqPage = lazy(() => import('@/pages/FaqPage'));
-const AccountOverviewPage = lazy(() => import('@/pages/account/AccountOverviewPage'));
-const AccountOrdersPage = lazy(() => import('@/pages/account/AccountOrdersPage'));
-const AccountAddressesPage = lazy(() => import('@/pages/account/AccountAddressesPage'));
-const AccountProfilePage = lazy(() => import('@/pages/account/AccountProfilePage'));
-const AdminPage = lazy(() => import('@/pages/AdminPage'));
+/* Checkout kritik yolu — lazy chunk hatası riskini azaltmak için doğrudan yükle */
+import CartPage from '@/pages/CartPage';
+import PaymentPage from '@/pages/PaymentPage';
+import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
+import PaymentFailPage from '@/pages/PaymentFailPage';
+
+const HomePage = lazyWithRetry(() => import('@/pages/HomePage'));
+const CategoriesPage = lazyWithRetry(() => import('@/pages/CategoriesPage'));
+const CategoryLandingPage = lazyWithRetry(() => import('@/pages/CategoryLandingPage'));
+const ProductDetailPage = lazyWithRetry(() => import('@/pages/ProductDetailPage'));
+const AboutPage = lazyWithRetry(() => import('@/pages/AboutPage'));
+const ContactPage = lazyWithRetry(() => import('@/pages/ContactPage'));
+const BestSellersPage = lazyWithRetry(() => import('@/pages/BestSellersPage'));
+const LegalPage = lazyWithRetry(() => import('@/pages/LegalPage'));
+const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
+const RegisterPage = lazyWithRetry(() => import('@/pages/RegisterPage'));
+const OrderTrackPage = lazyWithRetry(() => import('@/pages/OrderTrackPage'));
+const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'));
+const AccountOverviewPage = lazyWithRetry(() => import('@/pages/account/AccountOverviewPage'));
+const AccountOrdersPage = lazyWithRetry(() => import('@/pages/account/AccountOrdersPage'));
+const AccountAddressesPage = lazyWithRetry(() => import('@/pages/account/AccountAddressesPage'));
+const AccountProfilePage = lazyWithRetry(() => import('@/pages/account/AccountProfilePage'));
+const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
 
 function PageLoader() {
   return (
@@ -71,10 +74,10 @@ export default function App() {
                   />
                 ))}
                 <Route path="urun/:id" element={<Suspense fallback={<PageLoader />}><ProductDetailPage /></Suspense>} />
-                <Route path="sepet" element={<Suspense fallback={<PageLoader />}><CartPage /></Suspense>} />
-                <Route path="odeme" element={<Suspense fallback={<PageLoader />}><PaymentPage /></Suspense>} />
-                <Route path="odeme/basarili" element={<Suspense fallback={<PageLoader />}><PaymentSuccessPage /></Suspense>} />
-                <Route path="odeme/hata" element={<Suspense fallback={<PageLoader />}><PaymentFailPage /></Suspense>} />
+                <Route path="sepet" element={<CartPage />} />
+                <Route path="odeme" element={<PaymentPage />} />
+                <Route path="odeme/basarili" element={<PaymentSuccessPage />} />
+                <Route path="odeme/hata" element={<PaymentFailPage />} />
                 <Route path="hakkimizda" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="iletisim" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />
                 <Route path="en-cok-satanlar" element={<Suspense fallback={<PageLoader />}><BestSellersPage /></Suspense>} />
