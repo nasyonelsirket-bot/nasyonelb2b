@@ -8,7 +8,9 @@ import {
   Shield,
 } from 'lucide-react';
 import InstagramIcon from '@/components/ui/InstagramIcon';
-import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
+import BrandLogo from '@/components/brand/BrandLogo';
+import { APP_VERSION } from '@/constants/appVersion';
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import {
   INSTAGRAM_URL,
   INSTAGRAM_HANDLE,
@@ -27,9 +29,6 @@ import {
 } from '@/constants/companyInfo';
 import { useStore } from '@/context/StoreContext';
 import { useMember } from '@/context/MemberContext';
-import BrandLogo from '@/components/brand/BrandLogo';
-import { APP_VERSION } from '@/constants/appVersion';
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
 function whatsAppHref(number) {
   const phone = String(number || '').replace(/\D/g, '');
@@ -52,9 +51,8 @@ export default function Footer() {
   return (
     <footer className="gradient-hero text-white mt-auto">
       <div className="border-b border-brand-700/40 bg-brand-950/30">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
-          <PaymentTrustStrip className="border-brand-700/30 from-brand-900/40 to-brand-950/20 [&_span]:text-brand-100 [&_.text-brand-900]:text-white [&_.text-gray-500]:text-brand-200 [&_.text-brand-700]:text-brand-100" />
-          <p className="mt-3 text-center text-xs text-brand-200">{PAYTR_TRUST_LABEL}</p>
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-8">
+          <p className="text-center text-xs sm:text-sm text-brand-200">{PAYTR_TRUST_LABEL}</p>
         </div>
       </div>
 
@@ -77,7 +75,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-brand-100">
               <li><Link to="/" className="hover:text-white transition-colors">Ana Sayfa</Link></li>
               <li><Link to="/en-cok-satanlar" className="hover:text-white transition-colors">Çok Satanlar</Link></li>
-              <li><Link to="/#urunler" className="hover:text-white transition-colors">Tüm Ürünler</Link></li>
+              <li><Link to="/kategoriler?hepsi=1" className="hover:text-white transition-colors">Tüm Ürünler</Link></li>
               <li><Link to="/kategoriler" className="hover:text-white transition-colors">Kategoriler</Link></li>
               <li><Link to="/hakkimizda" className="hover:text-white transition-colors">Hakkımızda</Link></li>
             </ul>

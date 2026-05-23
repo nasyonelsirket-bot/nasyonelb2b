@@ -16,22 +16,29 @@ export default function ProductGrid({
   onOpenCart,
   defaultSort = 'bestseller',
   showSort = true,
+  previewLimit,
+  seeAllHref,
+  seeAllLabel = 'Tümünü Gör',
 }) {
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const isPreview = previewLimit != null && previewLimit > 0;
+  const pageSize = isPreview ? previewLimit : PAGE_SIZE;
+  const [visibleCount, setVisibleCount] = useState(pageSize);
   const [sortKey, setSortKey] = useState(defaultSort);
   const sentinelRef = useRef(null);
   const { totalItems } = useCart();
   const list = useMemo(() => sortProducts(products, sortKey), [products, sortKey]);
 
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [list.length]);
+    setVisibleCount(pageSize);
+  }, [list.length, pageSize]);
 
   const loadMore = useCallback(() => {
+    if (isPreview) return;
     setVisibleCount((n) => Math.min(n + PAGE_SIZE, list.length));
-  }, [list.length]);
+  }, [isPreview, list.length]);
 
   useEffect(() => {
+    if (isPreview) return undefined;
     const el = sentinelRef.current;
     if (!el || visibleCount >= list.length) return undefined;
     const obs = new IntersectionObserver(
@@ -42,7 +49,7 @@ export default function ProductGrid({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [visibleCount, list.length, loadMore]);
+  }, [visibleCount, list.length, loadMore, isPreview]);
 
   if (!list.length) {
     return (
@@ -52,8 +59,9 @@ export default function ProductGrid({
     );
   }
 
-  const visible = list.slice(0, visibleCount);
-  const hasMore = visibleCount < list.length;
+  const visible = list.slice(0, isPreview ? previewLimit : visibleCount);
+  const hasMore = !isPreview && visibleCount < list.length;
+  const showSeeAll = isPreview && seeAllHref && list.length > previewLimit;
 
   return (
     <section id="urunler" className="py-4 sm:py-10 scroll-mt-24">
@@ -76,7 +84,7 @@ export default function ProductGrid({
                     value={sortKey}
                     onChange={(e) => {
                       setSortKey(e.target.value);
-                      setVisibleCount(PAGE_SIZE);
+                      setVisibleCount(pageSize);
                     }}
                     className="bg-transparent font-medium text-brand-900 outline-none cursor-pointer max-w-[200px] sm:max-w-none"
                   >
@@ -114,6 +122,16 @@ export default function ProductGrid({
           <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" aria-hidden />
             <span className="sr-only">Daha fazla ürün yükleniyor</span>
+          </div>
+        )}
+        {showSeeAll && (
+          <div className="mt-8 flex justify-center px-2">
+            <Link
+              to={seeAllHref}
+              className="inline-flex items-center justify-center rounded-xl bg-brand-900 px-8 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-brand-800"
+            >
+              {seeAllLabel}
+            </Link>
           </div>
         )}
       </div>

@@ -11,6 +11,7 @@ export default function CategoriesPage() {
   const { products, categories } = useStore();
   const [params] = useSearchParams();
   const cat = params.get('cat');
+  const hepsi = params.get('hepsi') === '1';
 
   const filtered = useMemo(() => {
     if (!cat) return products;
@@ -30,7 +31,7 @@ export default function CategoriesPage() {
   }, [categories, products]);
 
   const grouped = useMemo(() => {
-    if (cat) return null;
+    if (cat || hepsi) return null;
     const cats = Array.isArray(categories) ? categories : [];
     const byName = new Map();
     products.forEach((p) => {
@@ -58,25 +59,43 @@ export default function CategoriesPage() {
         if (scoreDiff !== 0) return scoreDiff;
         return b.items.length - a.items.length;
       });
-  }, [cat, categories, products]);
+  }, [cat, hepsi, categories, products]);
 
   const catHasProducts = !cat || filtered.length > 0;
 
   return (
     <>
-      <SEO title="Kategoriler" description="Nasyonel Toys oyuncak kategorileri ve ürün fiyatları" path="/kategoriler" />
+      <SEO
+        title={hepsi ? 'Tüm Ürünler' : 'Kategoriler'}
+        description={
+          hepsi
+            ? 'Nasyonel Toys tüm ürünler — eğitici oyuncaklar, güvenli ödeme ve hızlı kargo.'
+            : 'Nasyonel Toys oyuncak kategorileri ve ürün fiyatları'
+        }
+        path={hepsi ? '/kategoriler?hepsi=1' : '/kategoriler'}
+      />
       <div className="bg-brand-900 text-white py-12">
         <div className="mx-auto max-w-7xl px-4">
-          <h1 className="font-display text-3xl font-bold">Kategoriler</h1>
+          <h1 className="font-display text-3xl font-bold">{hepsi ? 'Tüm Ürünler' : 'Kategoriler'}</h1>
           <p className="mt-2 text-brand-200">
-            {cat ? cat : 'Ürünler kategorilere göre listelenir'}
+            {hepsi
+              ? `${products.length} ürün listeleniyor`
+              : cat
+                ? cat
+                : 'Ürünler kategorilere göre listelenir'}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Link
               to="/kategoriler"
-              className={`rounded-full px-4 py-1.5 text-sm font-medium ${!cat ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${!cat && !hepsi ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
             >
               Tümü
+            </Link>
+            <Link
+              to="/kategoriler?hepsi=1"
+              className={`rounded-full px-4 py-1.5 text-sm font-medium ${hepsi ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
+            >
+              Tüm Ürünler
             </Link>
             {activeCategoryList.map((c) => (
               <Link
@@ -91,7 +110,13 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {cat && !catHasProducts ? (
+      {hepsi ? (
+        <ProductGrid
+          products={products}
+          title=""
+          subtitle={`${products.length} ürün — sıralamayı değiştirin`}
+        />
+      ) : cat && !catHasProducts ? (
         <EmptyCategoryFallback
           title={`"${cat}" kategorisinde ürün yok`}
           message="Bu kategoride şu an listelenecek ürün bulunmuyor. Diğer kategorilerdeki ürünleri inceleyebilirsiniz."

@@ -21,6 +21,7 @@ import {
 } from '@/utils/homepagePlacements';
 
 const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'yeni-gelenler', 'firsatlar', 'egitici', 'sepet'];
+const HOME_ALL_PRODUCTS_PREVIEW = 21;
 
 function defaultBestsellerSubtitle(layout, catalog) {
   const pinned = countPinnedInSection(layout, 'bestsellers');
@@ -113,7 +114,10 @@ export default function HomePage() {
     const title = q ? `Arama: "${q}"` : cfg.title || 'Tüm Ürünler';
     let subtitle = q ? `${filtered.length} ürün` : cfg.subtitle;
     if (!subtitle && !q) {
-      subtitle = `${filtered.length} ürün — sıralamayı değiştirin`;
+      subtitle =
+        filtered.length > HOME_ALL_PRODUCTS_PREVIEW
+          ? `${HOME_ALL_PRODUCTS_PREVIEW} ürün gösteriliyor — toplam ${filtered.length} ürün`
+          : `${filtered.length} ürün — sıralamayı değiştirin`;
     }
 
     return (
@@ -124,6 +128,9 @@ export default function HomePage() {
           subtitle={subtitle}
           showSort={cfg.showSort !== false}
           onOpenCart={openCart}
+          previewLimit={!q ? HOME_ALL_PRODUCTS_PREVIEW : undefined}
+          seeAllHref={!q && filtered.length > HOME_ALL_PRODUCTS_PREVIEW ? '/kategoriler?hepsi=1' : undefined}
+          seeAllLabel="Tümünü Gör"
         />
       </div>
     );
