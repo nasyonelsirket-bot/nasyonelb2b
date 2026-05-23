@@ -105,7 +105,7 @@ export default function ProductDetailPage() {
         ]}
       />
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-8">
         <Breadcrumbs
           variant="light"
           className="mb-4"
@@ -187,7 +187,7 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <div className="mt-6 max-w-md hidden lg:block">
+            <div className="mt-6 max-w-md">
               <QuantityControls
                 quantity={qty}
                 onChange={setQty}
@@ -225,6 +225,24 @@ export default function ProductDetailPage() {
         </div>
 
         <ProductReviewsSection product={product} />
+      </div>
+
+      {/* Mobil — sabit Sepete Ekle (alt menünün üstünde) */}
+      <div
+        className="lg:hidden fixed left-0 right-0 z-[47] border-t border-brand-100 bg-white/98 backdrop-blur-md px-3 pt-2 pb-2 shadow-[0_-4px_24px_rgba(10,31,77,0.1)]"
+        style={{ bottom: 'calc(3.25rem + env(safe-area-inset-bottom, 0px))' }}
+      >
+        <Button
+          type="button"
+          variant="yellow"
+          size="lg"
+          className="w-full min-h-[48px] rounded-full text-base font-bold shadow-lg"
+          onClick={handleAdd}
+          disabled={!inStock}
+        >
+          <ShoppingCart className="h-5 w-5 shrink-0" />
+          {inStock ? `Sepete Ekle · ${formatPrice(lineTotal)}` : 'Stokta yok'}
+        </Button>
       </div>
     </>
   );
