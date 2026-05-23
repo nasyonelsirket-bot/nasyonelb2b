@@ -69,7 +69,7 @@ function availableCatalog(catalog, cartIds) {
 }
 
 /**
- * 750 TL'ye tamamlamak için sepete uyumlu tek ürün (%5 indirimli)
+ * 500 TL'ye tamamlamak için sepete uyumlu tek ürün (%5 indirimli)
  */
 export function buildFreeShippingBundle(cartItems, catalog, subtotal) {
   const threshold = FREE_SHIPPING_THRESHOLD_TL;

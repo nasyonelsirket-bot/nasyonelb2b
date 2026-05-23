@@ -4,7 +4,7 @@ const COMPANY = 'Nasyonel Toys';
 const BRAND = 'nasyoneltoys';
 const EMAIL = 'info@nasyoneltoys.com';
 const PHONE = '+90 850 305 81 34';
-const FREE_SHIPPING_MIN = 750;
+const FREE_SHIPPING_MIN = 500;
 const RETURN_DAYS = 14;
 
 const BRAND_INTRO =

@@ -29,7 +29,7 @@ import {
   EMPTY_CHECKOUT_CUSTOMER,
 } from '@/utils/checkoutCustomer';
 import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
-import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
+import { getFreeShippingStatus, getOrderPayableTotal, FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import { normalizePromotions } from '@/utils/promotions';
 import { getBundleFreeShippingOverride } from '@/utils/bundleRules';
 import { validateCouponRemote } from '@/services/promotionApi';
@@ -77,7 +77,7 @@ export default function CartPage() {
     [totalPrice, promos, couponApplied],
   );
   const shipping = useMemo(() => {
-    const threshold = promos.freeShippingThreshold || 750;
+    const threshold = promos.freeShippingThreshold || FREE_SHIPPING_THRESHOLD_TL;
     const base = getFreeShippingStatus(discount.subtotal, threshold);
     const bundleShip = getBundleFreeShippingOverride(items, promos.bundleRules, threshold);
     if (bundleShip?.eligible) {

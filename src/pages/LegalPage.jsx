@@ -1,6 +1,7 @@
 import { useParams, Link, NavLink } from 'react-router-dom';
 import { FileText, Shield, Truck, RotateCcw } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import LegalPageSchema from '@/components/seo/LegalPageSchema';
 import { LEGAL_PAGES } from '@/data/legalContent';
 import { LEGAL_ROUTES } from '@/constants/siteLinks';
@@ -125,7 +126,7 @@ export default function LegalPage() {
                 </p>
                 <p className="flex items-start gap-2">
                   <Truck className="h-4 w-4 shrink-0 text-accent-gold mt-0.5" />
-                  750 TL üzeri ücretsiz kargo
+                  {FREE_SHIPPING_THRESHOLD_TL} TL üzeri ücretsiz kargo
                 </p>
                 <p className="flex items-start gap-2">
                   <RotateCcw className="h-4 w-4 shrink-0 text-accent-gold mt-0.5" />

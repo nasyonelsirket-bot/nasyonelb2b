@@ -25,7 +25,7 @@ const PERKS = [
   },
   {
     icon: Truck,
-    label: '750 TL kargo bedava',
+    label: `${FREE_SHIPPING_THRESHOLD_TL} TL kargo bedava`,
     sub: 'Altı 100 TL kargo',
     cardClass:
       'bg-gradient-to-br from-emerald-500/25 to-teal-500/20 border-emerald-400/40 hover:from-emerald-500/35',

@@ -1,6 +1,6 @@
 export const DEFAULT_PROMOTIONS = {
   ibanDiscountPercent: 10,
-  freeShippingThreshold: 750,
+  freeShippingThreshold: 500,
   standardShippingFee: 100,
   deliveryReward: {
     enabled: true,
@@ -19,7 +19,7 @@ export function normalizePromotions(raw) {
   const p = raw && typeof raw === 'object' ? raw : {};
   return {
     ibanDiscountPercent: Number(p.ibanDiscountPercent) || 10,
-    freeShippingThreshold: Number(p.freeShippingThreshold) || 750,
+    freeShippingThreshold: Number(p.freeShippingThreshold) || 500,
     standardShippingFee: Number(p.standardShippingFee) || 100,
     deliveryReward: {
       ...DEFAULT_PROMOTIONS.deliveryReward,

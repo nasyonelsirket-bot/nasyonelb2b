@@ -64,7 +64,7 @@ export default function LegalPageSchema({ title, description, path, slug }) {
         name: 'Ücretsiz kargo şartı nedir?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: '750 TL ve üzeri siparişlerde kargo bedeli alıcıya yansıtılmaz.',
+          text: '500 TL ve üzeri siparişlerde kargo bedeli alıcıya yansıtılmaz.',
         },
       },
     ];

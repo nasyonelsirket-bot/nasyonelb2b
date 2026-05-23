@@ -1,7 +1,7 @@
 export const FAQ_ITEMS = [
   {
     q: 'Kargo ücretlendirmesi nasıl uygulanmaktadır?',
-    a: '750 TL ve üzeri siparişlerde kargo bedavadır. 750 TL altındaki siparişlerde 100 TL kargo ücreti uygulanır. Sepet özetinde güncel tutar görünür.',
+    a: '500 TL ve üzeri siparişlerde kargo bedavadır. 500 TL altındaki siparişlerde 100 TL kargo ücreti uygulanır. Sepet özetinde güncel tutar görünür.',
   },
   {
     q: 'Siparişimin teslimat süresi ne kadardır?',

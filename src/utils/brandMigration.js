@@ -4,7 +4,7 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 13;
+export const BRAND_VERSION = 14;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetLogo(logoUrl) {
@@ -73,6 +73,28 @@ export function runBrandMigration() {
       settings.trendyolPriceDivisor = '2';
     }
     settings.pdfSettings = mergePdfSettings(settings.pdfSettings || DEFAULT_SETTINGS.pdfSettings);
+
+    if (settings.promotions && typeof settings.promotions === 'object') {
+      const threshold = Number(settings.promotions.freeShippingThreshold);
+      if (!threshold || threshold === 750) {
+        settings.promotions = {
+          ...DEFAULT_SETTINGS.promotions,
+          ...settings.promotions,
+          freeShippingThreshold: 500,
+        };
+      }
+      if (Array.isArray(settings.promotions.campaigns)) {
+        settings.promotions.campaigns = settings.promotions.campaigns.map((c) => {
+          if (!c?.description || !String(c.description).includes('750 TL')) return c;
+          return {
+            ...c,
+            description: String(c.description).replace(/750 TL/g, '500 TL'),
+          };
+        });
+      }
+    } else {
+      settings.promotions = { ...DEFAULT_SETTINGS.promotions };
+    }
 
     const storedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
     const categories = refreshCategoryIcons(

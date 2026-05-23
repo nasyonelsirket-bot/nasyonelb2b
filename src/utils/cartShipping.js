@@ -1,6 +1,6 @@
 import { formatPrice } from '@/utils/whatsapp';
 
-export const FREE_SHIPPING_THRESHOLD_TL = 750;
+export const FREE_SHIPPING_THRESHOLD_TL = 500;
 export const STANDARD_SHIPPING_FEE_TL = 100;
 
 export function getFreeShippingStatus(subtotal, threshold = FREE_SHIPPING_THRESHOLD_TL) {
@@ -34,7 +34,7 @@ export function getFreeShippingStatus(subtotal, threshold = FREE_SHIPPING_THRESH
     upsellMessage: !eligible
       ? `${formatPrice(remaining)} daha ekleyin, kargo bedava!`
       : null,
-    successMessage: eligible ? '750 TL üzeri — kargo bedava!' : null,
+    successMessage: eligible ? `${threshold} TL üzeri — kargo bedava!` : null,
   };
 }
 

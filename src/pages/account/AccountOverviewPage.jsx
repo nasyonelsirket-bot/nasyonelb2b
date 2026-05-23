@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 import { Package, MapPin, User, Truck } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import { useMember } from '@/context/MemberContext';
@@ -43,7 +44,7 @@ export default function AccountOverviewPage() {
             <div>
               <h2 className="font-display font-bold text-brand-900">Hoş geldiniz</h2>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                750 TL üzeri siparişlerde kargo bedava. Siparişlerinizi bu panelden takip
+                {FREE_SHIPPING_THRESHOLD_TL} TL üzeri siparişlerde kargo bedava. Siparişlerinizi bu panelden takip
                 edebilir, adres ve profil bilgilerinizi güncelleyebilirsiniz.
               </p>
             </div>

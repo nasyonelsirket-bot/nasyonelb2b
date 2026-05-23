@@ -6,7 +6,7 @@ Kod bilgisayarınızda güncellendi; **canlı sitede görünmesi için yeniden d
 
 Sayfanın en altında (footer): **Site sürümü: 2026.05.21-perakende-v1** yazmalı.
 
-Üst bant: **750 TL üzeri kargo bedava**  
+Üst bant: **500 TL üzeri kargo bedava**  
 Sepet: 3 adım (Sepet → Teslimat → Ödeme), IBAN / Kapıda ödeme  
 Admin: **Siparişler** sekmesi
 
