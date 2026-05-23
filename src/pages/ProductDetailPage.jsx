@@ -187,7 +187,7 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <div className="mt-6 max-w-md">
+            <div className="mt-6 max-w-md lg:max-w-md">
               <QuantityControls
                 quantity={qty}
                 onChange={setQty}
@@ -196,16 +196,18 @@ export default function ProductDetailPage() {
               />
             </div>
 
-            <Button
-              variant="yellow"
-              size="lg"
-              className="mt-6 w-full hidden lg:inline-flex"
-              onClick={handleAdd}
-              disabled={!inStock}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              Sepete Ekle ({Math.max(1, qty)} adet · {formatPrice(lineTotal)})
-            </Button>
+            <div className="mt-6 hidden max-w-md lg:block">
+              <Button
+                variant="yellow"
+                size="lg"
+                className="w-full"
+                onClick={handleAdd}
+                disabled={!inStock}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                Sepete Ekle ({Math.max(1, qty)} adet · {formatPrice(lineTotal)})
+              </Button>
+            </div>
 
             <div className="mt-8 space-y-3">
               <AccordionSection title="Ürün Açıklaması" defaultOpen>
