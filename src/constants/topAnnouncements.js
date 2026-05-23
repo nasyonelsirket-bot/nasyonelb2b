@@ -24,7 +24,7 @@ export const TOP_ANNOUNCEMENTS = [
   },
   {
     highlight: 'Çok Satan Ürünler',
-    rest: 'Trendyol satış verilerine dayalı sıralama ·',
+    rest: 'Satış performansına dayalı sıralama ·',
   },
   {
     highlight: 'Ücretsiz Üyelik',
