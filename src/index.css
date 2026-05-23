@@ -140,11 +140,9 @@
 
   /* Ürün görselleri — kırpma yok, Trendyol oranı (~3:4) */
   .product-media {
+    position: relative;
     aspect-ratio: 3 / 4;
     background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .product-media--square {
@@ -159,10 +157,11 @@
   }
 
   .product-media-img {
+    position: absolute;
+    inset: 0;
+    margin: auto;
     max-height: 100%;
     max-width: 100%;
-    height: auto;
-    width: auto;
     object-fit: contain;
     object-position: center;
   }

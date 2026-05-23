@@ -1,19 +1,15 @@
-/** Trendyol CDN küçük ölçü parametrelerini kaldırır (görsel dosyası yeniden işlenmez). */
+import { optimizeImageUrl } from '@/utils/imageOptimize';
+
+/** Tam çözünürlük URL — detay sayfası galerisi için */
 export function normalizeProductImageUrl(url) {
   if (!url || typeof url !== 'string' || !url.startsWith('http')) return url;
+  return url.trim();
+}
 
-  let u = url.trim();
-  u = u.replace(/\/mnresize\/\d+\/\d+\//gi, '/');
-  u = u.replace(/\/mnresize\/\d+\/-\//gi, '/');
-  u = u.replace(/\/(\d{2,4})x(\d{2,4})\//gi, '/');
-
-  try {
-    const parsed = new URL(u);
-    ['width', 'height', 'w', 'h', 'size', 'thumbnail'].forEach((k) => parsed.searchParams.delete(k));
-    return parsed.toString();
-  } catch {
-    return u;
-  }
+export function getDisplayImageUrl(url, variant = 'card') {
+  const normalized = normalizeProductImageUrl(url);
+  if (!normalized) return '';
+  return optimizeImageUrl(normalized, variant);
 }
 
 /** Trendyol / katalog ürün görselleri — kırpma yok, orijinal oran (3:4) */
@@ -21,7 +17,7 @@ export const PRODUCT_MEDIA_FRAME =
   'product-media relative flex items-center justify-center overflow-hidden bg-white';
 
 export const PRODUCT_MEDIA_IMG =
-  'product-media-img max-h-full max-w-full h-auto w-auto object-contain';
+  'product-media-img h-full w-full object-contain';
 
 export function getProductImages(product) {
   const list = [];
@@ -37,7 +33,8 @@ export function getProductImages(product) {
   return [...new Set(list.filter(Boolean))];
 }
 
-export function getPrimaryImage(product) {
+export function getPrimaryImage(product, variant = 'card') {
   const images = getProductImages(product);
-  return images[0] || '';
+  const primary = images[0] || '';
+  return primary ? getDisplayImageUrl(primary, variant) : '';
 }

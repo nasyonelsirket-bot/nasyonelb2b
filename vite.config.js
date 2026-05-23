@@ -942,6 +942,21 @@ export default defineConfig(({ mode }) => {
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('react-dom') || id.includes('react-router') || /\/react\//.test(id)) {
+            return 'vendor-react';
+          }
+          if (id.includes('lucide-react')) return 'vendor-icons';
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('react-helmet')) return 'vendor-helmet';
+          if (id.includes('xlsx')) return 'vendor-xlsx';
+          return 'vendor';
+        },
+      },
+    },
   },
 }
 })

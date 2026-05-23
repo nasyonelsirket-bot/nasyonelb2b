@@ -14,7 +14,7 @@ import MemberActivityTracker from '@/components/account/MemberActivityTracker';
 
 import { MAIN_CATEGORIES } from '@/data/mainCategories';
 
-import HomePage from '@/pages/HomePage';
+const HomePage = lazy(() => import('@/pages/HomePage'));
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
 const CategoryLandingPage = lazy(() => import('@/pages/CategoryLandingPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
@@ -57,7 +57,7 @@ export default function App() {
             <Ga4PageTracker />
             <Routes>
               <Route element={<Layout />}>
-                <Route index element={<HomePage />} />
+                <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
                 <Route path="kategoriler" element={<Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense>} />
                 {MAIN_CATEGORIES.map((c) => (
                   <Route

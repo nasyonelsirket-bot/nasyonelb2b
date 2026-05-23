@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Eye, Zap, Truck, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -15,7 +15,7 @@ import { getProductRatingSummary } from '@/utils/productReviews';
 import { getProductCardBadges } from '@/utils/productCardBadges';
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
-export default function ProductCard({ product }) {
+function ProductCard({ product }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
@@ -133,3 +133,5 @@ export default function ProductCard({ product }) {
     </article>
   );
 }
+
+export default memo(ProductCard);

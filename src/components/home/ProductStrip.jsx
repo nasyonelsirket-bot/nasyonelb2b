@@ -21,7 +21,7 @@ export default function ProductStrip({
   const [canRight, setCanRight] = useState(false);
 
   const list = markBestsellers
-    ? markBestSellerFlags(Array.isArray(products) ? products : [], 24)
+    ? markBestSellerFlags(Array.isArray(products) ? products : [], 12)
     : Array.isArray(products) ? products : [];
 
   const updateArrows = useCallback(() => {

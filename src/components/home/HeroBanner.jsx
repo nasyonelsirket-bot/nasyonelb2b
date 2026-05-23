@@ -3,9 +3,28 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { PRODUCTS_SECTION_PATH } from '@/constants/siteLinks';
+import { optimizeBannerImage } from '@/utils/imageOptimize';
 
-const AUTO_MS = 5500;
+const AUTO_MS = 6500;
 const SWIPE_THRESHOLD = 48;
+
+function preloadHeroImage(src) {
+  if (!src || typeof document === 'undefined') return undefined;
+  const href = optimizeBannerImage(src);
+  const existing = document.querySelector(`link[data-hero-preload="${href}"]`);
+  if (existing) return undefined;
+
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'image';
+  link.href = href;
+  link.setAttribute('data-hero-preload', href);
+  document.head.appendChild(link);
+
+  return () => {
+    link.remove();
+  };
+}
 
 /**
  * @param {{ bannerIds?: string[] }} props
@@ -27,13 +46,18 @@ export default function HeroBanner({ bannerIds }) {
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const touchStart = useRef(null);
 
   const count = active.length;
+  const current = active[index];
+  const currentSrc = current?.image ? optimizeBannerImage(current.image) : '';
+
   const go = useCallback(
     (delta) => {
       if (count <= 1) return;
       setIndex((i) => (i + delta + count) % count);
+      setLoaded(false);
     },
     [count],
   );
@@ -43,9 +67,14 @@ export default function HeroBanner({ bannerIds }) {
   }, [count]);
 
   useEffect(() => {
+    if (!active[0]?.image) return undefined;
+    return preloadHeroImage(active[0].image);
+  }, [active]);
+
+  useEffect(() => {
     if (count <= 1 || paused) return undefined;
-    const t = setInterval(() => go(1), AUTO_MS);
-    return () => clearInterval(t);
+    const t = window.setInterval(() => go(1), AUTO_MS);
+    return () => window.clearInterval(t);
   }, [count, paused, go]);
 
   const onTouchStart = (e) => {
@@ -60,7 +89,10 @@ export default function HeroBanner({ bannerIds }) {
     go(dx < 0 ? 1 : -1);
   };
 
-  if (!count) return null;
+  if (!count || !current) return null;
+
+  const hasText = Boolean(current.title?.trim() || current.subtitle?.trim());
+  const linkTo = current.link?.trim() || PRODUCTS_SECTION_PATH;
 
   return (
     <section
@@ -74,58 +106,50 @@ export default function HeroBanner({ bannerIds }) {
     >
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl ring-1 ring-white/10 bg-brand-950">
         <div className="hero-banner-frame relative w-full">
-          {active.map((banner, i) => {
-            if (i !== index) return null;
-            const hasText = Boolean(banner.title?.trim() || banner.subtitle?.trim());
-            const linkTo = banner.link?.trim() || PRODUCTS_SECTION_PATH;
-
-            const slideContent = (
-              <>
-                <img
-                  src={banner.image}
-                  alt={banner.title?.trim() || `Banner ${i + 1}`}
-                  className="absolute inset-0 w-full h-full object-contain object-center"
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  draggable={false}
+          <div className="hero-slide absolute inset-0 z-10">
+            <Link
+              to={linkTo}
+              className="block w-full h-full touch-manipulation cursor-pointer"
+              tabIndex={0}
+              aria-label={current.title?.trim() ? `${current.title} — devam` : 'Devam'}
+            >
+              {!loaded && (
+                <div
+                  className="absolute inset-0 animate-pulse bg-gradient-to-br from-brand-800 via-brand-700 to-brand-900"
+                  aria-hidden
                 />
-                {hasText && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40 pointer-events-none" />
-                    <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-10 lg:px-14 max-w-xl pointer-events-none z-[1]">
-                      {banner.title?.trim() && (
-                        <h2 className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
-                          {banner.title}
-                        </h2>
-                      )}
-                      {banner.subtitle?.trim() && (
-                        <p className="mt-1 sm:mt-2 text-xs sm:text-lg text-brand-100/95 line-clamp-2">
-                          {banner.subtitle}
-                        </p>
-                      )}
-                    </div>
-                  </>
-                )}
-              </>
-            );
-
-            return (
-              <div
-                key={banner.id}
-                className="hero-slide absolute inset-0 hero-slide-active z-10"
-                aria-hidden={false}
-              >
-                <Link
-                  to={linkTo}
-                  className="block w-full h-full touch-manipulation cursor-pointer"
-                  tabIndex={0}
-                  aria-label={banner.title?.trim() ? `${banner.title} — devam` : 'Devam'}
-                >
-                  {slideContent}
-                </Link>
-              </div>
-            );
-          })}
+              )}
+              <img
+                src={currentSrc}
+                alt={current.title?.trim() || 'Kampanya bannerı'}
+                className={`hero-banner-img absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                width={1280}
+                height={533}
+                draggable={false}
+                onLoad={() => setLoaded(true)}
+              />
+              {hasText && (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40 pointer-events-none" />
+                  <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-10 lg:px-14 max-w-xl pointer-events-none z-[1]">
+                    {current.title?.trim() && (
+                      <h2 className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
+                        {current.title}
+                      </h2>
+                    )}
+                    {current.subtitle?.trim() && (
+                      <p className="mt-1 sm:mt-2 text-xs sm:text-lg text-brand-100/95 line-clamp-2">
+                        {current.subtitle}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -152,7 +176,10 @@ export default function HeroBanner({ bannerIds }) {
               <button
                 key={banner.id}
                 type="button"
-                onClick={() => setIndex(i)}
+                onClick={() => {
+                  setIndex(i);
+                  setLoaded(false);
+                }}
                 className={`rounded-full transition-all duration-300 touch-manipulation ${
                   i === index
                     ? 'h-2.5 w-7 sm:w-8 bg-accent-gold shadow-sm'

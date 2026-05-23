@@ -1,4 +1,6 @@
-import { PRODUCT_MEDIA_FRAME, PRODUCT_MEDIA_IMG } from '@/utils/productImage';
+import { useMemo } from 'react';
+import { PRODUCT_MEDIA_FRAME, PRODUCT_MEDIA_IMG, getDisplayImageUrl } from '@/utils/productImage';
+import { buildImageSrcSet, IMAGE_SIZES } from '@/utils/imageOptimize';
 
 export default function ProductImage({
   src,
@@ -7,6 +9,7 @@ export default function ProductImage({
   className = '',
   imgClassName = '',
   loading,
+  fetchPriority,
 }) {
   const imgLoading = loading ?? (variant === 'detail' ? 'eager' : 'lazy');
   const variantClass =
@@ -18,7 +21,19 @@ export default function ProductImage({
           ? 'product-media--square'
           : 'product-media--card';
 
-  if (!src) {
+  const optimizedSrc = useMemo(
+    () => (src ? getDisplayImageUrl(src, variant) : ''),
+    [src, variant],
+  );
+
+  const srcSet = useMemo(
+    () => (src && variant !== 'thumb' ? buildImageSrcSet(src, variant) : undefined),
+    [src, variant],
+  );
+
+  const sizes = IMAGE_SIZES[variant] || IMAGE_SIZES.card;
+
+  if (!optimizedSrc) {
     return (
       <div className={`${PRODUCT_MEDIA_FRAME} ${variantClass} ${className}`}>
         <span className="text-xs text-gray-400">Görsel yok</span>
@@ -29,11 +44,16 @@ export default function ProductImage({
   return (
     <div className={`${PRODUCT_MEDIA_FRAME} ${variantClass} ${className}`}>
       <img
-        src={src}
+        src={optimizedSrc}
+        srcSet={srcSet}
+        sizes={srcSet ? sizes : undefined}
         alt={alt}
         loading={imgLoading}
         decoding="async"
+        fetchPriority={fetchPriority}
         draggable={false}
+        width={variant === 'detail' ? 560 : variant === 'thumb' ? 96 : 320}
+        height={variant === 'detail' ? 700 : variant === 'thumb' ? 96 : 400}
         className={`${PRODUCT_MEDIA_IMG} ${imgClassName}`}
       />
     </div>

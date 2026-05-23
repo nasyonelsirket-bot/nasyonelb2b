@@ -48,22 +48,74 @@ function loadLocalSettings(migration) {
   return merged;
 }
 
+function persistPublishedCatalog(remote) {
+  if (!remote?.products?.length) return;
+  saveToStorage(KEYS.PRODUCTS, remote.products);
+  if (Array.isArray(remote.categories)) saveToStorage(KEYS.CATEGORIES, remote.categories);
+  if (Array.isArray(remote.banners) && remote.banners.length) {
+    saveToStorage(KEYS.BANNERS, remote.banners);
+  }
+}
+
+function hydrateInitialCatalog(migration) {
+  const meta = loadFromStorage(KEYS.CATALOG_META, null);
+  const cachedProducts = loadProductsCache();
+  if (meta?.updatedAt && cachedProducts.length) {
+    const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
+    const cachedBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+    return {
+      products: migrateCatalog(cachedProducts),
+      categories: refreshCategoryIcons(
+        cachedCategories.length ? cachedCategories : buildCategoriesFromProducts(cachedProducts),
+      ),
+      banners: cachedBanners.length ? cachedBanners : DEMO_BANNERS,
+      source: 'cache',
+      updatedAt: meta.updatedAt,
+    };
+  }
+
+  if (isAdminSession()) {
+    const localProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
+    if (localProducts.length) {
+      const localCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
+      const localBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+      return {
+        products: migrateCatalog(localProducts),
+        categories: refreshCategoryIcons(
+          localCategories.length ? localCategories : buildCategoriesFromProducts(localProducts),
+        ),
+        banners: localBanners.length ? localBanners : DEMO_BANNERS,
+        source: 'local',
+        updatedAt: null,
+      };
+    }
+  }
+
+  return {
+    products: migrateCatalog(DEMO_PRODUCTS),
+    categories: refreshCategoryIcons(
+      migration?.categories?.length ? migration.categories : DEMO_CATEGORIES,
+    ),
+    banners: DEMO_BANNERS,
+    source: 'local',
+    updatedAt: null,
+  };
+}
+
 export function StoreProvider({ children }) {
   const migration = useMemo(() => runBrandMigration(), []);
+  const initialCatalog = useMemo(() => hydrateInitialCatalog(migration), [migration]);
 
-  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogReady, setCatalogReady] = useState(true);
   const [catalogLoadError, setCatalogLoadError] = useState(null);
-  const [catalogSource, setCatalogSource] = useState('local');
-  const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(null);
-  const [publishing, setPublishing] = useState(false);
-
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(() => {
-    if (migration?.categories?.length) return migration.categories;
-    return refreshCategoryIcons(DEMO_CATEGORIES);
-  });
-  const [banners, setBanners] = useState(() => DEMO_BANNERS);
+  const [products, setProducts] = useState(() => initialCatalog.products);
+  const [categories, setCategories] = useState(() => initialCatalog.categories);
+  const [banners, setBanners] = useState(() => initialCatalog.banners);
   const [settings, setSettings] = useState(() => loadLocalSettings(migration));
+  const [catalogSource, setCatalogSource] = useState(initialCatalog.source);
+  const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(initialCatalog.updatedAt);
+
+  const [publishing, setPublishing] = useState(false);
 
   const applyRemoteCatalog = useCallback((remote) => {
     if (!remote?.products?.length) return false;
@@ -78,6 +130,7 @@ export function StoreProvider({ children }) {
     setCatalogSource('server');
     const updatedAt = remote.updatedAt || new Date().toISOString();
     setCatalogUpdatedAt(updatedAt);
+    persistPublishedCatalog(remote);
     saveCatalogMeta({
       updatedAt,
       productCount: remote.products.length,
@@ -147,6 +200,8 @@ export function StoreProvider({ children }) {
     (async () => {
       try {
         await loadPublishedCatalog();
+      } catch {
+        /* hydrateInitialCatalog already rendered usable catalog */
       } finally {
         if (!cancelled) setCatalogReady(true);
       }
@@ -431,18 +486,6 @@ export function StoreProvider({ children }) {
       refreshAllCategoryEmojis,
     ],
   );
-
-  if (!catalogReady) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-brand-50 px-4 text-center">
-        <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600"
-          aria-hidden
-        />
-        <p className="mt-4 text-sm font-medium text-brand-800">Katalog yükleniyor…</p>
-      </div>
-    );
-  }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

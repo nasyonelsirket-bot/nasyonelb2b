@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
 import HeroBanner from '@/components/home/HeroBanner';
@@ -6,9 +6,10 @@ import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
 import TrustBadges from '@/components/home/TrustBadges';
-import HomeTrustSection from '@/components/home/HomeTrustSection';
-import RecentlyViewedStrip from '@/components/home/RecentlyViewedStrip';
-import HomeSocialProof from '@/components/home/HomeSocialProof';
+
+const HomeTrustSection = lazy(() => import('@/components/home/HomeTrustSection'));
+const RecentlyViewedStrip = lazy(() => import('@/components/home/RecentlyViewedStrip'));
+const HomeSocialProof = lazy(() => import('@/components/home/HomeSocialProof'));
 import { useStore } from '@/context/StoreContext';
 import { hasTrendyolSalesData } from '@/utils/productBestseller';
 import {
@@ -149,7 +150,9 @@ export default function HomePage() {
     if (cfg?.enabled === false) return null;
     return (
       <div key="trust" id="guven" className="scroll-mt-32">
-        <HomeTrustSection />
+        <Suspense fallback={null}>
+          <HomeTrustSection />
+        </Suspense>
       </div>
     );
   };
@@ -172,8 +175,10 @@ export default function HomePage() {
             return (
               <div key="all-products-block">
                 {renderAllProducts()}
-                <RecentlyViewedStrip />
-                <HomeSocialProof />
+                <Suspense fallback={null}>
+                  <RecentlyViewedStrip />
+                  <HomeSocialProof />
+                </Suspense>
               </div>
             );
           }
@@ -183,7 +188,9 @@ export default function HomePage() {
       {q && (
         <>
           {renderAllProducts()}
-          <RecentlyViewedStrip />
+          <Suspense fallback={null}>
+            <RecentlyViewedStrip />
+          </Suspense>
         </>
       )}
 

@@ -7,12 +7,9 @@ export async function fetchPublishedCatalog() {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const url = `${CATALOG_GET}?_=${Date.now()}`;
-    const res = await fetch(url, {
+    const res = await fetch(CATALOG_GET, {
       method: 'GET',
-      cache: 'no-store',
       signal: controller.signal,
-      headers: { Pragma: 'no-cache', 'Cache-Control': 'no-cache' },
     });
     if (!res.ok) return null;
     const data = await res.json();

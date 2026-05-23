@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { resolveLogoUrl, resolveHeaderLogoUrl, DEFAULT_LOGO } from '@/utils/resolveLogoUrl';
 
-const LOGO_2X = '/nasyonel-logo@2x.png?v=5';
-
 /**
- * Site logosu — header’da resmi PNG (retina srcset), diğer yerlerde ayar
+ * Site logosu — header’da resmi PNG, diğer yerlerde ayar
  */
 export default function BrandLogo({
   logoUrl,
@@ -23,12 +21,13 @@ export default function BrandLogo({
   return (
     <img
       src={src}
-      srcSet={isHeader ? `${src} 1x, ${LOGO_2X} 2x` : undefined}
       alt={siteName}
       className={imgClass}
       width={420}
       height={171}
       decoding="async"
+      fetchPriority={isHeader ? 'high' : undefined}
+      loading={isHeader ? 'eager' : 'lazy'}
       onError={() => {
         if (src !== DEFAULT_LOGO) setSrc(DEFAULT_LOGO);
       }}
