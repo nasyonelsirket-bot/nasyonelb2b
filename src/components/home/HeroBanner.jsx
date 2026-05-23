@@ -133,7 +133,7 @@ export default function HeroBanner({ bannerIds }) {
       </p>
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl ring-1 ring-white/10 bg-brand-950">
         <div className="hero-banner-frame relative w-full">
-          <div className="hero-slide absolute inset-0 z-10">
+          <div className="hero-slide hero-slide-active absolute inset-0 z-10">
             <Link
               to={linkTo}
               className="block w-full h-full touch-manipulation cursor-pointer"
