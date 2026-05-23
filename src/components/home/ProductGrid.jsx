@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, CreditCard, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import KdvNotice from '@/components/ui/KdvNotice';
-import Button from '@/components/ui/Button';
-import { useCart } from '@/context/CartContext';
 import { SORT_OPTIONS, sortProducts } from '@/utils/productSortFilter';
 
 const PAGE_SIZE = 24;
@@ -13,7 +11,6 @@ export default function ProductGrid({
   products,
   title,
   subtitle,
-  onOpenCart,
   defaultSort = 'bestseller',
   showSort = true,
   previewLimit,
@@ -25,7 +22,6 @@ export default function ProductGrid({
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [sortKey, setSortKey] = useState(defaultSort);
   const sentinelRef = useRef(null);
-  const { totalItems } = useCart();
   const list = useMemo(() => sortProducts(products, sortKey), [products, sortKey]);
 
   useEffect(() => {
@@ -66,7 +62,7 @@ export default function ProductGrid({
   return (
     <section id="urunler" className="py-4 sm:py-10 scroll-mt-24">
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-        {(title || subtitle || onOpenCart || showSort) && (
+        {(title || subtitle || showSort) && (
           <div className="mb-4 sm:mb-8 px-1 flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0 flex-1">
               {title && (
@@ -95,20 +91,6 @@ export default function ProductGrid({
                     ))}
                   </select>
                 </label>
-              )}
-              {onOpenCart && (
-                <>
-                  <Button type="button" variant="gold" size="sm" onClick={onOpenCart}>
-                    <ShoppingCart className="h-4 w-4" />
-                    Sepet ({totalItems})
-                  </Button>
-                  <Link to="/sepet">
-                    <Button type="button" variant="primary" size="sm">
-                      <CreditCard className="h-4 w-4" />
-                      Ödeme
-                    </Button>
-                  </Link>
-                </>
               )}
             </div>
           </div>

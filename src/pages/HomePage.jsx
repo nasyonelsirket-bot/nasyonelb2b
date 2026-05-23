@@ -126,7 +126,6 @@ export default function HomePage() {
           title={title}
           subtitle={subtitle}
           showSort={cfg.showSort !== false}
-          onOpenCart={openCart}
           previewLimit={!q ? HOME_ALL_PRODUCTS_PREVIEW : undefined}
           seeAllHref={!q && filtered.length > HOME_ALL_PRODUCTS_PREVIEW ? '/kategoriler?hepsi=1' : undefined}
           seeAllLabel="Tümünü Gör"
