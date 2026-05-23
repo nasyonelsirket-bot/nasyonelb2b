@@ -55,15 +55,15 @@ export default function ProductStrip({
   const accentStyles = {
     orange: {
       bar: 'bg-gradient-to-r from-orange-500 to-amber-500',
-      badge: 'bg-orange-100 text-orange-800',
+      badge: 'bg-orange-700 text-white',
       badgeIcon: Flame,
-      link: 'text-orange-600 hover:text-orange-700',
+      link: 'text-orange-700 hover:text-orange-800',
     },
     brand: {
       bar: 'bg-gradient-to-r from-brand-700 to-brand-900',
-      badge: 'bg-brand-100 text-brand-800',
+      badge: 'bg-brand-800 text-white',
       badgeIcon: Flame,
-      link: 'text-brand-700 hover:text-brand-900',
+      link: 'text-brand-800 hover:text-brand-950',
     },
   };
   const style = accentStyles[accent] || accentStyles.orange;
@@ -92,7 +92,7 @@ export default function ProductStrip({
           </div>
           <Link
             to={seeAllHref}
-            className="shrink-0 text-sm font-bold text-orange-600 hover:text-orange-700 whitespace-nowrap"
+            className="shrink-0 text-sm font-bold text-orange-700 hover:text-orange-800 whitespace-nowrap"
           >
             {seeAllLabel} →
           </Link>
@@ -123,10 +123,13 @@ export default function ProductStrip({
           <div
             ref={trackRef}
             className="product-strip-track flex gap-2 sm:gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth touch-pan-x"
+            role="list"
+            aria-label={`${title} ürün listesi`}
           >
             {list.map((p) => (
               <div
                 key={p.id}
+                role="listitem"
                 className="product-strip-item shrink-0 snap-start w-[calc(50%-0.25rem)] min-w-[9.5rem] sm:min-w-[17.5rem] sm:w-[17.75rem] md:w-[19rem] lg:w-[20rem]"
               >
                 <ProductCard product={p} />

@@ -165,6 +165,8 @@ export default function HomePage() {
         path="/"
       />
 
+      <h1 className="sr-only">Nasyonel Toys — Online Oyuncak Mağazası</h1>
+
       {!q && <TrustBadges />}
 
       {!q &&

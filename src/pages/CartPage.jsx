@@ -32,6 +32,7 @@ import { getFreeShippingStatus, getOrderPayableTotal, FREE_SHIPPING_THRESHOLD_TL
 import { normalizePromotions } from '@/utils/promotions';
 import { getBundleFreeShippingOverride } from '@/utils/bundleRules';
 import { validateCouponRemote } from '@/services/promotionApi';
+import { fieldId } from '@/utils/formFieldId';
 import { formatPrice } from '@/utils/whatsapp';
 import { startPaytrPayment } from '@/services/paytrApi';
 import {
@@ -323,7 +324,7 @@ export default function CartPage() {
                     >
                       <div className="flex gap-3 flex-1 min-w-0">
                         <div className="product-media product-media--thumb rounded-lg border shrink-0">
-                          <img src={item.image} alt="" className="product-media-img p-1" />
+                          <img src={item.image} alt={item.name || 'Ürün görseli'} className="product-media-img p-1" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-brand-900">{item.name}</h3>
@@ -392,11 +393,16 @@ export default function CartPage() {
                   ['city', 'İl *', 'text'],
                   ['district', 'İlçe *', 'text'],
                   ['address', 'Açık Adres *', 'textarea'],
-                ].map(([key, label, type]) => (
+                ].map(([key, label, type]) => {
+                  const inputId = fieldId('checkout', key);
+                  return (
                   <div key={key}>
-                    <label className="text-xs font-medium text-brand-800">{label}</label>
+                    <label htmlFor={inputId} className="text-xs font-medium text-brand-800">
+                      {label}
+                    </label>
                     {type === 'textarea' ? (
                       <textarea
+                        id={inputId}
                         rows={3}
                         value={customer[key]}
                         onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
@@ -405,15 +411,26 @@ export default function CartPage() {
                       />
                     ) : (
                       <input
+                        id={inputId}
                         type={type}
                         value={customer[key]}
                         onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
                         className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/20"
                         required
+                        autoComplete={
+                          key === 'email'
+                            ? 'email'
+                            : key === 'phone'
+                              ? 'tel'
+                              : key === 'name'
+                                ? 'name'
+                                : undefined
+                        }
                       />
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

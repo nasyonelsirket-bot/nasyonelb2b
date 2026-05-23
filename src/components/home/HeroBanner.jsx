@@ -89,6 +89,17 @@ export default function HeroBanner({ bannerIds }) {
     go(dx < 0 ? 1 : -1);
   };
 
+  const onKeyDown = (e) => {
+    if (count <= 1) return;
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      go(-1);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      go(1);
+    }
+  };
+
   if (!count || !current) return null;
 
   const hasText = Boolean(current.title?.trim() || current.subtitle?.trim());
@@ -103,7 +114,14 @@ export default function HeroBanner({ bannerIds }) {
       onTouchEnd={onTouchEnd}
       aria-label="Kampanya bannerları"
       aria-roledescription="carousel"
+      onKeyDown={onKeyDown}
+      tabIndex={0}
     >
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {count > 1
+          ? `Banner ${index + 1} / ${count}${current.title?.trim() ? `: ${current.title}` : ''}`
+          : ''}
+      </p>
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl ring-1 ring-white/10 bg-brand-950">
         <div className="hero-banner-frame relative w-full">
           <div className="hero-slide absolute inset-0 z-10">
@@ -136,9 +154,9 @@ export default function HeroBanner({ bannerIds }) {
                   <div className="absolute inset-0 bg-gradient-to-r from-brand-950/85 via-brand-900/50 to-transparent sm:via-brand-900/40 pointer-events-none" />
                   <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-10 lg:px-14 max-w-xl pointer-events-none z-[1]">
                     {current.title?.trim() && (
-                      <h2 className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
+                      <p className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-white drop-shadow-sm">
                         {current.title}
-                      </h2>
+                      </p>
                     )}
                     {current.subtitle?.trim() && (
                       <p className="mt-1 sm:mt-2 text-xs sm:text-lg text-brand-100/95 line-clamp-2">

@@ -9,10 +9,16 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 export default function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main-content"
+        className="sr-only skip-link focus-ring"
+      >
+        İçeriğe atla
+      </a>
       <MetaPixel />
       <Header />
       <CartAddedToast />
-      <main className="flex-1 w-full min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-4">
+      <main id="main-content" className="flex-1 w-full min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-4">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>

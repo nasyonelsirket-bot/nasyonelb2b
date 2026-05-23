@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -49,6 +49,9 @@ export default function LoginPage() {
     }
   }, [hash, navigate]);
 
+  const emailId = useId();
+  const passwordId = useId();
+
   return (
     <>
       <SEO title="Giriş Yap" path="/giris" />
@@ -76,10 +79,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="text-xs font-medium text-brand-800">E-posta</label>
+            <label htmlFor={emailId} className="text-xs font-medium text-brand-800">
+              E-posta
+            </label>
             <input
+              id={emailId}
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -89,11 +96,15 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-brand-800">Şifre</label>
+            <label htmlFor={passwordId} className="text-xs font-medium text-brand-800">
+              Şifre
+            </label>
             <input
+              id={passwordId}
               type="password"
               required
               minLength={6}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2.5 text-sm"

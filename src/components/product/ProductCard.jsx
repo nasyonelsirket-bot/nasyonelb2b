@@ -47,7 +47,7 @@ function ProductCard({ product }) {
           ))}
         </div>
         {onSale && (
-          <span className="absolute right-2 top-2 z-10 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-md sm:text-xs">
+          <span className="absolute right-2 top-2 z-10 rounded-md bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white shadow-md sm:text-xs">
             %{pct}
           </span>
         )}
@@ -123,7 +123,8 @@ function ProductCard({ product }) {
             variant="outline"
             className="w-full min-w-0 inline-flex h-9 sm:min-h-[44px] px-2 text-[11px] sm:text-xs gap-1 whitespace-nowrap"
             onClick={handleQuickBuy}
-            title="Hızlı satın al"
+            aria-label={`Hızlı Al: ${product.name}`}
+            title={`Hızlı Al: ${product.name}`}
           >
             <Zap className="h-3.5 w-3.5 shrink-0" />
             Hızlı Al

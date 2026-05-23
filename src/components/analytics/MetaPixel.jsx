@@ -30,8 +30,14 @@ export default function MetaPixel() {
       window.fbq('init', pixelId);
       window.fbq('track', 'PageView');
 
+      const img = document.createElement('img');
+      img.height = 1;
+      img.width = 1;
+      img.style.display = 'none';
+      img.alt = '';
+      img.src = `https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1`;
       const noscript = document.createElement('noscript');
-      noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/>`;
+      noscript.appendChild(img);
       document.body.appendChild(noscript);
     });
   }, [pixelId]);

@@ -26,11 +26,11 @@ export default function ProductPriceDisplay({
       </span>
       {onSale && (
         <>
-          <span className="text-sm text-gray-400 line-through decoration-red-400/80">
+          <span className="text-sm text-gray-600 line-through decoration-red-500/90">
             {formatPrice(compare)}
           </span>
           {showBadge && (
-            <span className="inline-flex items-center rounded-md bg-red-600 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-white animate-pulse-soft">
+            <span className="inline-flex items-center rounded-md bg-red-700 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-white">
               %{pct} İNDİRİM
             </span>
           )}

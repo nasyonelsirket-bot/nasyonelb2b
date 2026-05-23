@@ -149,9 +149,9 @@ export default function Footer() {
                 href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#20bd5a] transition-colors shadow-md"
+                className="inline-flex items-center gap-2 rounded-full bg-[#075E54] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#064a42] transition-colors shadow-md"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4" aria-hidden />
                 WhatsApp Destek
               </a>
             )}
@@ -168,9 +168,8 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20 transition-colors"
-                  aria-label="Instagram"
                 >
-                  <InstagramIcon className="h-5 w-5" />
+                  <InstagramIcon className="h-5 w-5" aria-hidden />
                   @{INSTAGRAM_HANDLE}
                 </a>
                 <a

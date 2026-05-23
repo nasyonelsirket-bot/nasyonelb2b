@@ -1,10 +1,10 @@
 import { getTrendyolUnitsSold } from '@/utils/productBestseller';
 
 const BADGE_STYLES = {
-  bestseller: 'bg-orange-500 text-white',
-  trend: 'bg-violet-600 text-white',
-  stock: 'bg-amber-500 text-brand-950',
-  shipping: 'bg-emerald-600 text-white',
+  bestseller: 'bg-orange-600 text-white',
+  trend: 'bg-violet-700 text-white',
+  stock: 'bg-amber-700 text-white',
+  shipping: 'bg-emerald-700 text-white',
 };
 
 /** Ürün kartı köşe rozetleri — en fazla 2 adet */

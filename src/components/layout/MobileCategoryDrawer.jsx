@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X, ChevronDown } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
@@ -8,15 +8,18 @@ import {
 } from '@/data/mainCategories';
 import { HEADER_LEGAL_LINKS } from '@/constants/siteLinks';
 import useBodyScrollLock from '@/hooks/useBodyScrollLock';
+import useDialogA11y from '@/hooks/useDialogA11y';
 
 /**
- * @param {{ open: boolean, onClose: () => void }} props
+ * @param {{ open: boolean, onClose: () => void, returnFocusRef?: import('react').RefObject<HTMLElement|null> }} props
  */
-export default function MobileCategoryDrawer({ open, onClose }) {
+export default function MobileCategoryDrawer({ open, onClose, returnFocusRef }) {
   const { products } = useStore();
   const [expanded, setExpanded] = useState(null);
+  const panelRef = useRef(null);
 
   useBodyScrollLock(open);
+  useDialogA11y({ open, onClose, containerRef: panelRef, returnFocusRef });
 
   const activeCategories = getActiveMainCategories(products);
 
@@ -35,25 +38,31 @@ export default function MobileCategoryDrawer({ open, onClose }) {
         onClick={onClose}
       />
       <aside
+        ref={panelRef}
+        id="mobile-category-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-category-drawer-title"
         className="fixed inset-y-0 left-0 z-[61] w-[min(88vw,320px)] bg-white shadow-2xl flex flex-col lg:hidden animate-slide-in-left"
-        aria-label="Kategori menüsü"
       >
         <div className="flex items-center justify-between border-b border-brand-100 px-4 py-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-brand-500">Kategoriler</p>
-            <p className="font-display font-bold text-brand-900">Alışverişe başla</p>
+            <h2 id="mobile-category-drawer-title" className="font-display font-bold text-brand-900">
+              Alışverişe başla
+            </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-brand-700 hover:bg-brand-50"
-            aria-label="Kapat"
+            className="rounded-full p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-brand-700 hover:bg-brand-50 focus-ring"
+            aria-label="Menüyü kapat"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+        <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-3" aria-label="Kategori listesi">
           <Link
             to="/kategoriler"
             onClick={onClose}
@@ -70,12 +79,15 @@ export default function MobileCategoryDrawer({ open, onClose }) {
               {activeCategories.map((main) => {
                 const subs = getSubcategoriesForMain(products, main);
                 const isOpen = expanded === main.slug;
+                const panelId = `mobile-cat-panel-${main.slug}`;
                 return (
                   <li key={main.slug} className="rounded-xl border border-brand-50 overflow-hidden">
                     <button
                       type="button"
                       onClick={() => toggle(main.slug)}
-                      className="flex w-full items-center gap-3 px-3 py-3.5 text-left hover:bg-brand-50/80 transition-colors"
+                      className="flex w-full items-center gap-3 px-3 py-3.5 min-h-[44px] text-left hover:bg-brand-50/80 transition-colors focus-ring"
+                      aria-expanded={isOpen}
+                      aria-controls={panelId}
                     >
                       <span className="text-xl shrink-0" aria-hidden>
                         {main.icon}
@@ -83,10 +95,11 @@ export default function MobileCategoryDrawer({ open, onClose }) {
                       <span className="flex-1 font-semibold text-brand-900 text-sm">{main.name}</span>
                       <ChevronDown
                         className={`h-4 w-4 text-brand-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        aria-hidden
                       />
                     </button>
                     {isOpen && (
-                      <ul className="border-t border-brand-50 bg-brand-50/40 pb-2 max-h-48 overflow-y-auto">
+                      <ul id={panelId} className="border-t border-brand-50 bg-brand-50/40 pb-2 max-h-48 overflow-y-auto">
                         <li>
                           <Link
                             to={`/${main.slug}`}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, ShoppingCart, User, MessageCircle } from 'lucide-react';
 import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
@@ -30,6 +30,7 @@ export default function Header() {
   const { totalItems, totalPrice, cartAnimating } = useCart();
   const { isLoggedIn } = useMember();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
 
   const waLink = whatsAppHref(settings.whatsappNumber);
   const siteName = settings.siteName || 'Nasyonel Toys';
@@ -50,12 +51,15 @@ export default function Header() {
         {/* Ana satır — mobilde logo ortada */}
         <div className="relative flex h-14 lg:h-[3.75rem] items-center py-1 lg:gap-4">
           <button
+            ref={menuButtonRef}
             type="button"
-            className="lg:hidden absolute left-0 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
+            className="lg:hidden absolute left-0 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation focus-ring"
             onClick={() => setMenuOpen(true)}
             aria-label="Kategori menüsü"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-category-drawer"
           >
-            <Menu className="h-5 w-5" strokeWidth={2.5} />
+            <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden />
           </button>
 
           <div className="flex flex-1 justify-center lg:flex-none lg:justify-start min-w-0 px-12 lg:px-0">
@@ -131,7 +135,7 @@ export default function Header() {
           <HeaderSearch variant="pill" />
         </div>
 
-          <nav className="hidden lg:flex items-center gap-5 pb-1.5 border-t border-brand-100/80 pt-1.5">
+          <nav className="hidden lg:flex items-center gap-5 pb-1.5 border-t border-brand-100/80 pt-1.5" aria-label="Ana menü">
           <CategoryMegaMenu />
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>
@@ -151,7 +155,11 @@ export default function Header() {
         </nav>
       </div>
 
-      <MobileCategoryDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileCategoryDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        returnFocusRef={menuButtonRef}
+      />
     </header>
   );
 }

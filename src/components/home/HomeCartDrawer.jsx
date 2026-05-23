@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { X, ShoppingBag, Trash2, ArrowRight, Truck } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -9,10 +9,12 @@ import { getCartSubtotal, getEffectiveUnitPrice } from '@/utils/cartLinePricing'
 import { getFreeShippingStatus } from '@/utils/cartShipping';
 import { formatPrice } from '@/utils/whatsapp';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
+import useDialogA11y from '@/hooks/useDialogA11y';
 
 export default function HomeCartDrawer({ open, onClose }) {
   const { items, totalItems, totalPrice, removeFromCart, setQuantity, increment, decrement } =
     useCart();
+  const panelRef = useRef(null);
 
   const subtotal = getCartSubtotal(items);
   const shipping = getFreeShippingStatus(subtotal);
@@ -26,48 +28,50 @@ export default function HomeCartDrawer({ open, onClose }) {
     };
   }, [open]);
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (open) window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  useDialogA11y({ open, onClose, containerRef: panelRef });
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex justify-end" role="dialog" aria-modal="true" aria-label="Sepet önizleme">
+    <div className="fixed inset-0 z-[60] flex justify-end">
       <button
         type="button"
         className="absolute inset-0 bg-brand-950/50 backdrop-blur-[2px]"
         onClick={onClose}
-        aria-label="Kapat"
+        aria-label="Sepeti kapat"
       />
 
-      <aside className="relative flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-up">
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="home-cart-drawer-title"
+        className="relative flex h-full w-full max-w-md flex-col bg-white shadow-2xl animate-slide-up"
+      >
         <header className="flex items-center justify-between border-b border-brand-100 px-4 py-4">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-6 w-6 text-accent-gold" />
+            <ShoppingBag className="h-6 w-6 text-accent-gold" aria-hidden />
             <div>
-              <h2 className="font-display text-lg font-bold text-brand-900">Sepetiniz</h2>
+              <h2 id="home-cart-drawer-title" className="font-display text-lg font-bold text-brand-900">
+                Sepetiniz
+              </h2>
               <p className="text-xs text-gray-500">{totalItems} ürün</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-brand-600 hover:bg-brand-50"
+            className="rounded-full p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-brand-600 hover:bg-brand-50 focus-ring"
             aria-label="Sepeti kapat"
           >
-            <X className="h-6 w-6" />
+            <X className="h-6 w-6" aria-hidden />
           </button>
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {!items.length ? (
             <div className="text-center py-12">
-              <ShoppingBag className="h-14 w-14 mx-auto text-brand-200" />
+              <ShoppingBag className="h-14 w-14 mx-auto text-brand-200" aria-hidden />
               <p className="mt-4 text-gray-600">Sepetiniz boş</p>
               <Button variant="primary" className="mt-4" onClick={onClose}>
                 Ürünlere göz at
@@ -83,11 +87,17 @@ export default function HomeCartDrawer({ open, onClose }) {
                     className="flex gap-3 rounded-xl border border-brand-100 bg-brand-50/40 p-3"
                   >
                     <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-brand-100 bg-white">
-                      <ProductImage src={item.image} alt="" variant="thumb" className="!w-full !h-full" />
+                      <ProductImage
+                        src={item.image}
+                        alt={item.name || 'Ürün görseli'}
+                        variant="thumb"
+                        className="!w-full !h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-brand-900 line-clamp-2">{item.name}</p>
                       <p className="text-sm font-bold text-brand-700 mt-0.5">
+                        <span className="sr-only">Birim fiyat </span>
                         {formatPrice(unit)} × {item.quantity}
                       </p>
                       <div className="mt-2 max-w-[200px]">
@@ -103,10 +113,10 @@ export default function HomeCartDrawer({ open, onClose }) {
                     <button
                       type="button"
                       onClick={() => removeFromCart(item.id)}
-                      className="self-start p-1 text-red-500 hover:text-red-700"
-                      aria-label="Kaldır"
+                      className="self-start p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-red-500 hover:text-red-700 focus-ring"
+                      aria-label={`${item.name} — sepetten kaldır`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden />
                     </button>
                   </li>
                 );
@@ -125,13 +135,20 @@ export default function HomeCartDrawer({ open, onClose }) {
           <footer className="border-t border-brand-100 bg-gradient-to-t from-brand-50 to-white p-4 space-y-3 safe-area-pb">
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3">
               <p className="text-xs font-semibold text-emerald-900 flex items-center gap-1.5">
-                <Truck className="h-4 w-4" />
+                <Truck className="h-4 w-4" aria-hidden />
                 {shipping.eligible
                   ? 'Kargo bedava!'
                   : `${formatPrice(shipping.remaining)} daha — kargo bedava`}
               </p>
               {!shipping.eligible && (
-                <div className="mt-2 h-2 rounded-full bg-white overflow-hidden border border-emerald-200">
+                <div
+                  className="mt-2 h-2 rounded-full bg-white overflow-hidden border border-emerald-200"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(shipping.progressPercent)}
+                  aria-label="Ücretsiz kargo eşiği ilerlemesi"
+                >
                   <div
                     className="h-full bg-emerald-500 transition-all"
                     style={{ width: `${shipping.progressPercent}%` }}
@@ -152,7 +169,7 @@ export default function HomeCartDrawer({ open, onClose }) {
               <Link to="/sepet" onClick={onClose} className="block">
                 <Button type="button" variant="gold" className="w-full">
                   Ödemeye geç
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden />
                 </Button>
               </Link>
             </div>
