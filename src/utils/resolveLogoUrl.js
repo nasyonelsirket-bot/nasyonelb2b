@@ -1,4 +1,4 @@
-const DEFAULT_LOGO = '/nasyonel-logo.png?v=3';
+const DEFAULT_LOGO = '/logo.svg';
 
 /** Admin yüklemesi (data:), harici URL veya /public yolu — hepsi kullanılır */
 export function resolveLogoUrl(url) {

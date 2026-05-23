@@ -40,7 +40,7 @@ export function runBrandMigration() {
     const settings = { ...DEFAULT_SETTINGS, ...safeSettings };
 
     if (shouldResetLogo(settings.logoUrl)) {
-      settings.logoUrl = '/nasyonel-logo.png?v=3';
+      settings.logoUrl = '/logo.svg';
     }
     if (
       !settings.siteName ||

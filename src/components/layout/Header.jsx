@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Menu, ShoppingCart, User, Package, MessageCircle, Users } from 'lucide-react';
+import { Menu, ShoppingCart, User, MessageCircle } from 'lucide-react';
 import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
 import MobileCategoryDrawer from '@/components/layout/MobileCategoryDrawer';
 import TopAnnouncementBar from '@/components/layout/TopAnnouncementBar';
 import HeaderTrustBar from '@/components/layout/HeaderTrustBar';
 import HeaderSearch from '@/components/layout/HeaderSearch';
+import { BrandLogoLink } from '@/components/brand/BrandLogo';
 import { HEADER_LEGAL_LINKS } from '@/constants/siteLinks';
 import { useStore } from '@/context/StoreContext';
 import { useCart } from '@/context/CartContext';
 import { useMember } from '@/context/MemberContext';
-import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
+import { formatPrice } from '@/utils/whatsapp';
 
 const NAV = [
   { to: '/', label: 'Ana Sayfa', end: true },
@@ -26,12 +27,12 @@ function whatsAppHref(number) {
 
 export default function Header() {
   const { settings } = useStore();
-  const { totalItems, cartAnimating } = useCart();
+  const { totalItems, totalPrice, cartAnimating } = useCart();
   const { isLoggedIn } = useMember();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const logoSrc = resolveLogoUrl(settings.logoUrl);
   const waLink = whatsAppHref(settings.whatsappNumber);
+  const siteName = settings.siteName || 'Nasyonel Toys';
 
   const navClass = ({ isActive }) =>
     `text-sm font-medium transition-colors pb-0.5 border-b-2 ${
@@ -41,116 +42,115 @@ export default function Header() {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-brand-100 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white border-b-[3px] border-accent-gold shadow-sm">
       <TopAnnouncementBar />
       <HeaderTrustBar />
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-2 py-2 sm:py-2.5">
-          <div className="grid grid-cols-[auto_1fr_auto] lg:flex lg:min-h-[4.5rem] items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              className="lg:hidden p-2 -ml-1 text-brand-800 rounded-lg hover:bg-brand-50 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Kategori menüsü"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
+      <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-8">
+        {/* Ana satır — referans mockup düzeni */}
+        <div className="flex min-h-[4.25rem] lg:min-h-[4.75rem] items-center gap-2 sm:gap-3 lg:gap-4 py-2 lg:py-2.5">
+          <button
+            type="button"
+            className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Kategori menüsü"
+          >
+            <Menu className="h-5 w-5" strokeWidth={2.5} />
+          </button>
+
+          <BrandLogoLink
+            logoUrl={settings.logoUrl}
+            siteName={siteName}
+            className="shrink-0 min-w-0 lg:mr-1"
+          />
+
+          <div className="hidden md:flex flex-1 min-w-0 max-w-2xl mx-auto lg:mx-4">
+            <HeaderSearch variant="pill" />
+          </div>
+
+          <div className="ml-auto flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden lg:inline-flex items-center gap-2 rounded-full px-2 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-50 transition-colors"
+                aria-label="WhatsApp destek hattı"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm">
+                  <MessageCircle className="h-5 w-5" />
+                </span>
+                <span className="hidden xl:inline leading-tight">
+                  WhatsApp
+                  <br />
+                  <span className="text-xs font-normal text-gray-500">Destek Hattı</span>
+                </span>
+              </a>
+            )}
+
+            {isLoggedIn ? (
+              <Link
+                to="/hesabim"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-50 max-w-[140px]"
+              >
+                <User className="h-5 w-5 shrink-0 text-brand-700" />
+                <span className="hidden lg:inline truncate">Hesabım</span>
+              </Link>
+            ) : (
+              <Link
+                to="/giris"
+                className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-medium text-brand-800 hover:bg-brand-50"
+              >
+                <User className="h-5 w-5 shrink-0 text-brand-700" />
+                <span className="hidden lg:inline whitespace-nowrap">Giriş / Üye Ol</span>
+              </Link>
+            )}
 
             <Link
-              to="/"
-              className="flex items-center justify-center lg:justify-start shrink-0 min-w-0 py-0.5 mx-auto lg:mx-0 lg:max-w-none max-w-[180px] sm:max-w-[220px]"
+              to="/sepet"
+              className={`relative inline-flex items-center gap-2 rounded-full px-1 sm:px-2 py-1 hover:bg-brand-50 transition-colors ${cartAnimating ? 'animate-cart-bounce' : ''}`}
+              aria-label={`Sepet${totalItems > 0 ? `, ${totalItems} ürün` : ''}`}
             >
-              <img src={logoSrc} alt={settings.siteName || 'Nasyonel'} className="site-logo max-h-12 sm:max-h-14" />
-            </Link>
-
-            <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
-              <span className="hidden xl:inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-accent-gold/20 to-orange-100 border border-accent-gold/40 px-2.5 py-1 text-[11px] font-bold text-brand-900 whitespace-nowrap">
-                <Users className="h-3.5 w-3.5 text-orange-600" />
-                100.000+ Mutlu Müşteri
-              </span>
-            </div>
-
-            <div className="hidden md:flex flex-1 max-w-xl mx-2 lg:mx-4">
-              <HeaderSearch />
-            </div>
-
-            <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 col-start-3 lg:col-auto">
-              {waLink && (
-                <a
-                  href={waLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden sm:inline-flex items-center justify-center rounded-full bg-[#25D366] p-2.5 text-white hover:bg-[#20bd5a] shadow-md transition-transform hover:scale-105"
-                  aria-label="WhatsApp ile yazın"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                </a>
-              )}
-              <Link
-                to="/siparis-takip"
-                className="hidden lg:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
-              >
-                <Package className="h-4 w-4" />
-                Sipariş Takip
-              </Link>
-              {isLoggedIn ? (
-                <Link
-                  to="/hesabim"
-                  className="hidden lg:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50 max-w-[140px]"
-                >
-                  <User className="h-4 w-4 shrink-0" />
-                  <span className="truncate">Hesabım</span>
-                </Link>
-              ) : (
-                <Link
-                  to="/giris"
-                  className="hidden lg:inline-flex items-center gap-1 rounded-full border border-brand-200 px-3 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
-                >
-                  <User className="h-4 w-4" />
-                  Giriş / Üye Ol
-                </Link>
-              )}
-
-              <Link
-                to="/sepet"
-                className={`relative flex items-center justify-center rounded-full bg-brand-900 p-2.5 sm:px-4 sm:py-2 sm:gap-1.5 text-sm font-semibold text-white hover:bg-brand-800 transition-all shadow-md min-h-[44px] min-w-[44px] sm:min-w-0 ${cartAnimating ? 'animate-cart-bounce' : ''}`}
-                aria-label={`Sepet${totalItems > 0 ? `, ${totalItems} ürün` : ''}`}
-              >
+              <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-white shadow-md">
                 <ShoppingCart className="h-5 w-5" />
-                <span className="hidden sm:inline">Sepet</span>
                 {totalItems > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-gold text-xs font-bold text-brand-950">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent-gold px-1 text-[10px] font-bold text-brand-950">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
-              </Link>
-            </div>
+              </span>
+              <span className="hidden lg:flex flex-col leading-tight text-left">
+                <span className="text-sm font-semibold text-brand-900">Sepetim</span>
+                <span className="text-xs font-bold text-brand-700 tabular-nums">
+                  {totalItems > 0 ? formatPrice(totalPrice) : formatPrice(0)}
+                </span>
+              </span>
+            </Link>
           </div>
-
-          <div className="md:hidden pb-1">
-            <HeaderSearch />
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-5 pb-1 border-t border-brand-50 pt-2">
-            <CategoryMegaMenu />
-            {NAV.map((item) => (
-              <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>
-                {item.label}
-              </NavLink>
-            ))}
-            <span className="ml-auto hidden xl:flex items-center gap-3 text-[11px] text-gray-500">
-              {HEADER_LEGAL_LINKS.slice(0, 3).map((link) => (
-                <Link key={link.path} to={link.path} className="hover:text-brand-800 hover:underline whitespace-nowrap">
-                  {link.label}
-                </Link>
-              ))}
-              <Link to="/iletisim" className="hover:text-brand-800 hover:underline whitespace-nowrap">
-                İletişim
-              </Link>
-            </span>
-          </nav>
         </div>
+
+        <div className="md:hidden pb-2">
+          <HeaderSearch variant="pill" />
+        </div>
+
+        <nav className="hidden lg:flex items-center gap-5 pb-2 border-t border-brand-100/80 pt-2">
+          <CategoryMegaMenu />
+          {NAV.map((item) => (
+            <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>
+              {item.label}
+            </NavLink>
+          ))}
+          <span className="ml-auto hidden xl:flex items-center gap-3 text-[11px] text-gray-500">
+            {HEADER_LEGAL_LINKS.slice(0, 3).map((link) => (
+              <Link key={link.path} to={link.path} className="hover:text-brand-800 hover:underline whitespace-nowrap">
+                {link.label}
+              </Link>
+            ))}
+            <Link to="/iletisim" className="hover:text-brand-800 hover:underline whitespace-nowrap">
+              İletişim
+            </Link>
+          </span>
+        </nav>
       </div>
 
       <MobileCategoryDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />

@@ -27,7 +27,7 @@ import {
 } from '@/constants/companyInfo';
 import { useStore } from '@/context/StoreContext';
 import { useMember } from '@/context/MemberContext';
-import { resolveLogoUrl } from '@/utils/resolveLogoUrl';
+import BrandLogo from '@/components/brand/BrandLogo';
 import { APP_VERSION } from '@/constants/appVersion';
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
@@ -61,12 +61,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <img
-              src={resolveLogoUrl(settings.logoUrl)}
-              alt={siteName}
-              className="site-logo-footer mb-4"
-              loading="lazy"
-            />
+            <BrandLogo logoUrl={settings.logoUrl} siteName={siteName} variant="footer" className="mb-4" />
             <p className="text-brand-100 text-sm leading-relaxed">
               Eğitici ve eğlenceli oyuncaklar — güvenli kart ödemesi, hızlı kargo ve kolay iade ile
               ailelere güvenilir bir alışveriş deneyimi sunuyoruz.
