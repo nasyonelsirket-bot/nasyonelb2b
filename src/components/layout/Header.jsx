@@ -48,7 +48,7 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-8">
         {/* Ana satır — referans mockup düzeni */}
-        <div className="flex min-h-[4.75rem] lg:min-h-[5.5rem] items-center gap-2 sm:gap-3 lg:gap-5 py-2.5 lg:py-3">
+        <div className="flex min-h-[5rem] sm:min-h-[5.5rem] lg:min-h-[6.75rem] items-center gap-2 sm:gap-3 lg:gap-4 py-2 sm:py-2.5 lg:py-3">
           <button
             type="button"
             className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"

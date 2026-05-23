@@ -45,29 +45,43 @@
     background: linear-gradient(135deg, #f5b800 0%, #ffd54f 100%);
   }
   .site-logo {
-    height: 3.5rem;
+    height: 4.5rem;
     width: auto;
-    max-width: min(100%, 240px);
+    min-width: 10.5rem;
+    max-width: none;
     object-fit: contain;
     object-position: left center;
     display: block;
   }
   @media (min-width: 640px) {
     .site-logo {
-      height: 4.25rem;
-      max-width: 280px;
+      height: 5.25rem;
+      min-width: 12.5rem;
     }
   }
   @media (min-width: 1024px) {
     .site-logo {
-      height: 4.75rem;
-      max-width: 300px;
+      height: 6rem;
+      min-width: 14.5rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .site-logo {
+      height: 6.5rem;
+      min-width: 15.5rem;
     }
   }
 
   .brand-logo-link {
     text-decoration: none;
     flex-shrink: 0;
+    min-width: 10.5rem;
+  }
+  @media (min-width: 1024px) {
+    .brand-logo-link {
+      min-width: 14.5rem;
+      margin-right: 0.5rem;
+    }
   }
   .site-logo-footer {
     height: 3.25rem;
