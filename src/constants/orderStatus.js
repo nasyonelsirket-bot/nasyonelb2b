@@ -84,8 +84,30 @@ export function getStatusMeta(status) {
   );
 }
 
+/** Ödeme yapılmamış — admin Bekleyen sekmesi */
+export function isUnpaidOrderStatus(status) {
+  return status === 'pending_payment' || status === 'pending_iban_check' || status === 'pending_cod';
+}
+
+/** Kart ödemesi PayTR ekranında — sadece izleme, manuel onay yok */
+export function isPaymentStageWaiting(status) {
+  return status === 'pending_payment';
+}
+
+export function canAdminApprovePending(status) {
+  return status === 'pending_iban_check' || status === 'pending_cod';
+}
+
+/** @deprecated isUnpaidOrderStatus kullanın */
 export function isPendingStatus(status) {
-  return status === 'pending_cod' || status === 'pending_iban_check' || status === 'pending_payment';
+  return isUnpaidOrderStatus(status);
+}
+
+export function formatPaymentMethod(method) {
+  if (method === 'iban') return 'Havale / EFT';
+  if (method === 'paytr') return 'Kart (PayTR)';
+  if (method === 'cod') return 'Kapıda ödeme';
+  return method || '—';
 }
 
 /** Admin: mevcut duruma göre önerilen sonraki adımlar */
@@ -94,7 +116,7 @@ export function getAdminStatusActions(order) {
   const paymentMethod = order?.paymentMethod;
   const actions = [];
 
-  if (isPendingStatus(status)) {
+  if (canAdminApprovePending(status)) {
     actions.push({
       id: 'approve',
       label: paymentMethod === 'iban' && status === 'pending_iban_check' ? 'IBAN onayla' : 'Onayla',
@@ -137,7 +159,7 @@ export function getAdminStatusActions(order) {
 export const ADMIN_STATUS_FILTERS = [
   { id: 'all', label: 'Tümü' },
   { id: 'pending', label: 'Bekleyen' },
-  { id: 'preparing', label: 'Hazırlanıyor' },
+  { id: 'preparing', label: 'Kargoya hazır' },
   { id: 'shipping', label: 'Kargoda' },
   { id: 'completed', label: 'Teslim' },
   { id: 'cancelled', label: 'İptal' },
@@ -146,7 +168,7 @@ export const ADMIN_STATUS_FILTERS = [
 export function matchesStatusFilter(order, filterId) {
   const s = order?.status;
   if (filterId === 'all') return true;
-  if (filterId === 'pending') return isPendingStatus(s);
+  if (filterId === 'pending') return isUnpaidOrderStatus(s);
   if (filterId === 'preparing') return s === 'confirmed' || s === 'iban_verified';
   if (filterId === 'shipping') return s === 'shipped';
   if (filterId === 'completed') return s === 'completed';

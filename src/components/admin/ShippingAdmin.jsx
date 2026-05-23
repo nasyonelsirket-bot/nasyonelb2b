@@ -17,7 +17,7 @@ import { formatPrice } from '@/utils/whatsapp';
 import { getStatusMeta } from '@/constants/orderStatus';
 
 const FILTERS = [
-  { id: 'preparing', label: 'Hazırlanıyor' },
+  { id: 'preparing', label: 'Kargoya hazır' },
   { id: 'in_transit', label: 'Yolda' },
   { id: 'delivered', label: 'Teslim edildi' },
   { id: 'cancelled', label: 'İptal' },

@@ -3,6 +3,7 @@
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
 const { allocateOrderNumber } = require('../../lib/orderNumber.cjs');
 const { loadPromotions, markCouponUsed } = require('../../lib/catalogPromotions.cjs');
@@ -155,6 +156,15 @@ exports.handler = async (event) => {
     payload.orderNumber = orderNumber;
 
     await store.setJSON(`order-${id}`, payload);
+
+    try {
+      await cancelSupersededPendingOrders(store, {
+        customerEmail: payload.customer.email,
+        excludeId: id,
+      });
+    } catch (dedupErr) {
+      console.error('order-pdf-save dedup:', dedupErr);
+    }
 
     let index = [];
     try {

@@ -110,6 +110,18 @@ exports.handler = async (event) => {
           failed_reason_msg: post.failed_reason_msg || null,
         },
       });
+
+      try {
+        const index = await store.get('order-index', { type: 'json' });
+        if (Array.isArray(index)) {
+          const next = index.map((row) =>
+            row.id === orderId ? { ...row, status: 'cancelled' } : row,
+          );
+          await store.setJSON('order-index', next);
+        }
+      } catch (idxErr) {
+        console.error('paytr-callback failed index:', idxErr);
+      }
     }
   } catch (err) {
     console.error('paytr-callback store:', err);

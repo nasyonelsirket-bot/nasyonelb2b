@@ -6,6 +6,7 @@ const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { allocateOrderNumber } = require('../../lib/orderNumber.cjs');
 const { loadPromotions } = require('../../lib/catalogPromotions.cjs');
 const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
+const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
   buildDirectUserBasket,
@@ -189,6 +190,12 @@ exports.handler = async (event) => {
     payload.orderNumber = orderNumber;
 
     await store.setJSON(`order-${id}`, payload);
+
+    try {
+      await cancelSupersededPendingOrders(store, { customerEmail: email, excludeId: id });
+    } catch (dedupErr) {
+      console.error('paytr-token dedup:', dedupErr);
+    }
 
     let index = [];
     try {

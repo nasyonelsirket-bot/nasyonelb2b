@@ -21,7 +21,9 @@ import { ORDER_CANCEL_PRESETS } from '@/data/orderCancelReasons';
 import { formatPrice } from '@/utils/whatsapp';
 import {
   getStatusMeta,
-  isPendingStatus,
+  isPaymentStageWaiting,
+  canAdminApprovePending,
+  formatPaymentMethod,
   matchesStatusFilter,
   ADMIN_STATUS_FILTERS,
 } from '@/constants/orderStatus';
@@ -123,7 +125,7 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
         </div>
         <div>
           <span className="text-gray-500">Ödeme: </span>
-          <strong>{order.paymentMethod === 'iban' ? 'Havale / EFT' : 'Kapıda ödeme'}</strong>
+          <strong>{formatPaymentMethod(order.paymentMethod)}</strong>
         </div>
         <div>
           <span className="text-gray-500">Toplam: </span>
@@ -155,7 +157,15 @@ function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, busy
         </div>
       )}
 
-      {isPendingStatus(order.status) && (
+      {isPaymentStageWaiting(order.status) && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-900 text-xs">
+          Müşteri kart ödemesini tamamlamadı. PayTR sonucu gelene kadar bu sipariş yalnızca
+          izlenir; manuel onay gerekmez. Ödeme başarılı olunca sipariş otomatik{' '}
+          <strong>Kargoya hazır</strong> sekmesine düşer.
+        </div>
+      )}
+
+      {canAdminApprovePending(order.status) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-100">
           <Button type="button" variant="primary" disabled={busy} onClick={onApprove}>
             <CheckCircle className="h-4 w-4" />
@@ -428,6 +438,15 @@ export default function OrdersAdmin({ setMsg }) {
 
   const hasSearch = Boolean(orderNoQuery.trim() || customerQuery.trim());
 
+  const filterCounts = useMemo(() => {
+    const counts = { all: orders.length };
+    for (const { id } of ADMIN_STATUS_FILTERS) {
+      if (id === 'all') continue;
+      counts[id] = orders.filter((o) => matchesStatusFilter(o, id)).length;
+    }
+    return counts;
+  }, [orders]);
+
   const filtered = useMemo(
     () =>
       orders.filter(
@@ -462,8 +481,10 @@ export default function OrdersAdmin({ setMsg }) {
       </div>
 
       <p className="text-sm text-gray-600">
-        Siparişe tıklayın — müşteri ve adres bilgilerini görün, <strong>Onayla</strong> veya{' '}
-        <strong>Reddet</strong> seçin. IBAN ödemelerinde önce bankadan kontrol edin.
+        <strong>Bekleyen:</strong> ödeme yapılmamış siparişler (kart ekranında bekleyenler yalnızca
+        görüntülenir). <strong>Kargoya hazır:</strong> ödeme alınmış siparişler. Kargo verildikten sonra{' '}
+        <strong>Kargoda</strong>, teslim sonrası <strong>Teslim</strong> sekmesine geçer. Müşteri yeni
+        sipariş verirse eski bekleyen kayıt otomatik kapanır.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -472,11 +493,20 @@ export default function OrdersAdmin({ setMsg }) {
             key={id}
             type="button"
             onClick={() => setFilter(id)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition inline-flex items-center gap-1.5 ${
               filter === id ? 'bg-brand-900 text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'
             }`}
           >
             {label}
+            {!loading && filterCounts[id] != null ? (
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  filter === id ? 'bg-white/20 text-white' : 'bg-brand-200/80 text-brand-800'
+                }`}
+              >
+                {filterCounts[id]}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -575,9 +605,7 @@ export default function OrdersAdmin({ setMsg }) {
                   <div className="text-right space-y-2 shrink-0">
                     <p className="font-bold text-brand-700">{formatPrice(o.orderTotal)}</p>
                     <StatusBadge status={o.status} />
-                    <p className="text-xs text-gray-500">
-                      {o.paymentMethod === 'iban' ? 'Havale/EFT' : 'Kapıda ödeme'}
-                    </p>
+                    <p className="text-xs text-gray-500">{formatPaymentMethod(o.paymentMethod)}</p>
                   </div>
                 </button>
 
