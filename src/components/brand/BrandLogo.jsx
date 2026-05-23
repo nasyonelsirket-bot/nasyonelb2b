@@ -28,7 +28,7 @@ export default function BrandLogo({
       className={imgClass}
       width={420}
       height={171}
-      decoding="async"
+      decoding={isHeader ? 'sync' : 'async'}
       fetchPriority={isHeader ? 'high' : undefined}
       loading={isHeader ? 'eager' : 'lazy'}
       onError={() => {
