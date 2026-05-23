@@ -5,12 +5,20 @@ import ImageDropzone from '@/components/admin/ImageDropzone';
 import ProductSeoFields from '@/components/admin/ProductSeoFields';
 import { processImageFile } from '@/utils/imageUpload';
 import { validateProductSeoForm } from '@/utils/productSeo';
+import {
+  getCompareAtPrice,
+  getDiscountPercent,
+  normalizeProductPrices,
+  validateProductPricing,
+} from '@/utils/productPricing';
+import { formatPrice } from '@/utils/whatsapp';
 
 const EMPTY_PRODUCT = {
   name: '',
   sku: '',
   category: '',
   price: 0,
+  compareAtPrice: '',
   image: '',
   description: '',
   slug: '',
@@ -18,6 +26,89 @@ const EMPTY_PRODUCT = {
   meta_description: '',
   canonical_url: '',
 };
+
+function ProductPricingFields({ form, setForm }) {
+  const salePrice = Number(form.price) || 0;
+  const listInput = Number(form.compareAtPrice);
+  const hasListInput = Number.isFinite(listInput) && listInput > 0;
+  const previewProduct = hasListInput ? { ...form, compareAtPrice: listInput } : form;
+  const listPrice = getCompareAtPrice(previewProduct);
+  const showDiscount = salePrice > 0 && listPrice > salePrice;
+  const pct = showDiscount ? getDiscountPercent(previewProduct) : 0;
+
+  return (
+    <div className="sm:col-span-2 rounded-xl border border-brand-100 bg-brand-50/40 p-3 space-y-3">
+      <p className="text-xs font-semibold text-brand-800">Fiyatlandırma</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-gray-500">Liste fiyatı (₺) — kaçtan</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={form.compareAtPrice === '' || form.compareAtPrice == null ? '' : form.compareAtPrice}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (!raw.trim()) {
+                setForm({ ...form, compareAtPrice: '' });
+                return;
+              }
+              const v = parseFloat(raw.replace(',', '.'));
+              setForm({ ...form, compareAtPrice: Number.isFinite(v) ? v : '' });
+            }}
+            placeholder="Örn. 379.90"
+            className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-[10px] text-gray-500">Üstü çizili eski fiyat. Boş bırakılırsa satış fiyatının 2 katı kullanılır.</p>
+        </div>
+        <div>
+          <label className="text-xs text-gray-500">Satış fiyatı (₺) — kaça</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0.01"
+            value={Number.isFinite(form.price) && form.price !== 0 ? form.price : form.price === 0 ? 0 : ''}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value.replace(',', '.'));
+              setForm({ ...form, price: Number.isFinite(v) ? v : 0 });
+            }}
+            className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
+            required
+          />
+        </div>
+      </div>
+      {salePrice > 0 && (
+        <p className="text-xs text-brand-800">
+          {showDiscount ? (
+            <>
+              Önizleme:{' '}
+              <span className="line-through text-gray-500">{formatPrice(listPrice)}</span>
+              {' → '}
+              <span className="font-bold text-brand-700">{formatPrice(salePrice)}</span>
+              {pct >= 5 && (
+                <span className="ml-1.5 inline-flex rounded bg-red-700 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  %{pct} indirim
+                </span>
+              )}
+            </>
+          ) : hasListInput ? (
+            <span className="text-amber-800">
+              Liste fiyatı satış fiyatından büyük olmalı — aksi halde indirim rozeti görünmez.
+            </span>
+          ) : (
+            <>
+              Önizleme:{' '}
+              <span className="line-through text-gray-500">{formatPrice(listPrice)}</span>
+              {' → '}
+              <span className="font-bold text-brand-700">{formatPrice(salePrice)}</span>
+              <span className="text-gray-500 ml-1">(otomatik %50 indirim görünümü)</span>
+            </>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function ProductFormFields({ form, setForm }) {
   return (
@@ -48,19 +139,7 @@ function ProductFormFields({ form, setForm }) {
           className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
         />
       </div>
-      <div>
-        <label className="text-xs text-gray-500">Fiyat (₺)</label>
-        <input
-          type="number"
-          step="0.01"
-          value={Number.isFinite(form.price) ? form.price : ''}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            setForm({ ...form, price: Number.isFinite(v) ? v : 0 });
-          }}
-          className="w-full mt-1 rounded-lg border border-brand-200 px-3 py-2 text-sm"
-        />
-      </div>
+      <ProductPricingFields form={form} setForm={setForm} />
       <div className="sm:col-span-2">
         <ImageDropzone
           label="Ürün görseli"
@@ -84,6 +163,27 @@ function ProductFormFields({ form, setForm }) {
 
 function normalizeSearch(value) {
   return String(value || '').trim().toLocaleLowerCase('tr');
+}
+
+function productToForm(product) {
+  const compare = Number(product?.compareAtPrice);
+  return {
+    ...product,
+    compareAtPrice: Number.isFinite(compare) && compare > 0 ? compare : '',
+  };
+}
+
+function validateProductForm(form, products, excludeId) {
+  const pricing = validateProductPricing(form);
+  if (!pricing.ok) {
+    return { ok: false, errors: pricing.errors, warnings: pricing.warnings };
+  }
+  const seo = validateProductSeoForm(form, products, excludeId);
+  return {
+    ok: seo.ok,
+    errors: seo.errors,
+    warnings: [...pricing.warnings, ...seo.warnings],
+  };
 }
 
 export default function ProductsAdmin({ store, showMsg }) {
@@ -181,18 +281,19 @@ export default function ProductsAdmin({ store, showMsg }) {
 
   const startEdit = (p) => {
     setEditingId(p.id);
-    setEditForm({ ...p });
+    setEditForm(productToForm(p));
     setShowAdd(false);
   };
 
   const saveEdit = (e) => {
     e.preventDefault();
-    const { errors, warnings, ok } = validateProductSeoForm(editForm, products, editingId);
+    const { errors, warnings, ok } = validateProductForm(editForm, products, editingId);
     if (!ok) {
-      showMsg(errors[0]);
+      showMsg(errors[0], 'error');
       return;
     }
-    startTransition(() => store.updateProduct(editingId, editForm));
+    const payload = normalizeProductPrices(editForm);
+    startTransition(() => store.updateProduct(editingId, payload));
     setEditingId(null);
     showMsg(
       warnings.length
@@ -203,12 +304,13 @@ export default function ProductsAdmin({ store, showMsg }) {
 
   const addProduct = (e) => {
     e.preventDefault();
-    const { errors, warnings, ok } = validateProductSeoForm(addForm, products, null);
+    const { errors, warnings, ok } = validateProductForm(addForm, products, null);
     if (!ok) {
-      showMsg(errors[0]);
+      showMsg(errors[0], 'error');
       return;
     }
-    startTransition(() => store.addProduct({ ...addForm, id: `p-${Date.now()}` }));
+    const payload = normalizeProductPrices(addForm);
+    startTransition(() => store.addProduct({ ...payload, id: `p-${Date.now()}` }));
     setAddForm(EMPTY_PRODUCT);
     setShowAdd(false);
     showMsg(
@@ -355,6 +457,23 @@ export default function ProductsAdmin({ store, showMsg }) {
   );
 }
 
+function ProductTablePrice({ product }) {
+  const sale = Number(product?.price) || 0;
+  const compare = getCompareAtPrice(product);
+  if (sale <= 0) {
+    return <span className="text-amber-700 text-xs font-medium">Fiyat yok</span>;
+  }
+  if (compare > sale) {
+    return (
+      <div className="text-xs leading-snug">
+        <span className="text-gray-500 line-through block">{formatPrice(compare)}</span>
+        <span className="font-semibold text-brand-700">{formatPrice(sale)}</span>
+      </div>
+    );
+  }
+  return <span className="font-semibold text-brand-700">{formatPrice(sale)}</span>;
+}
+
 function ProductRow({
   p,
   editingId,
@@ -406,7 +525,9 @@ function ProductRow({
         </td>
         <td className="p-3 font-medium">{p.name}</td>
         <td className="p-3 text-center text-gray-600">{p.sku}</td>
-        <td className="p-3 text-center font-semibold text-brand-700">{p.price} ₺</td>
+        <td className="p-3 text-center">
+          <ProductTablePrice product={p} />
+        </td>
         <td className="p-3">
           <div className="flex gap-2 justify-end">
             <button
