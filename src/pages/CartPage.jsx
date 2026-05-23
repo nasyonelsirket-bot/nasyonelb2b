@@ -17,7 +17,6 @@ import QuantityControls from '@/components/product/QuantityControls';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 import CheckoutLegalConsent from '@/components/cart/CheckoutLegalConsent';
-import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -424,9 +423,7 @@ export default function CartPage() {
                   <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme
                 </h2>
 
-                <PaymentTrustStrip />
-
-                <div className="rounded-2xl border-2 border-brand-600 bg-brand-50 p-5 ring-2 ring-brand-200">
+                <div className="rounded-2xl border-2 border-brand-600 bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 p-5 ring-2 ring-brand-200">
                   <div className="flex items-center gap-2 text-brand-900 font-bold">
                     <CreditCard className="h-5 w-5 text-accent-gold" />
                     Kredi / Banka Kartı
@@ -485,8 +482,8 @@ export default function CartPage() {
                 </Button>
               )}
             </div>
-            <PaymentTrustStrip compact className="mt-1" />
-          </div>
+
+            </div>
         </div>
       </div>
     </>

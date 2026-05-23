@@ -15,11 +15,18 @@ export const DEFAULT_PROMOTIONS = {
   bundleRules: [],
 };
 
+function normalizeFreeShippingThreshold(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 500;
+  if (n === 750) return 500;
+  return n;
+}
+
 export function normalizePromotions(raw) {
   const p = raw && typeof raw === 'object' ? raw : {};
   return {
     ibanDiscountPercent: Number(p.ibanDiscountPercent) || 10,
-    freeShippingThreshold: Number(p.freeShippingThreshold) || 500,
+    freeShippingThreshold: normalizeFreeShippingThreshold(p.freeShippingThreshold),
     standardShippingFee: Number(p.standardShippingFee) || 100,
     deliveryReward: {
       ...DEFAULT_PROMOTIONS.deliveryReward,

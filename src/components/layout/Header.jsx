@@ -47,18 +47,18 @@ export default function Header() {
       <HeaderTrustBar />
 
       <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-8">
-        {/* Ana satır — referans mockup düzeni */}
-        <div className="flex h-14 lg:h-[3.75rem] items-center gap-2 sm:gap-3 lg:gap-4 py-1">
+        {/* Ana satır — mobilde logo ortada */}
+        <div className="relative flex h-14 lg:h-[3.75rem] items-center py-1 lg:gap-4">
           <button
             type="button"
-            className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
+            className="lg:hidden absolute left-0 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
             onClick={() => setMenuOpen(true)}
             aria-label="Kategori menüsü"
           >
             <Menu className="h-5 w-5" strokeWidth={2.5} />
           </button>
 
-          <div className="shrink-0 flex items-center">
+          <div className="flex flex-1 justify-center lg:flex-none lg:justify-start min-w-0 px-12 lg:px-0">
             <BrandLogoLink logoUrl={settings.logoUrl} siteName={siteName} />
           </div>
 
@@ -66,7 +66,7 @@ export default function Header() {
             <HeaderSearch variant="pill" />
           </div>
 
-          <div className="ml-auto flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
+          <div className="absolute right-0 lg:relative lg:ml-auto flex items-center gap-1 sm:gap-2 lg:gap-3 shrink-0">
             {waLink && (
               <a
                 href={waLink}

@@ -8,7 +8,7 @@ const REVIEWS = [
   },
   {
     name: 'Mehmet T.',
-    text: 'Toptan fiyatlar gerçekten iyi. WhatsApp ile sipariş çok pratik.',
+    text: 'Fiyatlar çok uygun, kargo hızlı geldi. WhatsApp destek de çok yardımcı oldu.',
     rating: 5,
   },
   {
