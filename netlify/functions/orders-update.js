@@ -76,6 +76,9 @@ exports.handler = async (event) => {
       order.confirmedAt = now;
       if (body.cancelReason) order.cancelReason = '';
       if (body.cancelNote) order.cancelNote = '';
+    } else if (status === 'packed') {
+      order.packedAt = now;
+      if (body.labelPrintedAt !== false) order.labelPrintedAt = now;
     } else if (status === 'shipped') {
       order.shippedAt = now;
       order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim();

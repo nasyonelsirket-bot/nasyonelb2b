@@ -59,6 +59,16 @@ export async function updateOrderStatus(id, status, extra = {}) {
   return data;
 }
 
+export async function markOrdersPacked(ids) {
+  const list = (Array.isArray(ids) ? ids : []).map(String).filter(Boolean);
+  if (!list.length) return [];
+  return Promise.all(
+    list.map((id) =>
+      updateOrderStatus(id, 'packed').catch((err) => ({ id, error: err.message })),
+    ),
+  );
+}
+
 export async function deleteOrder(id) {
   const res = await fetch(ORDERS_DELETE, {
     method: 'POST',

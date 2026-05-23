@@ -45,6 +45,13 @@ export const ORDER_STATUS_META = {
     color: 'text-emerald-700 bg-emerald-50',
     icon: CheckCircle,
   },
+  packed: {
+    label: 'Paket yapıldı',
+    shortLabel: 'Paket yapıldı',
+    phase: 'packed',
+    color: 'text-violet-700 bg-violet-50',
+    icon: Package,
+  },
   shipped: {
     label: 'Kargoya verildi',
     shortLabel: 'Kargoda',
@@ -128,6 +135,10 @@ export function getAdminStatusActions(order) {
   }
 
   if (status === 'iban_verified' || status === 'confirmed') {
+    return actions;
+  }
+
+  if (status === 'packed') {
     actions.push({
       id: 'ship',
       label: 'Kargoya ver',
@@ -160,6 +171,7 @@ export const ADMIN_STATUS_FILTERS = [
   { id: 'all', label: 'Tümü' },
   { id: 'pending', label: 'Bekleyen' },
   { id: 'preparing', label: 'Kargoya hazır' },
+  { id: 'packed', label: 'Paket yapıldı' },
   { id: 'shipping', label: 'Kargoda' },
   { id: 'completed', label: 'Teslim' },
   { id: 'cancelled', label: 'İptal' },
@@ -170,6 +182,7 @@ export function matchesStatusFilter(order, filterId) {
   if (filterId === 'all') return true;
   if (filterId === 'pending') return isUnpaidOrderStatus(s);
   if (filterId === 'preparing') return s === 'confirmed' || s === 'iban_verified';
+  if (filterId === 'packed') return s === 'packed';
   if (filterId === 'shipping') return s === 'shipped';
   if (filterId === 'completed') return s === 'completed';
   if (filterId === 'cancelled') return s === 'cancelled';

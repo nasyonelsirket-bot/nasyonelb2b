@@ -17,7 +17,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder } from '@/services/orderApi';
+import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder, markOrdersPacked } from '@/services/orderApi';
 import { ORDER_CANCEL_PRESETS } from '@/data/orderCancelReasons';
 import { formatPrice } from '@/utils/whatsapp';
 import {
@@ -30,6 +30,7 @@ import {
 } from '@/constants/orderStatus';
 import { matchesOrderNumberSearch, matchesCustomerNameSearch } from '@/utils/orderNumberSearch';
 import ShippingLabelPrint from '@/components/admin/ShippingLabelPrint';
+import PreparingBulkPrintBar from '@/components/admin/PreparingBulkPrintBar';
 
 function StatusBadge({ status }) {
   const meta = getStatusMeta(status);
@@ -43,14 +44,24 @@ function StatusBadge({ status }) {
   );
 }
 
-function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, onDelete, busy }) {
+function OrderDetailPanel({ order, onApprove, onReject, onShip, onComplete, onDelete, onLabelPrinted, busy }) {
   const c = order.customer || {};
   const items = Array.isArray(order.items) ? order.items : [];
   const [labelOpen, setLabelOpen] = useState(false);
 
+  const handleLabelPrinted = async () => {
+    await markOrdersPacked([order.id]);
+    onLabelPrinted?.();
+  };
+
   return (
     <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4 space-y-4 text-sm">
-      <ShippingLabelPrint order={order} open={labelOpen} onClose={() => setLabelOpen(false)} />
+      <ShippingLabelPrint
+        order={order}
+        open={labelOpen}
+        onClose={() => setLabelOpen(false)}
+        onPrinted={handleLabelPrinted}
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <h4 className="font-bold text-brand-900 flex items-center gap-2">
@@ -211,7 +222,7 @@ function ShipForm({ order, onShip, busy }) {
   const [carrier, setCarrier] = useState(order.shippingCarrier || CARRIERS[0]);
   const [tracking, setTracking] = useState(order.trackingNumber || '');
 
-  if (!['confirmed', 'iban_verified', 'shipped'].includes(order.status)) return null;
+  if (!['packed', 'shipped'].includes(order.status)) return null;
 
   return (
     <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-3">
@@ -330,6 +341,7 @@ export default function OrdersAdmin({ setMsg }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [printSelectedIds, setPrintSelectedIds] = useState(() => new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -347,6 +359,19 @@ export default function OrdersAdmin({ setMsg }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (filter !== 'preparing') setPrintSelectedIds(new Set());
+  }, [filter]);
+
+  const togglePrintSelected = (id) => {
+    setPrintSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const openDetail = async (id) => {
     if (expandedId === id) {
@@ -595,6 +620,16 @@ export default function OrdersAdmin({ setMsg }) {
         </div>
       </div>
 
+      {filter === 'preparing' && !loading && filtered.length > 0 && (
+        <PreparingBulkPrintBar
+          orders={filtered}
+          selectedIds={printSelectedIds}
+          onSelectedIdsChange={setPrintSelectedIds}
+          setMsg={setMsg}
+          onOrdersUpdated={load}
+        />
+      )}
+
       {loading ? (
         <p className="text-sm text-gray-500 py-8 text-center">Yükleniyor...</p>
       ) : filtered.length === 0 ? (
@@ -611,10 +646,20 @@ export default function OrdersAdmin({ setMsg }) {
             const expanded = expandedId === o.id;
             return (
               <li key={o.id} className="py-4 first:pt-0">
+                <div className="flex items-start gap-2">
+                  {filter === 'preparing' && (
+                    <input
+                      type="checkbox"
+                      checked={printSelectedIds.has(o.id)}
+                      onChange={() => togglePrintSelected(o.id)}
+                      className="mt-2 h-4 w-4 shrink-0 rounded border-brand-300 text-brand-700 focus:ring-brand-500"
+                      aria-label={`${o.orderNumber || o.id} seç`}
+                    />
+                  )}
                 <button
                   type="button"
                   onClick={() => openDetail(o.id)}
-                  className="w-full text-left flex flex-wrap items-start justify-between gap-2 hover:bg-brand-50/50 -mx-2 px-2 py-1 rounded-lg transition"
+                  className="flex-1 min-w-0 text-left flex flex-wrap items-start justify-between gap-2 hover:bg-brand-50/50 -mx-2 px-2 py-1 rounded-lg transition"
                 >
                   <div className="flex items-start gap-2 min-w-0">
                     {expanded ? (
@@ -643,6 +688,7 @@ export default function OrdersAdmin({ setMsg }) {
                     <p className="text-xs text-gray-500">{formatPaymentMethod(o.paymentMethod)}</p>
                   </div>
                 </button>
+                </div>
 
                 {expanded && (
                   <>
@@ -656,6 +702,12 @@ export default function OrdersAdmin({ setMsg }) {
                         onShip={(carrier, trackingNumber) => handleShip(detail, carrier, trackingNumber)}
                         onComplete={() => handleComplete(detail)}
                         onDelete={() => handleDelete(detail)}
+                        onLabelPrinted={async () => {
+                          setMsg('Etiket yazdırıldı — sipariş Paket yapıldı sekmesine taşındı');
+                          const refreshed = await fetchOrderDetail(detail.id);
+                          setDetail(refreshed);
+                          load();
+                        }}
                       />
                     )}
                   </>

@@ -199,7 +199,59 @@ const PRINT_STYLES = `
   @media print {
     html, body { margin: 0; padding: 0; }
   }
+  body.bulk-print {
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+  body.bulk-print .sheet {
+    page-break-after: always;
+    break-after: page;
+  }
+  body.bulk-print .sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
 `;
+
+export function buildBulkLabelsHtml(orders) {
+  const list = (Array.isArray(orders) ? orders : []).filter(Boolean);
+  return list.map((order) => buildLabelPrintHtml(order)).join('\n');
+}
+
+/** Tek veya çoklu 10×10 cm etiket yazdırır */
+export function printShippingLabels(orders) {
+  const list = (Array.isArray(orders) ? orders : []).filter(Boolean);
+  if (!list.length) return 0;
+
+  const bulk = list.length > 1;
+  const labelHtml = buildBulkLabelsHtml(list);
+  const title =
+    list.length === 1
+      ? `Kargo etiketi — ${list[0].orderNumber || list[0].id || ''}`
+      : `Kargo etiketleri (${list.length})`;
+
+  const doc = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>${PRINT_STYLES}</style>
+</head>
+<body class="${bulk ? 'bulk-print' : ''}">${labelHtml}</body>
+</html>`;
+
+  const win = window.open('', '_blank', bulk ? 'width=480,height=640' : 'width=420,height=420');
+  if (!win) return 0;
+  win.document.write(doc);
+  win.document.close();
+  win.focus();
+  setTimeout(() => {
+    win.print();
+  }, bulk ? 500 : 300);
+
+  return list.length;
+}
 
 function LabelPreview({ order }) {
   const c = order.customer || {};
@@ -246,27 +298,14 @@ function LabelPreview({ order }) {
   );
 }
 
-export default function ShippingLabelPrint({ order, open, onClose }) {
-  const handlePrint = () => {
-    const labelHtml = buildLabelPrintHtml(order);
-    const doc = `<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8" />
-  <title>Kargo etiketi — ${escapeHtml(order.orderNumber || order.id || '')}</title>
-  <style>${PRINT_STYLES}</style>
-</head>
-<body>${labelHtml}</body>
-</html>`;
-
-    const win = window.open('', '_blank', 'width=420,height=420');
-    if (!win) return;
-    win.document.write(doc);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-    }, 300);
+export default function ShippingLabelPrint({ order, open, onClose, onPrinted }) {
+  const handlePrint = async () => {
+    printShippingLabels([order]);
+    try {
+      await onPrinted?.(order);
+    } catch {
+      /* parent handles errors */
+    }
   };
 
   if (!open || !order) return null;

@@ -775,6 +775,9 @@ function orderPdfDevProxy(env = {}) {
           order.cancelledAt = now
         } else if (status === 'confirmed' || status === 'iban_verified') {
           order.confirmedAt = now
+        } else if (status === 'packed') {
+          order.packedAt = now
+          order.labelPrintedAt = now
         } else if (status === 'shipped') {
           order.shippedAt = now
           order.shippingCarrier = String(body.shippingCarrier || order.shippingCarrier || '').trim()
