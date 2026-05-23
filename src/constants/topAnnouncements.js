@@ -1,12 +1,35 @@
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+
 /** Üst turuncu şerit — dönen duyurular */
 export const TOP_ANNOUNCEMENTS = [
-  { highlight: '500 TL üzeri KARGO BEDAVA', rest: 'Tüm siparişlerde' },
-  { highlight: '14 iş günü', rest: 'iade hakkı · koşulsuz kolaylık' },
-  { highlight: 'Güvenli kart ödemesi', rest: 'PayTR altyapısı ile' },
-  { highlight: 'Eğitici oyuncaklar', rest: 'güvenli alışveriş · hızlı kargo' },
-  { highlight: 'Sepette %5 indirim', rest: '500 TL\'yi tamamlayan uyumlu ürün önerisi' },
-  { highlight: 'En çok satanlar', rest: 'Trendyol satış verilerine göre sıralama' },
-  { highlight: 'Ücretsiz üyelik', rest: 'sipariş takibi · adres kaydı' },
+  {
+    highlight: `${FREE_SHIPPING_THRESHOLD_TL} TL ve Üzeri Ücretsiz Kargo`,
+    rest: 'Tüm siparişlerinizde geçerli ·',
+  },
+  {
+    highlight: '14 İş Günü İade Hakkı',
+    rest: 'Yasal süre içinde iade ve cayma ·',
+  },
+  {
+    highlight: 'Güvenli Kart Ödemesi',
+    rest: 'PayTR altyapısı ile 256-bit SSL ·',
+  },
+  {
+    highlight: 'Eğitici Oyuncak Koleksiyonu',
+    rest: 'Güvenilir tedarik · hızlı sevkiyat ·',
+  },
+  {
+    highlight: '%5 Sepet İndirimi',
+    rest: `${FREE_SHIPPING_THRESHOLD_TL} TL üzeri uyumlu ürün önerilerinde ·`,
+  },
+  {
+    highlight: 'Çok Satan Ürünler',
+    rest: 'Trendyol satış verilerine dayalı sıralama ·',
+  },
+  {
+    highlight: 'Ücretsiz Üyelik',
+    rest: 'Sipariş takibi ve adres yönetimi ·',
+  },
 ];
 
 export const ANNOUNCEMENT_ROTATE_MS = 4200;
