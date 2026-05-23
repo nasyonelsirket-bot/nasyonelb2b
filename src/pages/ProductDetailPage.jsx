@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, ChevronDown, Truck, ShieldCheck } from 'lucide-react';
 import ProductSEO from '@/components/seo/ProductSEO';
 import ProductSchema from '@/components/seo/ProductSchema';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Button from '@/components/ui/Button';
 import QuantityControls from '@/components/product/QuantityControls';
 import { useStore } from '@/context/StoreContext';
@@ -19,7 +21,25 @@ import ProductRatingStars from '@/components/product/ProductRatingStars';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import { getProductRatingSummary } from '@/utils/productReviews';
 import { trackRecentlyViewed } from '@/utils/recentlyViewed';
-import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
+
+function AccordionSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-brand-100 rounded-xl overflow-hidden bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left font-semibold text-brand-900 hover:bg-brand-50/50"
+      >
+        {title}
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && <div className="px-4 pb-4 text-sm text-gray-600 leading-relaxed border-t border-brand-50">{children}</div>}
+    </div>
+  );
+}
 
 export default function ProductDetailPage() {
   const { id: idOrSlug } = useParams();
@@ -51,6 +71,11 @@ export default function ProductDetailPage() {
     }
   }, [product, idOrSlug, navigate]);
 
+  const handleAdd = useCallback(() => {
+    if (!product) return;
+    addToCart(product, Math.max(1, qty));
+  }, [addToCart, product, qty]);
+
   if (!product) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center">
@@ -65,8 +90,8 @@ export default function ProductDetailPage() {
   const lineTotal = product.price * Math.max(1, qty);
   const onSale = hasProductDiscount(product);
   const { avg: ratingAvg, count: reviewCount } = getProductRatingSummary(product);
-
   const productPath = getProductPath(product);
+  const inStock = product.stock == null || Number(product.stock) > 0;
 
   return (
     <>
@@ -80,66 +105,89 @@ export default function ProductDetailPage() {
         ]}
       />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 animate-fade-in">
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-6 sm:py-8 animate-fade-in pb-28 lg:pb-8">
+        <Breadcrumbs
+          variant="light"
+          className="mb-4"
+          items={[
+            { label: 'Ana Sayfa', to: '/' },
+            { label: product.category || 'Ürünler', to: '/kategoriler' },
+            { label: product.name },
+          ]}
+        />
+
         <Link
           to="/kategoriler"
-          className="inline-flex items-center gap-2 text-sm text-brand-600 hover:underline mb-6"
+          className="inline-flex items-center gap-2 text-sm text-brand-600 hover:underline mb-4 lg:hidden"
         >
-          <ArrowLeft className="h-4 w-4" /> Kategorilere Dön
+          <ArrowLeft className="h-4 w-4" /> Geri
         </Link>
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-8 lg:gap-10 lg:grid-cols-2">
+          <div className="space-y-3 min-w-0">
             <ProductImage
               src={activeImage}
               alt={product.name}
               variant="detail"
               className="rounded-2xl border border-brand-100 shadow-card w-full"
+              loading="eager"
             />
             {gallery.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
                 {gallery.map((url, i) => (
                   <button
                     key={`${url}-${i}`}
                     type="button"
                     onClick={() => setImageIndex(i)}
-                    className={`shrink-0 rounded-lg border-2 overflow-hidden transition ${
+                    className={`shrink-0 snap-start rounded-lg border-2 overflow-hidden transition ${
                       i === imageIndex
                         ? 'border-accent-gold ring-2 ring-accent-gold/30'
                         : 'border-brand-100 opacity-80 hover:opacity-100'
                     }`}
                   >
-                    <ProductImage src={url} alt="" variant="thumb" className="!w-16 !h-16" />
+                    <ProductImage src={url} alt="" variant="thumb" className="!w-16 !h-16" loading="lazy" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             {onSale && (
-              <span className="inline-flex rounded-lg bg-red-600 px-3 py-1 text-sm font-bold text-white animate-pulse-soft">
+              <span className="inline-flex rounded-lg bg-red-600 px-3 py-1 text-sm font-bold text-white">
                 %{getDiscountPercent(product)} İNDİRİM
               </span>
             )}
             <p className="text-sm text-brand-500 mt-2">{product.category}</p>
-            <h1 className="font-display text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900 mt-1">{product.name}</h1>
             {ratingAvg > 0 && (
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <ProductRatingStars rating={ratingAvg} size="md" />
-                <span className="text-sm text-gray-600">
-                  {reviewCount} müşteri değerlendirmesi
-                </span>
+                <span className="text-sm text-gray-600">({reviewCount} değerlendirme)</span>
               </div>
             )}
-            <p className="text-gray-500 mt-1">Stok Kodu: {product.sku}</p>
-            <div className="mt-6">
+            <p className="text-gray-500 mt-1 text-sm">Stok Kodu: {product.sku}</p>
+            <p className={`mt-2 text-sm font-medium ${inStock ? 'text-emerald-700' : 'text-red-600'}`}>
+              {inStock ? '● Stokta — hızlı kargo' : 'Stok tükendi'}
+            </p>
+
+            <div className="mt-4">
               <ProductPriceDisplay product={product} size="lg" />
             </div>
             <KdvNotice className="mt-2" />
-            <p className="mt-6 text-gray-600 leading-relaxed">{product.description}</p>
 
-            <div className="mt-8 max-w-md">
+            <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-1">
+                <Truck className="h-3.5 w-3.5 text-emerald-600" />
+                {FREE_SHIPPING_THRESHOLD_TL} TL+ kargo bedava
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-600" />
+                PayTR güvenli ödeme
+              </span>
+            </div>
+
+            <div className="mt-6 max-w-md hidden lg:block">
               <QuantityControls
                 quantity={qty}
                 onChange={setQty}
@@ -151,17 +199,55 @@ export default function ProductDetailPage() {
             <Button
               variant="yellow"
               size="lg"
-              className="mt-6"
-              onClick={() => addToCart(product, Math.max(1, qty))}
+              className="mt-6 w-full hidden lg:inline-flex"
+              onClick={handleAdd}
+              disabled={!inStock}
             >
               <ShoppingCart className="h-5 w-5" />
               Sepete Ekle ({Math.max(1, qty)} adet · {formatPrice(lineTotal)})
             </Button>
+
+            <div className="mt-8 space-y-3">
+              <AccordionSection title="Ürün Açıklaması" defaultOpen>
+                <p className="whitespace-pre-line">{product.description || 'Açıklama yakında eklenecek.'}</p>
+              </AccordionSection>
+              <AccordionSection title="Kargo & Teslimat">
+                <p>
+                  Stoktan hızlı hazırlık. {FREE_SHIPPING_THRESHOLD_TL} TL ve üzeri siparişlerde kargo bedava.
+                  Teslimat süresi bölgeye göre 1–5 iş günü arasında değişebilir.
+                </p>
+              </AccordionSection>
+              <AccordionSection title="Güvenli Ödeme">
+                <PaymentTrustStrip compact />
+              </AccordionSection>
+            </div>
           </div>
         </div>
 
         <ProductReviewsSection product={product} />
       </div>
+
+      {/* Mobil sticky satın al */}
+      <div className="lg:hidden fixed bottom-[calc(3rem+env(safe-area-inset-bottom))] left-0 right-0 z-[45] border-t border-brand-200 bg-white/95 backdrop-blur-md px-3 py-2.5 shadow-[0_-4px_20px_rgba(10,31,77,0.12)]">
+        <div className="flex items-center gap-3 max-w-7xl mx-auto">
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold text-brand-900 truncate">{formatPrice(lineTotal)}</p>
+            <p className="text-[10px] text-gray-500">{inStock ? 'Stokta' : 'Stok yok'}</p>
+          </div>
+          <QuantityControls
+            quantity={qty}
+            onChange={setQty}
+            onIncrement={(n) => setQty((q) => q + n)}
+            onDecrement={(n) => setQty((q) => Math.max(1, q - n))}
+            compact
+          />
+          <Button variant="yellow" size="sm" className="shrink-0 h-11 px-4" onClick={handleAdd} disabled={!inStock}>
+            <ShoppingCart className="h-4 w-4" />
+            Ekle
+          </Button>
+        </div>
+      </div>
     </>
   );
 }
+

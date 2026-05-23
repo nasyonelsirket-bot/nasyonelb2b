@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { trackPageView } from '@/lib/analytics/ga4';
+import { trackPageView, captureAttribution } from '@/lib/analytics/ga4';
 import { isGa4TrackablePath } from '@/lib/analytics/ga4Config';
 
 /**
@@ -16,6 +16,8 @@ export default function Ga4PageTracker() {
     const key = `${location.pathname}${location.search}${location.hash}`;
     if (lastSent.current === key) return;
     lastSent.current = key;
+
+    captureAttribution();
 
     trackPageView({
       page_path: location.pathname + location.search + location.hash,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, CreditCard, SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
@@ -19,12 +19,30 @@ export default function ProductGrid({
 }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [sortKey, setSortKey] = useState(defaultSort);
+  const sentinelRef = useRef(null);
   const { totalItems } = useCart();
   const list = useMemo(() => sortProducts(products, sortKey), [products, sortKey]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [list.length]);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((n) => Math.min(n + PAGE_SIZE, list.length));
+  }, [list.length]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || visibleCount >= list.length) return undefined;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: '200px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [visibleCount, list.length, loadMore]);
 
   if (!list.length) {
     return (
@@ -93,16 +111,9 @@ export default function ProductGrid({
           ))}
         </div>
         {hasMore && (
-          <div className="mt-8 flex justify-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="min-h-[48px] touch-manipulation"
-              onClick={() => setVisibleCount((n) => Math.min(n + PAGE_SIZE, list.length))}
-            >
-              Daha fazla göster ({list.length - visibleCount} kaldı)
-            </Button>
+          <div ref={sentinelRef} className="mt-8 flex justify-center py-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" aria-hidden />
+            <span className="sr-only">Daha fazla ürün yükleniyor</span>
           </div>
         )}
       </div>

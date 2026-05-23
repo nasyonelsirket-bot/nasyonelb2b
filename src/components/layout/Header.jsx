@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart, User, Package, MessageCircle, Users } from 'lucide-react';
+import { Link, NavLink } from 'react-router-dom';
+import { Menu, ShoppingCart, User, Package, MessageCircle, Users } from 'lucide-react';
 import CategoryMegaMenu from '@/components/layout/CategoryMegaMenu';
+import MobileCategoryDrawer from '@/components/layout/MobileCategoryDrawer';
 import TopAnnouncementBar from '@/components/layout/TopAnnouncementBar';
 import HeaderTrustBar from '@/components/layout/HeaderTrustBar';
 import HeaderSearch from '@/components/layout/HeaderSearch';
@@ -17,9 +18,6 @@ const NAV = [
   { to: '/iletisim', label: 'İletişim', end: false },
 ];
 
-const mobileNavClass =
-  'block py-3 px-1 text-base font-medium border-b border-brand-50 text-gray-700 hover:text-brand-900';
-
 function whatsAppHref(number) {
   const phone = String(number || '').replace(/\D/g, '');
   return phone ? `https://wa.me/${phone}` : null;
@@ -28,10 +26,8 @@ function whatsAppHref(number) {
 export default function Header() {
   const { settings } = useStore();
   const { totalItems, cartAnimating } = useCart();
-  const { isLoggedIn, member } = useMember();
-  const { pathname } = useLocation();
-  const isHome = pathname === '/';
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isLoggedIn } = useMember();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const logoSrc = resolveLogoUrl(settings.logoUrl);
   const waLink = whatsAppHref(settings.whatsappNumber);
@@ -50,11 +46,24 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-2 py-2 sm:py-2.5">
-          <div className="flex min-h-[3.5rem] sm:min-h-[4.5rem] items-center justify-between gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0 max-w-[46%] sm:max-w-none">
-              <Link to="/" className="flex items-center shrink-0 min-w-0 py-0.5">
-                <img src={logoSrc} alt={settings.siteName || 'Nasyonel'} className="site-logo" />
-              </Link>
+          <div className="grid grid-cols-[auto_1fr_auto] lg:flex lg:min-h-[4.5rem] items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              className="lg:hidden p-2 -ml-1 text-brand-800 rounded-lg hover:bg-brand-50 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Kategori menüsü"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+
+            <Link
+              to="/"
+              className="flex items-center justify-center lg:justify-start shrink-0 min-w-0 py-0.5 mx-auto lg:mx-0 lg:max-w-none max-w-[180px] sm:max-w-[220px]"
+            >
+              <img src={logoSrc} alt={settings.siteName || 'Nasyonel'} className="site-logo max-h-12 sm:max-h-14" />
+            </Link>
+
+            <div className="hidden lg:flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
               <span className="hidden xl:inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-accent-gold/20 to-orange-100 border border-accent-gold/40 px-2.5 py-1 text-[11px] font-bold text-brand-900 whitespace-nowrap">
                 <Users className="h-3.5 w-3.5 text-orange-600" />
                 100.000+ Mutlu Müşteri
@@ -65,7 +74,7 @@ export default function Header() {
               <HeaderSearch />
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 col-start-3 lg:col-auto">
               {waLink && (
                 <a
                   href={waLink}
@@ -104,7 +113,8 @@ export default function Header() {
 
               <Link
                 to="/sepet"
-                className={`relative flex items-center gap-1.5 rounded-full bg-brand-900 px-3 py-2 sm:px-4 text-sm font-semibold text-white hover:bg-brand-800 transition-all shadow-md ${cartAnimating ? 'animate-cart-bounce' : ''}`}
+                className={`relative flex items-center justify-center rounded-full bg-brand-900 p-2.5 sm:px-4 sm:py-2 sm:gap-1.5 text-sm font-semibold text-white hover:bg-brand-800 transition-all shadow-md min-h-[44px] min-w-[44px] sm:min-w-0 ${cartAnimating ? 'animate-cart-bounce' : ''}`}
+                aria-label={`Sepet${totalItems > 0 ? `, ${totalItems} ürün` : ''}`}
               >
                 <ShoppingCart className="h-5 w-5" />
                 <span className="hidden sm:inline">Sepet</span>
@@ -114,15 +124,6 @@ export default function Header() {
                   </span>
                 )}
               </Link>
-
-              <button
-                type="button"
-                className="lg:hidden p-2 text-brand-800"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Menü"
-              >
-                {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
             </div>
           </div>
 
@@ -139,64 +140,9 @@ export default function Header() {
             ))}
           </nav>
         </div>
-
-        {mobileOpen && (
-          <nav className="lg:hidden border-t border-brand-100 py-2 flex flex-col pb-4 max-h-[70vh] overflow-y-auto">
-            <span className="inline-flex items-center gap-1.5 px-1 py-2 text-xs font-bold text-brand-800">
-              <Users className="h-4 w-4 text-orange-500" />
-              100.000+ Mutlu Müşteri
-            </span>
-            {!isHome && (
-              <a href="/#urunler" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
-                Tüm Ürünler
-              </a>
-            )}
-            <Link to="/kategoriler" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
-              Kategoriler
-            </Link>
-            {NAV.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `${mobileNavClass} ${isActive ? 'text-brand-900' : ''}`
-                }
-                onClick={() => setMobileOpen(false)}
-                end={item.end}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-            {waLink && (
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${mobileNavClass} text-[#128C7E] font-semibold`}
-                onClick={() => setMobileOpen(false)}
-              >
-                WhatsApp Destek
-              </a>
-            )}
-            {isLoggedIn ? (
-              <Link to="/hesabim" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
-                Hesabım {member?.name ? `(${member.name.split(' ')[0]})` : ''}
-              </Link>
-            ) : (
-              <Link to="/giris" className={mobileNavClass} onClick={() => setMobileOpen(false)}>
-                Giriş / Üye Ol
-              </Link>
-            )}
-            <Link
-              to="/siparis-takip"
-              className={mobileNavClass}
-              onClick={() => setMobileOpen(false)}
-            >
-              Sipariş Takip
-            </Link>
-          </nav>
-        )}
       </div>
+
+      <MobileCategoryDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
   );
 }

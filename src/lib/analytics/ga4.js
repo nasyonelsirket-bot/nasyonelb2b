@@ -1,5 +1,8 @@
 import { GA4_CURRENCY, isGa4TrackablePath } from './ga4Config';
 import { productFlatParams, aggregateFlatParams } from './ga4Params';
+import { getAttributionForEvents, captureAttribution } from './attribution';
+
+export { captureAttribution };
 
 const eventQueue = [];
 let initializedId = null;
@@ -109,6 +112,7 @@ function emitEcommerceEvent(
     value: eventValue,
     items: gaItems,
     ...flat,
+    ...getAttributionForEvents(),
     ...extra,
   });
 }

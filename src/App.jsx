@@ -12,8 +12,11 @@ import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
 import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
 import MemberActivityTracker from '@/components/account/MemberActivityTracker';
 
+import { MAIN_CATEGORIES } from '@/data/mainCategories';
+
 import HomePage from '@/pages/HomePage';
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
+const CategoryLandingPage = lazy(() => import('@/pages/CategoryLandingPage'));
 const ProductDetailPage = lazy(() => import('@/pages/ProductDetailPage'));
 const CartPage = lazy(() => import('@/pages/CartPage'));
 const PaymentPage = lazy(() => import('@/pages/PaymentPage'));
@@ -56,6 +59,17 @@ export default function App() {
               <Route element={<Layout />}>
                 <Route index element={<HomePage />} />
                 <Route path="kategoriler" element={<Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense>} />
+                {MAIN_CATEGORIES.map((c) => (
+                  <Route
+                    key={c.slug}
+                    path={c.slug}
+                    element={
+                      <Suspense fallback={<PageLoader />}>
+                        <CategoryLandingPage />
+                      </Suspense>
+                    }
+                  />
+                ))}
                 <Route path="urun/:id" element={<Suspense fallback={<PageLoader />}><ProductDetailPage /></Suspense>} />
                 <Route path="sepet" element={<Suspense fallback={<PageLoader />}><CartPage /></Suspense>} />
                 <Route path="odeme" element={<Suspense fallback={<PageLoader />}><PaymentPage /></Suspense>} />

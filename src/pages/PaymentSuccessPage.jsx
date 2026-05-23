@@ -1,18 +1,28 @@
+import { useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import { useCart } from '@/context/CartContext';
-import { useEffect } from 'react';
+import { trackPurchase } from '@/lib/analytics/ga4';
 
 export default function PaymentSuccessPage() {
   const [params] = useSearchParams();
   const orderId = params.get('oid');
-  const { clearCart } = useCart();
+  const { clearCart, items } = useCart();
+  const tracked = useRef(false);
 
   useEffect(() => {
+    if (!tracked.current && orderId && items?.length) {
+      trackPurchase({
+        transactionId: orderId,
+        items,
+        value: items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
+      });
+      tracked.current = true;
+    }
     clearCart();
-  }, [clearCart]);
+  }, [orderId, items, clearCart]);
 
   return (
     <>
