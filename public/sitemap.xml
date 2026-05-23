@@ -23,7 +23,7 @@
   <url>
     <loc>https://www.nasyoneltoys.com/iletisim</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.nasyoneltoys.com/sss</loc>
@@ -34,5 +34,35 @@
     <loc>https://www.nasyoneltoys.com/siparis-takip</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/mesafeli-satis</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/iade-iptal</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/gizlilik</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/kvkk</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/teslimat-kargo</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.nasyoneltoys.com/sozlesme/on-bilgilendirme</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>

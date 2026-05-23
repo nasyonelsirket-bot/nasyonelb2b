@@ -78,7 +78,7 @@ export const LEGAL_PAGES = {
     ],
   },
   'iade-iptal': {
-    title: 'İptal & İade Politikası',
+    title: 'İade ve Değişim Politikası',
     intro:
       'Alışverişinizden memnun kalmamanız halinde kolay ve şeffaf bir iade süreci sunuyoruz. Ürünü teslim aldıktan sonra 14 iş günü içinde iade talebinde bulunabilirsiniz.',
     highlights: [
@@ -341,6 +341,54 @@ export const LEGAL_PAGES = {
         heading: 'Şikâyet ve uyuşmazlık',
         paragraphs: [
           `Öncelikle ${EMAIL} üzerinden bizimle iletişime geçebilirsiniz. Çözülemeyen uyuşmazlıklarda Tüketici Hakem Heyetleri ve Mahkemeleri yetkilidir.`,
+        ],
+      },
+    ],
+  },
+  'teslimat-kargo': {
+    title: 'Teslimat ve Kargo Politikası',
+    intro:
+      'Siparişlerinizin güvenli ve hızlı şekilde adresinize ulaşması için aşağıdaki teslimat ve kargo koşulları geçerlidir.',
+    highlights: [
+      `${FREE_SHIPPING_MIN} TL ve üzeri siparişlerde ücretsiz kargo`,
+      'Türkiye geneli gönderim',
+      'Kargo takip numarası ile sipariş takibi',
+    ],
+    sections: [
+      {
+        heading: 'Teslimat bölgeleri',
+        paragraphs: [
+          'Türkiye Cumhuriyeti sınırları içindeki tüm illere kargo ile teslimat yapılmaktadır.',
+          'Adres bilgilerinizin eksiksiz ve doğru olması teslimat süresini kısaltır.',
+        ],
+      },
+      {
+        heading: 'Teslimat süresi',
+        paragraphs: [
+          'Ödeme onayı alındıktan sonra siparişler stok durumuna göre hazırlanır ve kargoya verilir.',
+          'Standart teslimat süresi 1–5 iş günü arasında değişebilir; yoğun dönemlerde veya uzak bölgelerde süre uzayabilir.',
+          'Kargo firması ve takip numarası sipariş kargoya verildiğinde e-posta ile bildirilir; ayrıca sipariş takip sayfasından kontrol edebilirsiniz.',
+        ],
+      },
+      {
+        heading: 'Kargo ücreti',
+        paragraphs: [
+          `${FREE_SHIPPING_MIN} TL ve üzeri siparişlerde kargo bedeli alıcıya yansıtılmaz.`,
+          'Altındaki siparişlerde kargo bedeli sepet ve ödeme adımında açıkça gösterilir.',
+        ],
+      },
+      {
+        heading: 'Teslimat sırasında dikkat edilecekler',
+        bullets: [
+          'Kargo tesliminde paketin dışında hasar varsa tutanak tutturarak teslim almayı değerlendirin.',
+          'Teslim alınamayan siparişler kargo firması prosedürüne göre iade edilir; yeniden gönderim için bizimle iletişime geçin.',
+          'Teslimat adresi değişikliği, sipariş kargoya verilmeden önce mümkün olabilir.',
+        ],
+      },
+      {
+        heading: 'İletişim',
+        paragraphs: [
+          `Teslimat ve kargo sorularınız için ${EMAIL} veya ${PHONE} üzerinden bize ulaşabilirsiniz.`,
         ],
       },
     ],

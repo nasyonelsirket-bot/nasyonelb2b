@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Eye, Zap } from 'lucide-react';
+import { ShoppingCart, Eye, Zap, Truck, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ProductPriceDisplay from '@/components/product/ProductPriceDisplay';
 import QuantityControls from '@/components/product/QuantityControls';
@@ -85,6 +85,17 @@ export default function ProductCard({ product }) {
           <ProductPriceDisplay product={product} size="sm" />
         </div>
         <KdvNotice className="mt-0.5 hidden text-xs sm:block" />
+
+        <div className="mt-1.5 hidden sm:flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
+          <span className="inline-flex items-center gap-1 text-emerald-700">
+            <Truck className="h-3 w-3" aria-hidden />
+            {FREE_SHIPPING_THRESHOLD_TL} TL+ kargo bedava
+          </span>
+          <span className="inline-flex items-center gap-1 text-brand-600">
+            <ShieldCheck className="h-3 w-3" aria-hidden />
+            PayTR güvenli ödeme
+          </span>
+        </div>
 
         <div className="mt-2 hidden product-card-qty sm:block">
           <QuantityControls

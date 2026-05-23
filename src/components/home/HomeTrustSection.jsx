@@ -4,21 +4,21 @@ import {
   Truck,
   MapPin,
   Heart,
-  Building2,
   Globe2,
   Boxes,
+  Headphones,
 } from 'lucide-react';
 import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
 const TRUST_ITEMS = [
-  { icon: Shield, title: 'Güvenli alışveriş', desc: '256 bit SSL koruması' },
-  { icon: Lock, title: 'SSL koruması', desc: 'Ödeme bilgileriniz şifreli' },
-  { icon: Truck, title: 'Hızlı teslimat', desc: 'Stoktan aynı gün çıkış' },
+  { icon: Headphones, title: 'Müşteri destek', desc: 'WhatsApp & telefon' },
   { icon: MapPin, title: 'Türkiye geneli', desc: '81 ile gönderim' },
-  { icon: Heart, title: 'Müşteri memnuniyeti', desc: '100.000+ mutlu aile' },
-  { icon: Building2, title: 'Toptan & perakende', desc: 'Esnek sipariş adedi' },
-  { icon: Globe2, title: 'İthalatçı firma', desc: 'Doğrudan tedarik avantajı' },
+  { icon: Heart, title: 'Güvenilir mağaza', desc: '100.000+ mutlu aile' },
+  { icon: Lock, title: 'PayTR ödeme', desc: '256 bit SSL koruması' },
+  { icon: Truck, title: 'Hızlı kargo', desc: 'Stoktan aynı gün çıkış' },
+  { icon: Shield, title: 'Güvenli alışveriş', desc: '3D Secure destekli' },
   { icon: Boxes, title: 'Stoktan gönderim', desc: 'Hızlı sevkiyat' },
+  { icon: Globe2, title: 'Geniş koleksiyon', desc: 'Eğitici oyuncaklar' },
 ];
 
 export default function HomeTrustSection() {

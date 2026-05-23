@@ -16,6 +16,8 @@ import KdvNotice from '@/components/ui/KdvNotice';
 import QuantityControls from '@/components/product/QuantityControls';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
+import CheckoutLegalConsent from '@/components/cart/CheckoutLegalConsent';
+import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -62,6 +64,7 @@ export default function CartPage() {
   const [couponApplied, setCouponApplied] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   const promos = useMemo(() => normalizePromotions(settings.promotions), [settings.promotions]);
 
@@ -198,6 +201,10 @@ export default function CartPage() {
 
   const handleSubmit = async () => {
     setFormError('');
+    if (!legalAccepted) {
+      setFormError('Devam etmek için sözleşme onayını işaretleyin.');
+      return;
+    }
     const err = validateDelivery();
     if (err) {
       setFormError(err);
@@ -417,6 +424,8 @@ export default function CartPage() {
                   <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme
                 </h2>
 
+                <PaymentTrustStrip />
+
                 <div className="rounded-2xl border-2 border-brand-600 bg-brand-50 p-5 ring-2 ring-brand-200">
                   <div className="flex items-center gap-2 text-brand-900 font-bold">
                     <CreditCard className="h-5 w-5 text-accent-gold" />
@@ -427,6 +436,12 @@ export default function CartPage() {
                   </p>
                   <p className="mt-3 text-2xl font-bold text-brand-900">{formatPrice(orderTotal)}</p>
                 </div>
+
+                <CheckoutLegalConsent
+                  accepted={legalAccepted}
+                  onChange={setLegalAccepted}
+                  error={!legalAccepted && formError.includes('sözleşme') ? formError : ''}
+                />
               </div>
             )}
           </div>
@@ -470,9 +485,7 @@ export default function CartPage() {
                 </Button>
               )}
             </div>
-            <p className="text-xs text-gray-500 text-center">
-              Ödeme PayTR güvenli altyapısı ile alınır.
-            </p>
+            <PaymentTrustStrip compact className="mt-1" />
           </div>
         </div>
       </div>

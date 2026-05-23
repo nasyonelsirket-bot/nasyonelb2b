@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, HelpCircle } from 'lucide-react';
+import FaqSchema from '@/components/seo/FaqSchema';
 import SEO from '@/components/seo/SEO';
 import { FAQ_ITEMS } from '@/data/faqContent';
 
@@ -11,9 +12,10 @@ export default function FaqPage() {
     <>
       <SEO
         title="Sıkça Sorulan Sorular"
-        description="Kargo, iade, ödeme ve sipariş takibi hakkında sıkça sorulan sorular."
+        description="Kargo, iade, PayTR güvenli ödeme ve sipariş takibi hakkında sıkça sorulan sorular."
         path="/sss"
       />
+      <FaqSchema items={FAQ_ITEMS} />
       <div className="mx-auto max-w-3xl px-4 py-10 sm:py-14 animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-900 text-accent-gold">

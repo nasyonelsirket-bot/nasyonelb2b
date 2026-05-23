@@ -11,6 +11,19 @@
   node_bundler = "esbuild"
   included_files = ["lib/**", "lib/fonts/**"]
 
+# HTTPS yönlendirme
+[[redirects]]
+  from = "http://nasyoneltoys.com/*"
+  to = "https://nasyoneltoys.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.nasyoneltoys.com/*"
+  to = "https://www.nasyoneltoys.com/:splat"
+  status = 301
+  force = true
+
 # Trendyol API — SPA yönlendirmesinden ÖNCE olmalı
 [[redirects]]
   from = "/api/trendyol/sync"

@@ -4,16 +4,32 @@ import {
   filterEducationalProducts,
 } from '@/utils/productBestseller';
 
-export const HOMEPAGE_SECTION_IDS = ['bestsellers', 'educational', 'deals', 'trust', 'allProducts'];
+export const HOMEPAGE_SECTION_IDS = ['bestsellers', 'newArrivals', 'deals', 'educational', 'trust', 'allProducts'];
 
 export const HOMEPAGE_SECTIONS = [
   {
     id: 'bestsellers',
-    label: 'En Çok Satanlar',
+    label: 'Çok Satanlar',
     type: 'strip',
     limit: 24,
     hashId: 'cok-satanlar',
     hint: 'Yatay ürün bandı. Ürün seçmezseniz otomatik doldurulur (açıksa).',
+  },
+  {
+    id: 'newArrivals',
+    label: 'Yeni Gelenler',
+    type: 'strip',
+    limit: 24,
+    hashId: 'yeni-gelenler',
+    hint: 'Yeni ürünler bandı.',
+  },
+  {
+    id: 'deals',
+    label: 'Trend Ürünler',
+    type: 'strip',
+    limit: 24,
+    hashId: 'firsatlar',
+    hint: 'İndirimli / trend ürünler bandı.',
   },
   {
     id: 'educational',
@@ -22,14 +38,6 @@ export const HOMEPAGE_SECTIONS = [
     limit: 24,
     hashId: 'egitici',
     hint: 'Eğitici kategorideki ürünler veya seçtiğiniz liste.',
-  },
-  {
-    id: 'deals',
-    label: 'Flaş Fırsatlar',
-    type: 'strip',
-    limit: 24,
-    hashId: 'firsatlar',
-    hint: 'İndirimli ürünler bandı.',
   },
   {
     id: 'trust',
@@ -47,18 +55,30 @@ export const HOMEPAGE_SECTIONS = [
   },
 ];
 
-const DEFAULT_SECTION_ORDER = ['bestsellers', 'educational', 'deals', 'allProducts'];
+const DEFAULT_SECTION_ORDER = ['bestsellers', 'newArrivals', 'deals', 'educational', 'allProducts'];
 
 const DEFAULT_SECTIONS = {
   bestsellers: {
     enabled: true,
-    title: 'En Çok Satanlar',
-    subtitle: '',
+    title: 'Çok Satanlar',
+    subtitle: 'Müşterilerimizin en çok tercih ettiği ürünler',
     badge: 'Popüler',
     seeAllHref: '/en-cok-satanlar',
     seeAllLabel: 'Tümünü Gör',
     accent: 'orange',
     limit: 16,
+    autoFill: true,
+    productIds: [],
+  },
+  newArrivals: {
+    enabled: true,
+    title: 'Yeni Gelenler',
+    subtitle: 'Koleksiyonumuza yeni eklenen ürünler',
+    badge: 'Yeni',
+    seeAllHref: '/#yeni-gelenler',
+    seeAllLabel: 'Tümünü Gör',
+    accent: 'brand',
+    limit: 12,
     autoFill: true,
     productIds: [],
   },
@@ -76,8 +96,8 @@ const DEFAULT_SECTIONS = {
   },
   deals: {
     enabled: true,
-    title: 'Flaş Fırsatlar',
-    subtitle: 'En yüksek indirimli ürünler',
+    title: 'Trend Ürünler',
+    subtitle: 'En yüksek indirimli ve popüler fırsatlar',
     badge: 'İndirim',
     seeAllHref: '/#firsatlar',
     seeAllLabel: 'Tümünü Gör',
@@ -99,6 +119,7 @@ const DEFAULT_SECTIONS = {
 
 const EMPTY_SLOTS = {
   bestsellers: [],
+  newArrivals: [],
   educational: [],
   deals: [],
 };
@@ -137,6 +158,7 @@ export function normalizeHomepageSlots(slots) {
   if (!slots || typeof slots !== 'object') return { ...EMPTY_SLOTS };
   return {
     bestsellers: Array.isArray(slots.bestsellers) ? slots.bestsellers.map(String).filter(Boolean) : [],
+    newArrivals: Array.isArray(slots.newArrivals) ? slots.newArrivals.map(String).filter(Boolean) : [],
     educational: Array.isArray(slots.educational) ? slots.educational.map(String).filter(Boolean) : [],
     deals: Array.isArray(slots.deals) ? slots.deals.map(String).filter(Boolean) : [],
   };
@@ -173,6 +195,7 @@ export function normalizeHomepageLayout(settings) {
 
   const sections = {
     bestsellers: normalizeStripSection('bestsellers', raw?.sections?.bestsellers, legacySlots.bestsellers),
+    newArrivals: normalizeStripSection('newArrivals', raw?.sections?.newArrivals, legacySlots.newArrivals),
     educational: normalizeStripSection('educational', raw?.sections?.educational, legacySlots.educational),
     deals: normalizeStripSection('deals', raw?.sections?.deals, legacySlots.deals),
     trust: {
@@ -212,6 +235,7 @@ export function layoutToHomepageSlots(layout) {
   const { sections } = layout;
   return {
     bestsellers: sections.bestsellers?.productIds || [],
+    newArrivals: sections.newArrivals?.productIds || [],
     educational: sections.educational?.productIds || [],
     deals: sections.deals?.productIds || [],
   };
@@ -275,6 +299,13 @@ export function getDealProductsAuto(catalog, limit = 12) {
     .slice(0, limit);
 }
 
+export function getNewArrivalProductsAuto(catalog, limit = 12) {
+  const list = Array.isArray(catalog) ? catalog : [];
+  const fresh = list.filter((p) => p.isNew);
+  if (fresh.length >= 4) return fresh.slice(0, limit);
+  return list.slice(-limit).reverse();
+}
+
 export function getEducationalProductsAuto(catalog, limit = 12) {
   const edu = filterEducationalProducts(catalog, limit);
   if (edu.length >= 4) return edu;
@@ -301,6 +332,15 @@ export function resolveHomepageSection(catalog, settingsOrLayout, sectionId, lim
       catalog,
       ids,
       (c) => getBestSellerProducts(c, limit),
+      limit,
+      autoFill,
+    );
+  }
+  if (sectionId === 'newArrivals') {
+    return resolveSectionProducts(
+      catalog,
+      ids,
+      (c) => getNewArrivalProductsAuto(c, limit),
       limit,
       autoFill,
     );

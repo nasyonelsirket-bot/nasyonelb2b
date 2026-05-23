@@ -185,11 +185,11 @@ export const DEFAULT_SETTINGS = {
   gaId: import.meta.env.VITE_GA_ID || '',
   siteUrl: import.meta.env.VITE_SITE_URL || 'https://www.nasyoneltoys.com',
   contactEmail: 'info@nasyoneltoys.com',
-  contactPhone: '+90 555 123 45 67',
+  contactPhone: '+90 850 305 81 34',
   contactAddress: 'Oruçreis, Giyimkent 17. Sk. 35/a, 34000 Esenler/İstanbul',
   contactMapQuery: 'Oruçreis, Giyimkent 17. Sk. 35/a, Esenler İstanbul',
   aboutText:
-    'Nasyonel Toys online oyuncak mağazası. Geniş ürün yelpazesi, güvenli alışveriş ve WhatsApp ile kolay sipariş.',
+    'Nasyonel Toys online oyuncak mağazası. Geniş ürün yelpazesi, PayTR güvenli kart ödemesi ve hızlı kargo.',
   trendyolSupplierId: '',
   trendyolApiKey: '',
   trendyolApiSecret: '',

@@ -5,6 +5,7 @@ import HeroBanner from '@/components/home/HeroBanner';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
 import HomeCartDrawer from '@/components/home/HomeCartDrawer';
+import TrustBadges from '@/components/home/TrustBadges';
 import HomeTrustSection from '@/components/home/HomeTrustSection';
 import HomeStickyCartBar from '@/components/home/HomeStickyCartBar';
 import RecentlyViewedStrip from '@/components/home/RecentlyViewedStrip';
@@ -19,7 +20,7 @@ import {
   isBannerSectionId,
 } from '@/utils/homepagePlacements';
 
-const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'firsatlar', 'egitici', 'sepet'];
+const HASH_SECTIONS = ['urunler', 'cok-satanlar', 'yeni-gelenler', 'firsatlar', 'egitici', 'sepet'];
 
 function defaultBestsellerSubtitle(layout, catalog) {
   const pinned = countPinnedInSection(layout, 'bestsellers');
@@ -59,7 +60,7 @@ export default function HomePage() {
 
   const sectionProducts = useMemo(() => {
     const out = {};
-    for (const id of ['bestsellers', 'educational', 'deals']) {
+    for (const id of ['bestsellers', 'newArrivals', 'deals', 'educational']) {
       out[id] = resolveHomepageSection(catalog, settings, id);
     }
     return out;
@@ -152,9 +153,11 @@ export default function HomePage() {
     <div className="pb-24 lg:pb-8 bg-gray-50">
       <SEO
         title="Ana Sayfa"
-        description="Nasyonel Toys — eğitici oyuncaklar, en çok satanlar, %50 indirim fırsatları."
+        description="Nasyonel Toys — eğitici oyuncaklar, çok satanlar, güvenli PayTR ödeme ve hızlı kargo. Türkiye geneli gönderim."
         path="/"
       />
+
+      {!q && <TrustBadges />}
 
       {!q &&
         homepageLayout.order.map((sectionId) => {

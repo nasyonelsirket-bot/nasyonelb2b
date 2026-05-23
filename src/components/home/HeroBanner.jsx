@@ -72,7 +72,7 @@ export default function HeroBanner({ bannerIds }) {
       aria-label="Kampanya bannerları"
       aria-roledescription="carousel"
     >
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-lg bg-brand-950">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl shadow-xl ring-1 ring-white/10 bg-brand-950">
         <div className="hero-banner-frame relative w-full">
           {active.map((banner, i) => {
             if (i !== index) return null;
