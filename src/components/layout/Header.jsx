@@ -42,7 +42,7 @@ export default function Header() {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b-[3px] border-accent-gold shadow-sm">
+    <header className="relative z-40 bg-white border-b-[3px] border-accent-gold shadow-sm">
       <TopAnnouncementBar />
       <HeaderTrustBar />
 
