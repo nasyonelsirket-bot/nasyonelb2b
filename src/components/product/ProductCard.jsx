@@ -13,6 +13,7 @@ import { getProductLink } from '@/utils/productSeo';
 import ProductRatingStars from '@/components/product/ProductRatingStars';
 import { getProductRatingSummary } from '@/utils/productReviews';
 import { getProductCardBadges } from '@/utils/productCardBadges';
+import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
