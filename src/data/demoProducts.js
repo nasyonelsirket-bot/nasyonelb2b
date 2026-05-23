@@ -179,7 +179,7 @@ export const DEMO_PRODUCTS = [
 export const DEFAULT_SETTINGS = {
   siteName: 'Nasyonel Toys',
   tagline: 'Hayaller Oyunla Başlar — Online Oyuncak Mağazası',
-  logoUrl: '/nasyonel-logo.png?v=3',
+  logoUrl: '/nasyonel-logo.png?v=4',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
   gaId: import.meta.env.VITE_GA_ID || '',

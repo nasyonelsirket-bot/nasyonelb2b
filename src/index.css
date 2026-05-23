@@ -45,42 +45,55 @@
     background: linear-gradient(135deg, #f5b800 0%, #ffd54f 100%);
   }
   .site-logo {
-    height: 4rem;
-    width: auto;
-    min-width: 9rem;
-    max-width: none;
+    display: block;
     object-fit: contain;
     object-position: left center;
-    display: block;
+    flex-shrink: 0;
+    max-width: none !important;
+    width: 11.5rem;
+    height: auto;
+  }
+  .site-logo--header {
+    width: 10.5rem;
   }
   @media (min-width: 640px) {
-    .site-logo {
-      height: 4.75rem;
-      min-width: 11rem;
+    .site-logo--header {
+      width: 13.5rem;
     }
   }
   @media (min-width: 1024px) {
-    .site-logo {
-      height: 5.5rem;
-      min-width: 13.5rem;
+    .site-logo--header {
+      width: 16.5rem;
     }
   }
   @media (min-width: 1280px) {
-    .site-logo {
-      height: 6rem;
-      min-width: 14.75rem;
+    .site-logo--header {
+      width: 18rem;
     }
   }
 
   .brand-logo-link {
     text-decoration: none;
     flex-shrink: 0;
-    min-width: 9rem;
+  }
+  .brand-logo-link--header {
+    flex: 0 0 auto;
+    width: 10.5rem;
+  }
+  @media (min-width: 640px) {
+    .brand-logo-link--header {
+      width: 13.5rem;
+    }
   }
   @media (min-width: 1024px) {
-    .brand-logo-link {
-      min-width: 13.5rem;
-      margin-right: 0.75rem;
+    .brand-logo-link--header {
+      width: 16.5rem;
+      margin-right: 0.5rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .brand-logo-link--header {
+      width: 18rem;
     }
   }
   .site-logo-footer {
