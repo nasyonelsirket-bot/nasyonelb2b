@@ -14,9 +14,15 @@ function isCustomLogo(url) {
 /**
  * Referans tasarımdaki 3D metin logo — görsel yoksa veya varsayılan logo yolundaysa kullanılır
  */
-export default function BrandLogo({ logoUrl, siteName = 'Nasyonel Toys', className = '', variant = 'header' }) {
+export default function BrandLogo({
+  logoUrl,
+  siteName = 'Nasyonel Toys',
+  className = '',
+  variant = 'header',
+  forceText = false,
+}) {
   const [imgFailed, setImgFailed] = useState(false);
-  const custom = isCustomLogo(logoUrl) && !imgFailed;
+  const custom = !forceText && isCustomLogo(logoUrl) && !imgFailed;
   const src = resolveLogoUrl(logoUrl);
 
   if (custom) {
@@ -32,7 +38,7 @@ export default function BrandLogo({ logoUrl, siteName = 'Nasyonel Toys', classNa
 
   return (
     <span
-      className={`brand-logo-3d ${variant === 'footer' ? 'brand-logo-3d--footer' : ''} ${className}`}
+      className={`brand-logo-3d ${variant === 'footer' ? 'brand-logo-3d--footer' : 'brand-logo-3d--header'} ${className}`}
       aria-label={siteName}
     >
       <span className="brand-logo-3d__nasyonel">Nasyonel</span>
@@ -43,8 +49,12 @@ export default function BrandLogo({ logoUrl, siteName = 'Nasyonel Toys', classNa
 
 export function BrandLogoLink({ logoUrl, siteName, className = '' }) {
   return (
-    <Link to="/" className={`brand-logo-link inline-flex shrink-0 ${className}`} aria-label={`${siteName || 'Nasyonel Toys'} — Ana sayfa`}>
-      <BrandLogo logoUrl={logoUrl} siteName={siteName} />
+    <Link
+      to="/"
+      className={`brand-logo-link brand-logo-link--header inline-flex shrink-0 items-center self-center ${className}`}
+      aria-label={`${siteName || 'Nasyonel Toys'} — Ana sayfa`}
+    >
+      <BrandLogo logoUrl={logoUrl} siteName={siteName} variant="header" forceText />
     </Link>
   );
 }

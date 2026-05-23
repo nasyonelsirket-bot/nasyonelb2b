@@ -48,7 +48,7 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-8">
         {/* Ana satır — referans mockup düzeni */}
-        <div className="flex min-h-[4.25rem] lg:min-h-[4.75rem] items-center gap-2 sm:gap-3 lg:gap-4 py-2 lg:py-2.5">
+        <div className="flex min-h-[4.75rem] lg:min-h-[5.5rem] items-center gap-2 sm:gap-3 lg:gap-5 py-2.5 lg:py-3">
           <button
             type="button"
             className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
@@ -58,11 +58,7 @@ export default function Header() {
             <Menu className="h-5 w-5" strokeWidth={2.5} />
           </button>
 
-          <BrandLogoLink
-            logoUrl={settings.logoUrl}
-            siteName={siteName}
-            className="shrink-0 min-w-0 lg:mr-1"
-          />
+          <BrandLogoLink logoUrl={settings.logoUrl} siteName={siteName} />
 
           <div className="hidden md:flex flex-1 min-w-0 max-w-2xl mx-auto lg:mx-4">
             <HeaderSearch variant="pill" />
