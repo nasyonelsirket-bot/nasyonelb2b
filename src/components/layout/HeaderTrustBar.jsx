@@ -13,7 +13,7 @@ const ITEMS = [
 
 export default function HeaderTrustBar() {
   return (
-    <div className="hidden sm:block border-b border-brand-100 bg-brand-50/80">
+    <div className="hidden sm:block lg:hidden border-b border-brand-100 bg-brand-50/80">
       <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
         <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 py-1.5 text-[11px] sm:text-xs text-brand-800">
           {ITEMS.map(({ icon: Icon, label }) => (

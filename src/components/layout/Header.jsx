@@ -48,7 +48,7 @@ export default function Header() {
 
       <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-8">
         {/* Ana satır — referans mockup düzeni */}
-        <div className="flex min-h-[4.5rem] sm:min-h-[5rem] lg:min-h-[5.75rem] items-center gap-2 sm:gap-4 lg:gap-5 py-2 lg:py-2.5">
+        <div className="flex h-14 lg:h-[3.75rem] items-center gap-2 sm:gap-3 lg:gap-4 py-1">
           <button
             type="button"
             className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-900 text-white shadow-md hover:bg-brand-800 transition-colors touch-manipulation"
@@ -131,7 +131,7 @@ export default function Header() {
           <HeaderSearch variant="pill" />
         </div>
 
-        <nav className="hidden lg:flex items-center gap-5 pb-2 border-t border-brand-100/80 pt-2">
+          <nav className="hidden lg:flex items-center gap-5 pb-1.5 border-t border-brand-100/80 pt-1.5">
           <CategoryMegaMenu />
           {NAV.map((item) => (
             <NavLink key={item.to} to={item.to} className={navClass} end={item.end}>

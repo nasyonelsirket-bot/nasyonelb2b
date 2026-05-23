@@ -50,51 +50,30 @@
     object-position: left center;
     flex-shrink: 0;
     max-width: none !important;
-    width: 11.5rem;
-    height: auto;
+    width: auto;
+    height: 2.75rem;
   }
   .site-logo--header {
-    width: 10.5rem;
+    height: 2.75rem;
   }
   @media (min-width: 640px) {
     .site-logo--header {
-      width: 13.5rem;
+      height: 3rem;
     }
   }
   @media (min-width: 1024px) {
     .site-logo--header {
-      width: 16.5rem;
-    }
-  }
-  @media (min-width: 1280px) {
-    .site-logo--header {
-      width: 18rem;
+      height: 3.25rem;
     }
   }
 
   .brand-logo-link {
     text-decoration: none;
     flex-shrink: 0;
+    line-height: 0;
   }
   .brand-logo-link--header {
     flex: 0 0 auto;
-    width: 10.5rem;
-  }
-  @media (min-width: 640px) {
-    .brand-logo-link--header {
-      width: 13.5rem;
-    }
-  }
-  @media (min-width: 1024px) {
-    .brand-logo-link--header {
-      width: 16.5rem;
-      margin-right: 0.5rem;
-    }
-  }
-  @media (min-width: 1280px) {
-    .brand-logo-link--header {
-      width: 18rem;
-    }
   }
   .site-logo-footer {
     height: 3.25rem;
