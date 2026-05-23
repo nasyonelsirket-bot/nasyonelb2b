@@ -1,5 +1,5 @@
 /**
- * PayTR iFrame token — sipariş kaydı (pending_payment) + ödeme token'ı.
+ * PayTR Direct API — sipariş kaydı + ödeme formu alanları.
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
@@ -8,8 +8,9 @@ const { loadPromotions } = require('../../lib/catalogPromotions.cjs');
 const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
 const {
   getPaytrConfig,
-  buildUserBasket,
-  createPaytrTokenHash,
+  buildDirectUserBasket,
+  formatDirectPaymentAmount,
+  createDirectPaytrTokenHash,
   resolveClientIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
@@ -115,11 +116,14 @@ exports.handler = async (event) => {
   const base = siteBaseUrl(event);
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
-  const paymentAmount = Math.round(orderTotal * 100);
-  const userBasket = buildUserBasket(items);
+  const paymentAmount = formatDirectPaymentAmount(orderTotal);
+  const userBasket = buildDirectUserBasket(items);
   const userIp = resolveClientIp(event);
+  const installmentCount = '0';
+  const paymentType = 'card';
+  const non3d = '0';
 
-  const paytrToken = createPaytrTokenHash({
+  const paytrToken = createDirectPaytrTokenHash({
     merchantId: config.merchantId,
     merchantKey: config.merchantKey,
     merchantSalt: config.merchantSalt,
@@ -127,11 +131,11 @@ exports.handler = async (event) => {
     merchantOid,
     email,
     paymentAmount,
-    userBasket,
-    noInstallment: config.noInstallment,
-    maxInstallment: config.maxInstallment,
+    paymentType,
+    installmentCount,
     currency: config.currency,
     testMode: config.testMode,
+    non3d,
   });
 
   const userName = customerName.slice(0, 60);
@@ -207,56 +211,40 @@ exports.handler = async (event) => {
     });
     await store.setJSON('order-index', index.slice(0, 500));
 
-    const form = new URLSearchParams({
+    const form = {
       merchant_id: config.merchantId,
       user_ip: userIp,
       merchant_oid: merchantOid,
       email,
-      payment_amount: String(paymentAmount),
-      paytr_token: paytrToken,
-      user_basket: userBasket,
-      debug_on: config.debugOn,
-      no_installment: config.noInstallment,
-      max_installment: config.maxInstallment,
+      payment_type: paymentType,
+      payment_amount: paymentAmount,
+      installment_count: installmentCount,
+      currency: config.currency,
+      test_mode: config.testMode,
+      non_3d: non3d,
+      merchant_ok_url: `${base}/odeme/basarili?oid=${id}`,
+      merchant_fail_url: `${base}/odeme/hata?oid=${id}`,
       user_name: userName,
       user_address: userAddress || '-',
       user_phone: userPhone,
-      merchant_ok_url: `${base}/odeme/basarili?oid=${id}`,
-      merchant_fail_url: `${base}/odeme/hata?oid=${id}`,
-      timeout_limit: config.timeoutLimit,
-      currency: config.currency,
-      test_mode: config.testMode,
-      lang: 'tr',
-    });
-
-    const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form.toString(),
-    });
-    const result = await response.json();
-
-    if (result.status !== 'success' || !result.token) {
-      console.error('paytr-token:', result);
-      return {
-        statusCode: 502,
-        headers: HEADERS,
-        body: JSON.stringify({
-          error: result.reason || 'PayTR token alınamadı',
-          paytr: result,
-        }),
-      };
-    }
+      user_basket: userBasket,
+      debug_on: config.debugOn,
+      client_lang: 'tr',
+      paytr_token: paytrToken,
+      non3d_test_failed: '0',
+    };
 
     return {
       statusCode: 200,
       headers: HEADERS,
       body: JSON.stringify({
         ok: true,
+        mode: 'direct',
         orderId: id,
         orderNumber,
         merchantOid,
-        token: result.token,
+        orderTotal,
+        form,
       }),
     };
   } catch (err) {

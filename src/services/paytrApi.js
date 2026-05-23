@@ -1,4 +1,4 @@
-/** PayTR ödeme token isteği */
+/** PayTR Direct API — sipariş hazırla, ödeme formu alanlarını döndür */
 export async function startPaytrPayment(payload) {
   const res = await fetch('/api/paytr/token', {
     method: 'POST',
@@ -10,7 +10,7 @@ export async function startPaytrPayment(payload) {
     const msg = [data.error, data.paytr?.reason].filter(Boolean).join(' — ') || 'Ödeme başlatılamadı';
     throw new Error(msg);
   }
-  if (!data?.token || !data?.orderId) {
+  if (!data?.form || !data?.orderId) {
     throw new Error('PayTR yanıtı geçersiz');
   }
   return data;
