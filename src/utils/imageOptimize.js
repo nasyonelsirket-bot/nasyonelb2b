@@ -47,7 +47,11 @@ export function optimizeImageUrl(url, variant = 'card') {
 }
 
 export function optimizeBannerImage(url) {
-  return optimizeImageUrl(url, 'banner');
+  if (!url || typeof url !== 'string') return '';
+  const raw = url.trim();
+  // Yüklenen / CDN banner URL'lerine dokunma — yalnızca Unsplash demo görsellerini küçült
+  if (raw.includes('images.unsplash.com')) return optimizeImageUrl(raw, 'banner');
+  return raw;
 }
 
 export function buildImageSrcSet(url, variant = 'card') {

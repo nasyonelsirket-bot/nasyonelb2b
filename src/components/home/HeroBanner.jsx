@@ -41,12 +41,14 @@ export default function HeroBanner({ bannerIds }) {
     const ids = Array.isArray(bannerIds) ? bannerIds.filter(Boolean) : [];
     if (!ids.length) return allActive;
     const byId = new Map(allActive.map((b) => [b.id, b]));
-    return ids.map((id) => byId.get(id)).filter(Boolean);
+    const picked = ids.map((id) => byId.get(id)).filter(Boolean);
+    // Ayarlardaki ID'ler henüz yüklenmemiş banner'larla eşleşmezse tüm aktif bannerları göster
+    return picked.length ? picked : allActive;
   }, [allActive, bannerIds]);
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(true);
   const touchStart = useRef(null);
 
   const count = active.length;
@@ -70,6 +72,13 @@ export default function HeroBanner({ bannerIds }) {
     if (!active[0]?.image) return undefined;
     return preloadHeroImage(active[0].image);
   }, [active]);
+
+  useEffect(() => {
+    if (!currentSrc || typeof window === 'undefined') return;
+    const img = new window.Image();
+    img.src = currentSrc;
+    if (img.complete) setLoaded(true);
+  }, [currentSrc]);
 
   useEffect(() => {
     if (count <= 1 || paused) return undefined;
@@ -148,6 +157,7 @@ export default function HeroBanner({ bannerIds }) {
                 height={533}
                 draggable={false}
                 onLoad={() => setLoaded(true)}
+                onError={() => setLoaded(true)}
               />
               {hasText && (
                 <>

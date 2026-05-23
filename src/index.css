@@ -91,16 +91,16 @@
     height: 2.75rem;
   }
   .site-logo--header {
-    height: 2.75rem;
+    height: 3rem;
   }
   @media (min-width: 640px) {
     .site-logo--header {
-      height: 3rem;
+      height: 3.25rem;
     }
   }
   @media (min-width: 1024px) {
     .site-logo--header {
-      height: 3.25rem;
+      height: 3.5rem;
     }
   }
 
