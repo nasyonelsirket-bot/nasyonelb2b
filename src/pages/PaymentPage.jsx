@@ -5,6 +5,11 @@ import SEO from '@/components/seo/SEO';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
+import {
+  attachPaytrIframeDebugListeners,
+  logPaytrIframeEvent,
+  redactPaytrIframeUrl,
+} from '@/utils/paytrIframeDebug';
 
 const IFRAME_RESIZER_SRC = 'https://www.paytr.com/js/iframeResizer.min.js';
 
@@ -42,6 +47,10 @@ export default function PaymentPage() {
   const [iframeUrl, setIframeUrl] = useState('');
   const iframeRef = useRef(null);
   const resizerStarted = useRef(false);
+
+  useEffect(() => {
+    return attachPaytrIframeDebugListeners();
+  }, []);
 
   useEffect(() => {
     if (!orderId) return undefined;
@@ -156,7 +165,18 @@ export default function PaymentPage() {
                     frameBorder="0"
                     scrolling="no"
                     className="w-full min-h-[480px] max-md:min-h-[420px] border-0"
-                    allow="payment"
+                    allow="payment *; fullscreen"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    onLoad={(event) => {
+                      logPaytrIframeEvent('load', {
+                        src: redactPaytrIframeUrl(event.currentTarget.src),
+                      });
+                    }}
+                    onError={() => {
+                      logPaytrIframeEvent('error', {
+                        message: 'PayTR iframe yüklenemedi — CSP/X-Frame-Options kontrol edin',
+                      });
+                    }}
                   />
                 </div>
               )}
