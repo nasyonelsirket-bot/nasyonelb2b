@@ -149,6 +149,8 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
     overscroll-behavior-x: contain;
+    overscroll-behavior-y: none;
+    overflow-anchor: none;
     -webkit-overflow-scrolling: touch;
   }
   .product-strip-track::-webkit-scrollbar {
@@ -212,6 +214,12 @@
   /* Ürün şeridi — kart genişliği butonlar için yeterli */
   .product-strip-item {
     container-type: inline-size;
+  }
+
+  html.peek-scroll-lock,
+  html.peek-scroll-lock body {
+    overflow: hidden;
+    overscroll-behavior-y: none;
   }
 
   /* Mobil ürün grid — Trendyol tarzı 2 sütun, kompakt kart */
