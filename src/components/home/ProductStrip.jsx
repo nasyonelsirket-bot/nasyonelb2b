@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Flame } from 'lucide-react';
 import ProductCard from '@/components/product/ProductCard';
 import { markBestSellerFlags } from '@/utils/productBestseller';
 import { useAxisScrollLock } from '@/utils/useAxisScrollLock';
+import { useScrollPeekHint } from '@/utils/useScrollPeekHint';
 
 const SCROLL_STEP = 0.82;
 
@@ -16,6 +17,7 @@ export default function ProductStrip({
   seeAllLabel = 'Tümünü Gör',
   accent = 'orange',
   markBestsellers = true,
+  peekHint = true,
 }) {
   const trackRef = useRef(null);
   useAxisScrollLock(trackRef);
@@ -25,6 +27,8 @@ export default function ProductStrip({
   const list = markBestsellers
     ? markBestSellerFlags(Array.isArray(products) ? products : [], 12)
     : Array.isArray(products) ? products : [];
+
+  useScrollPeekHint(trackRef, { enabled: peekHint, ready: list.length > 1 });
 
   const updateArrows = useCallback(() => {
     const el = trackRef.current;

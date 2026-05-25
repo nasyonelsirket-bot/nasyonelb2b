@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { CreditCard, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
+import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
@@ -105,6 +106,10 @@ export default function PaymentPage() {
     };
   }, [iframeUrl]);
 
+  const scrollToPayment = () => {
+    iframeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (!orderId) {
     return <Navigate to="/sepet" replace />;
   }
@@ -187,6 +192,17 @@ export default function PaymentPage() {
             </div>
           </div>
         </div>
+
+        <MobileCheckoutStickyBar
+          label="Kredi Kartı ile Öde"
+          onClick={scrollToPayment}
+          loading={loading}
+          loadingLabel="Ödeme ekranı hazırlanıyor…"
+          disabled={!iframeUrl && !loading}
+          error={formError}
+          total={orderTotal ?? null}
+          showPaymentIcon
+        />
       </div>
     </>
   );

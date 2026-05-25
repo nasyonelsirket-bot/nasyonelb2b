@@ -17,6 +17,7 @@ import QuantityControls from '@/components/product/QuantityControls';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 import CheckoutLegalConsent from '@/components/cart/CheckoutLegalConsent';
+import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -494,20 +495,16 @@ export default function CartPage() {
         </div>
         </div>
 
-        <div className="checkout-sticky-bar md:hidden px-1">
-          {formError && (
-            <p className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              {formError}
-            </p>
-          )}
-          <CheckoutActions
-            step={step}
-            setStep={setStep}
-            goNext={goNext}
-            handleSubmit={handleSubmit}
-            submitting={submitting}
-          />
-        </div>
+        <MobileCheckoutStickyBar
+          label={step < 3 ? 'Devam Et' : 'Kredi Kartı ile Öde'}
+          onClick={step < 3 ? goNext : handleSubmit}
+          loading={submitting}
+          loadingLabel="Ödeme hazırlanıyor…"
+          error={formError}
+          total={orderTotal}
+          onBack={step > 1 ? () => setStep((s) => s - 1) : null}
+          showPaymentIcon={step >= 3}
+        />
       </div>
     </>
   );
