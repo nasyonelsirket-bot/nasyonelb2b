@@ -57,10 +57,10 @@ exports.handler = async (event) => {
   }
 
   const post = parseEventFormBody(event);
-  const merchantOid = post.merchant_oid;
-  const status = post.status;
+  const merchantOid = String(post.merchant_oid || '').trim();
+  const status = String(post.status || '').trim();
   const totalAmount = post.total_amount;
-  const hash = post.hash;
+  const hash = String(post.hash || '').trim();
 
   if (!merchantOid || !status || totalAmount == null || totalAmount === '' || !hash) {
     console.error('paytr-callback: eksik alan', {
