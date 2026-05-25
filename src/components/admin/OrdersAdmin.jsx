@@ -365,6 +365,24 @@ export default function OrdersAdmin({ setMsg }) {
   }, [load]);
 
   useEffect(() => {
+    const refreshSilent = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const list = await fetchOrders();
+        if (Array.isArray(list)) setOrders(list);
+        if (expandedId) {
+          const fresh = await fetchOrderDetail(expandedId);
+          setDetail(fresh);
+        }
+      } catch {
+        /* sessiz yenileme */
+      }
+    };
+    const timer = window.setInterval(refreshSilent, 15000);
+    return () => window.clearInterval(timer);
+  }, [expandedId]);
+
+  useEffect(() => {
     setSelectedIds(new Set());
   }, [filter, paymentFilter]);
 

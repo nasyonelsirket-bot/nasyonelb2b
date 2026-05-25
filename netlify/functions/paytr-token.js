@@ -198,6 +198,7 @@ exports.handler = async (event) => {
       orderTotal,
       paymentMethod,
       status,
+      paymentStatus: 'pending',
       itemCount: items.length,
     });
     await store.setJSON('order-index', index.slice(0, 500));

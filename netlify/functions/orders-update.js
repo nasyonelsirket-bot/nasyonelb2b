@@ -151,6 +151,7 @@ exports.handler = async (event) => {
           ? {
               ...row,
               status,
+              paymentStatus: order.paymentStatus || row.paymentStatus || '',
               updatedAt: now,
               cancelReason: order.cancelReason || '',
             }
