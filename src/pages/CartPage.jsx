@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Trash2,
   Truck,
@@ -49,6 +49,7 @@ const STEPS = [
 ];
 
 export default function CartPage() {
+  const navigate = useNavigate();
   const { items, totalPrice, removeFromCart, setQuantity, increment, decrement, clearCart } =
     useCart();
   const { settings } = useStore();
@@ -236,8 +237,14 @@ export default function CartPage() {
       });
       saveCheckoutCustomer(customer);
       trackFormSubmit(items, { success: true });
-      // Tam sayfa yönlendirme: mobilde iframe kırılmasını ve paytr.com/odeme token hatasını önler.
-      window.location.assign(`https://www.paytr.com/odeme/guvenli/${result.iframeToken}`);
+      navigate('/odeme', {
+        state: {
+          iframeToken: result.iframeToken,
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          orderTotal,
+        },
+      });
     } catch (submitErr) {
       const msg = submitErr?.message || 'Ödeme başlatılamadı.';
       setFormError(msg);
