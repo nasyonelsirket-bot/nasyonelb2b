@@ -229,6 +229,8 @@ exports.handler = async (event) => {
       currency: config.currency,
       test_mode: config.testMode,
       non_3d: non3d,
+      no_installment: config.noInstallment,
+      max_installment: config.maxInstallment,
       merchant_ok_url: `${base}/odeme/basarili?oid=${id}`,
       merchant_fail_url: `${base}/odeme/hata?oid=${id}`,
       user_name: userName,
