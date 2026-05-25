@@ -239,7 +239,7 @@ export default function CartPage() {
       trackFormSubmit(items, { success: true });
       navigate('/odeme', {
         state: {
-          iframeToken: result.iframeToken,
+          form: result.form,
           orderId: result.orderId,
           orderNumber: result.orderNumber,
           orderTotal,

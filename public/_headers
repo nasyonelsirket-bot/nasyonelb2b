@@ -11,12 +11,13 @@
 /odeme
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Resource-Policy: cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(self "https://www.paytr.com" "https://paytr.com"), storage-access=(self "https://www.paytr.com" "https://paytr.com")
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(self "https://www.paytr.com" "https://paytr.com"), storage-access=(self "https://www.paytr.com" "https://paytr.com")
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://connect.facebook.net https://www.paytr.com https://paytr.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com https://connect.facebook.net https://www.facebook.com https://api.ipify.org https://www.paytr.com https://paytr.com https://cdn.jsdelivr.net; worker-src 'self' blob:; frame-src 'self' https://www.paytr.com https://paytr.com; child-src 'self' blob: https://www.paytr.com https://paytr.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://www.paytr.com https://paytr.com; upgrade-insecure-requests
 
 /odeme/*
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Resource-Policy: cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(self "https://www.paytr.com" "https://paytr.com"), storage-access=(self "https://www.paytr.com" "https://paytr.com")
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(self "https://www.paytr.com" "https://paytr.com"), storage-access=(self "https://www.paytr.com" "https://paytr.com")
 
 /index.html
   Cache-Control: no-cache, no-store, must-revalidate
