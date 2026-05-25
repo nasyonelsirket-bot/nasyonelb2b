@@ -54,3 +54,16 @@ export async function fetchPaytrIframeToken(orderId) {
   }
   return data;
 }
+
+/** PayTR callback sonrası ödeme durumunu doğrular (success sayfası için). */
+export async function fetchPaymentStatus(orderId) {
+  const res = await fetch(`/api/orders/payment-status?id=${encodeURIComponent(orderId)}`, {
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Ödeme durumu alınamadı');
+  }
+  return data;
+}

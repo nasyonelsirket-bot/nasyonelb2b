@@ -390,6 +390,20 @@
     --checkout-bar-reserve: 9rem;
   }
 
+  html.checkout-cta-hidden {
+    --checkout-bar-reserve: 1.25rem;
+  }
+
+  html.checkout-cta-hidden .mobile-checkout-sticky-bar {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  .checkout-shell--iframe-active .checkout-shell__main {
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
   html.checkout-active body {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;

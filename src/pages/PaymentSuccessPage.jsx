@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Home, Sparkles } from 'lucide-react';
+import { CheckCircle2, Home, Loader2, Sparkles } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import ConfettiBurst from '@/components/payment/ConfettiBurst';
 import { useCart } from '@/context/CartContext';
+import { fetchPaymentStatus } from '@/services/paytrApi';
+import { clearPaymentSession } from '@/utils/paytrPaymentSession';
 import { trackPurchase } from '@/lib/analytics/ga4';
 
 const REDIRECT_SECONDS = 5;
+const POLL_INTERVAL_MS = 2000;
+const POLL_MAX_ATTEMPTS = 20;
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
@@ -19,6 +23,8 @@ export default function PaymentSuccessPage() {
   const redirectTimer = useRef(null);
   const redirected = useRef(false);
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+  const [verifyState, setVerifyState] = useState('checking');
+  const [verifyMessage, setVerifyMessage] = useState('Ödemeniz doğrulanıyor…');
 
   const goHome = useCallback(() => {
     if (redirected.current) return;
@@ -36,20 +42,99 @@ export default function PaymentSuccessPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (cartCleared.current) return;
-    cartCleared.current = true;
-    if (!tracked.current && orderId && items?.length) {
-      trackPurchase({
-        transactionId: orderId,
-        items,
-        value: items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
-      });
-      tracked.current = true;
+    if (!orderId) {
+      setVerifyState('missing');
+      setVerifyMessage('Sipariş referansı bulunamadı.');
+      return undefined;
     }
-    clearCart();
+
+    let cancelled = false;
+    let attempts = 0;
+    let timer = null;
+    let finalized = false;
+
+    const stopPolling = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+
+    const finalizeSuccess = () => {
+      if (cancelled || cartCleared.current || finalized) return;
+      finalized = true;
+      stopPolling();
+      cartCleared.current = true;
+      clearPaymentSession(orderId);
+
+      if (!tracked.current && items?.length) {
+        trackPurchase({
+          transactionId: orderId,
+          items,
+          value: items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
+        });
+        tracked.current = true;
+      }
+      clearCart();
+      setVerifyState('confirmed');
+      setVerifyMessage('Ödemeniz onaylandı.');
+    };
+
+    const poll = async () => {
+      if (cancelled || finalized) return;
+      attempts += 1;
+      try {
+        const status = await fetchPaymentStatus(orderId);
+        if (cancelled || finalized) return;
+
+        if (status.failed) {
+          finalized = true;
+          stopPolling();
+          setVerifyState('failed');
+          setVerifyMessage('Ödeme tamamlanamadı. Sepetinizden tekrar deneyebilirsiniz.');
+          return;
+        }
+
+        if (status.paid) {
+          finalizeSuccess();
+          return;
+        }
+
+        if (attempts >= POLL_MAX_ATTEMPTS) {
+          finalized = true;
+          stopPolling();
+          setVerifyState('pending');
+          setVerifyMessage(
+            'Ödemeniz işleniyor. Onay e-postası geldiğinde siparişiniz sistemde görünecektir.',
+          );
+          return;
+        }
+
+        setVerifyState('checking');
+        setVerifyMessage('Ödemeniz doğrulanıyor…');
+      } catch {
+        if (cancelled || finalized) return;
+        if (attempts >= POLL_MAX_ATTEMPTS) {
+          finalized = true;
+          stopPolling();
+          setVerifyState('pending');
+          setVerifyMessage('Ödeme durumu şu an doğrulanamadı. E-posta bildiriminizi kontrol edin.');
+        }
+      }
+    };
+
+    poll();
+    timer = setInterval(poll, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      stopPolling();
+    };
   }, [orderId, items, clearCart]);
 
   useEffect(() => {
+    if (verifyState !== 'confirmed') return undefined;
+
     redirectTimer.current = setInterval(() => {
       setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -57,34 +142,63 @@ export default function PaymentSuccessPage() {
     return () => {
       if (redirectTimer.current) clearInterval(redirectTimer.current);
     };
-  }, []);
+  }, [verifyState]);
 
   useEffect(() => {
-    if (secondsLeft === 0) goHome();
-  }, [secondsLeft, goHome]);
+    if (verifyState === 'confirmed' && secondsLeft === 0) goHome();
+  }, [verifyState, secondsLeft, goHome]);
+
+  const showSuccessUi = verifyState === 'confirmed';
+  const showPendingUi = verifyState === 'checking' || verifyState === 'pending';
+  const showFailedUi = verifyState === 'failed' || verifyState === 'missing';
 
   return (
     <>
       <SEO title="Ödeme Başarılı" path="/odeme/basarili" noindex />
-      <ConfettiBurst />
+      {showSuccessUi ? <ConfettiBurst /> : null}
 
       <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-10 sm:py-16">
         <div className="relative w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-emerald-100 shadow-lg shadow-emerald-200/60 animate-[success-pop_0.55s_ease-out]">
-            <CheckCircle2 className="h-11 w-11 sm:h-14 sm:w-14 text-emerald-600" strokeWidth={2.2} />
-          </div>
+          {showPendingUi && (
+            <>
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-brand-100">
+                <Loader2 className="h-10 w-10 animate-spin text-brand-700" />
+              </div>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900 tracking-tight">
+                Ödeme Doğrulanıyor
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-brand-600 leading-relaxed px-2">{verifyMessage}</p>
+            </>
+          )}
 
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent-gold/15 border border-accent-gold/30 px-3 py-1 text-xs font-semibold text-brand-800 mb-4">
-            <Sparkles className="h-3.5 w-3.5 text-accent-gold" />
-            Ödeme onaylandı
-          </div>
+          {showSuccessUi && (
+            <>
+              <div className="mx-auto mb-6 flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-emerald-100 shadow-lg shadow-emerald-200/60 animate-[success-pop_0.55s_ease-out]">
+                <CheckCircle2 className="h-11 w-11 sm:h-14 sm:w-14 text-emerald-600" strokeWidth={2.2} />
+              </div>
 
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900 tracking-tight">
-            Ödemeniz Alındı
-          </h1>
-          <p className="mt-3 text-sm sm:text-base text-brand-600 leading-relaxed px-2">
-            Teşekkür ederiz! Ödeme işleminiz tamamlandı. Onay e-postanız kısa süre içinde iletilecektir.
-          </p>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent-gold/15 border border-accent-gold/30 px-3 py-1 text-xs font-semibold text-brand-800 mb-4">
+                <Sparkles className="h-3.5 w-3.5 text-accent-gold" />
+                Ödeme onaylandı
+              </div>
+
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900 tracking-tight">
+                Ödemeniz Alındı
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-brand-600 leading-relaxed px-2">
+                Teşekkür ederiz! Ödeme işleminiz tamamlandı. Onay e-postanız kısa süre içinde iletilecektir.
+              </p>
+            </>
+          )}
+
+          {showFailedUi && (
+            <>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900 tracking-tight">
+                Ödeme Doğrulanamadı
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-brand-600 leading-relaxed px-2">{verifyMessage}</p>
+            </>
+          )}
 
           {orderId && (
             <p className="mt-3 text-xs sm:text-sm text-gray-500 font-mono bg-gray-50 inline-block px-3 py-1 rounded-lg border border-gray-100">
@@ -92,16 +206,18 @@ export default function PaymentSuccessPage() {
             </p>
           )}
 
-          <p className="mt-5 text-sm text-brand-700 font-medium">
-            {secondsLeft > 0 ? (
-              <>
-                <span className="tabular-nums font-bold text-accent-gold">{secondsLeft}</span> saniye içinde ana
-                sayfaya yönlendirileceksiniz…
-              </>
-            ) : (
-              'Ana sayfaya yönlendiriliyorsunuz…'
-            )}
-          </p>
+          {showSuccessUi && (
+            <p className="mt-5 text-sm text-brand-700 font-medium">
+              {secondsLeft > 0 ? (
+                <>
+                  <span className="tabular-nums font-bold text-accent-gold">{secondsLeft}</span> saniye içinde ana
+                  sayfaya yönlendirileceksiniz…
+                </>
+              ) : (
+                'Ana sayfaya yönlendiriliyorsunuz…'
+              )}
+            </p>
+          )}
 
           <div className="mt-8 px-2">
             <Button

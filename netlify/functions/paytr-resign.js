@@ -68,36 +68,47 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş ödemeye uygun değil' }) };
     }
 
-    const merchantOid = mintPaytrMerchantOid(order.id);
+    const merchantOid =
+      String(order.paytrMerchantOid || order.merchantOid || '').trim().startsWith('NT') &&
+      order.status === 'pending_payment'
+        ? String(order.paytrMerchantOid || order.merchantOid).trim()
+        : mintPaytrMerchantOid(order.id);
+
+    const oidChanged = merchantOid !== (order.paytrMerchantOid || order.merchantOid);
     const updatedOrder = {
       ...order,
       merchantOid,
       paytrMerchantOid: merchantOid,
-      paytrMerchantOidAt: new Date().toISOString(),
+      ...(oidChanged ? { paytrMerchantOidAt: new Date().toISOString() } : {}),
       updatedAt: new Date().toISOString(),
     };
-    await store.setJSON(`order-${orderId}`, updatedOrder);
-    await registerMerchantOidMapping(store, merchantOid, orderId);
-    await upsertOrderIndexRow(store, updatedOrder, orderId, 'paytr-resign');
+    if (oidChanged || updatedOrder.paytrMerchantOid !== order.paytrMerchantOid) {
+      await store.setJSON(`order-${orderId}`, updatedOrder);
+      await registerMerchantOidMapping(store, merchantOid, orderId);
+      await upsertOrderIndexRow(store, updatedOrder, orderId, 'paytr-resign');
+    }
+
+    const activeOrder = updatedOrder;
 
     console.log('[paytr-resign] order saved', {
       order_id: orderId,
       merchant_oid: merchantOid,
       user_ip: userIp,
+      oid_reused: !oidChanged,
     });
 
     const base = siteBaseUrl(event);
-    const email = String(order.customer?.email || '').trim().slice(0, 100);
+    const email = String(activeOrder.customer?.email || '').trim().slice(0, 100);
 
     const checkout = await buildPaytrIframeCheckout({
       config,
       base,
-      orderId: order.id,
+      orderId: activeOrder.id,
       merchantOid,
       email,
-      orderTotal: order.orderTotal,
-      items: order.items,
-      customer: order.customer,
+      orderTotal: activeOrder.orderTotal,
+      items: activeOrder.items,
+      customer: activeOrder.customer,
       userIp,
       userIpDebug: ipResult.debug,
       context: `resign:${order.id}`,

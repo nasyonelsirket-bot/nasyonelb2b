@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { CreditCard, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -7,12 +7,18 @@ import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
 import {
+  ensurePaytrIframeSession,
+  readPaymentSession,
+  resolvePaymentNavState,
+} from '@/utils/paytrPaymentSession';
+import {
   attachPaytrIframeDebugListeners,
   logPaytrIframeEvent,
   redactPaytrIframeUrl,
 } from '@/utils/paytrIframeDebug';
 
 const IFRAME_RESIZER_SRC = 'https://www.paytr.com/js/iframeResizer.min.js';
+const resizerStartedByOrder = new Set();
 
 function loadIframeResizerScript() {
   return new Promise((resolve, reject) => {
@@ -39,42 +45,64 @@ function loadIframeResizerScript() {
 
 export default function PaymentPage() {
   const location = useLocation();
-  const orderId = location.state?.orderId;
-  const orderNumber = location.state?.orderNumber;
-  const orderTotal = location.state?.orderTotal;
+  const paymentNav = useMemo(() => resolvePaymentNavState(location.state), [location.state]);
+  const orderId = paymentNav?.orderId;
+  const orderNumber = paymentNav?.orderNumber;
+  const orderTotal = paymentNav?.orderTotal;
 
-  const [loading, setLoading] = useState(true);
+  const cachedSession = orderId ? readPaymentSession(orderId) : null;
+  const [loading, setLoading] = useState(!cachedSession?.iframeUrl);
   const [formError, setFormError] = useState('');
-  const [iframeUrl, setIframeUrl] = useState('');
+  const [iframeUrl, setIframeUrl] = useState(cachedSession?.iframeUrl || '');
   const iframeRef = useRef(null);
-  const resizerStarted = useRef(false);
+  const tokenRequestedRef = useRef(Boolean(cachedSession?.iframeUrl));
+
+  const paymentFormActive = Boolean(iframeUrl);
 
   useEffect(() => {
     return attachPaytrIframeDebugListeners();
   }, []);
 
   useEffect(() => {
-    if (!orderId) return undefined;
+    const html = document.documentElement;
+    if (paymentFormActive) {
+      html.classList.add('checkout-cta-hidden');
+    } else {
+      html.classList.remove('checkout-cta-hidden');
+    }
+    return () => html.classList.remove('checkout-cta-hidden');
+  }, [paymentFormActive]);
 
+  useEffect(() => {
+    if (!orderId || tokenRequestedRef.current) return undefined;
+
+    tokenRequestedRef.current = true;
     let cancelled = false;
-    resizerStarted.current = false;
 
-    (async () => {
-      setLoading(true);
-      setFormError('');
-      setIframeUrl('');
-      try {
-        const data = await fetchPaytrIframeToken(orderId);
+    const existing = readPaymentSession(orderId);
+    if (existing?.iframeUrl) {
+      setIframeUrl(existing.iframeUrl);
+      setLoading(false);
+      return undefined;
+    }
+
+    setLoading(true);
+    setFormError('');
+
+    ensurePaytrIframeSession(orderId, () => fetchPaytrIframeToken(orderId))
+      .then((data) => {
         if (cancelled) return;
         setIframeUrl(data.iframeUrl);
-      } catch (err) {
+      })
+      .catch((err) => {
         if (!cancelled) {
+          tokenRequestedRef.current = false;
           setFormError(err?.message || 'PayTR ödeme ekranı açılamadı.');
         }
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
+      });
 
     return () => {
       cancelled = true;
@@ -82,7 +110,7 @@ export default function PaymentPage() {
   }, [orderId]);
 
   useEffect(() => {
-    if (!iframeUrl || !iframeRef.current || resizerStarted.current) return undefined;
+    if (!iframeUrl || !orderId || resizerStartedByOrder.has(orderId)) return undefined;
 
     let cancelled = false;
 
@@ -90,9 +118,16 @@ export default function PaymentPage() {
       try {
         await loadIframeResizerScript();
         if (cancelled || !iframeRef.current) return;
-        if (typeof window.iFrameResize === 'function') {
-          window.iFrameResize({}, '#paytriframe');
-          resizerStarted.current = true;
+        if (typeof window.iFrameResize === 'function' && !resizerStartedByOrder.has(orderId)) {
+          window.iFrameResize(
+            {
+              checkOrigin: false,
+              heightCalculationMethod: 'lowestElement',
+              warningTimeout: 10000,
+            },
+            '#paytriframe',
+          );
+          resizerStartedByOrder.add(orderId);
         }
       } catch (err) {
         if (!cancelled) {
@@ -104,20 +139,20 @@ export default function PaymentPage() {
     return () => {
       cancelled = true;
     };
-  }, [iframeUrl]);
-
-  const scrollToPayment = () => {
-    iframeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  }, [iframeUrl, orderId]);
 
   if (!orderId) {
     return <Navigate to="/sepet" replace />;
   }
 
+  const showStickyCta = !paymentFormActive;
+
   return (
     <>
       <SEO title="Güvenli Ödeme" path="/odeme" noindex />
-      <div className="checkout-shell md:min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 py-6 sm:py-10">
+      <div
+        className={`checkout-shell md:min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 py-6 sm:py-10 ${paymentFormActive ? 'checkout-shell--iframe-active' : ''}`}
+      >
         <div className="checkout-shell__main md:pb-0 mx-auto max-w-2xl px-4 w-full">
           <Link
             to="/sepet"
@@ -153,14 +188,14 @@ export default function PaymentPage() {
                 </p>
               )}
 
-              {loading && (
+              {loading && !iframeUrl && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-brand-700">
                   <Loader2 className="h-10 w-10 animate-spin text-accent-gold" />
                   <p className="text-sm font-medium">PayTR ödeme ekranı hazırlanıyor…</p>
                 </div>
               )}
 
-              {!loading && iframeUrl && (
+              {iframeUrl ? (
                 <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
                   <iframe
                     ref={iframeRef}
@@ -184,7 +219,7 @@ export default function PaymentPage() {
                     }}
                   />
                 </div>
-              )}
+              ) : null}
 
               <p className="text-center text-[11px] text-gray-500 pt-4">
                 Ödeme sonucu sipariş sistemimize otomatik bildirilir. Başarılı ödeme sonrası onay e-postası gönderilir.
@@ -193,16 +228,18 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        <MobileCheckoutStickyBar
-          label="Kredi Kartı ile Öde"
-          onClick={scrollToPayment}
-          loading={loading}
-          loadingLabel="Ödeme ekranı hazırlanıyor…"
-          disabled={!iframeUrl && !loading}
-          error={formError}
-          total={orderTotal ?? null}
-          showPaymentIcon
-        />
+        {showStickyCta ? (
+          <MobileCheckoutStickyBar
+            label="Kredi Kartı ile Öde"
+            onClick={() => {}}
+            loading={loading}
+            loadingLabel="Ödeme ekranı hazırlanıyor…"
+            disabled={!iframeUrl && !loading}
+            error={formError}
+            total={orderTotal ?? null}
+            showPaymentIcon
+          />
+        ) : null}
       </div>
     </>
   );

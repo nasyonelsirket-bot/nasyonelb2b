@@ -16,9 +16,12 @@ export default function MobileCheckoutStickyBar({
   totalLabel = 'Toplam',
   onBack = null,
   showPaymentIcon = false,
+  hidden = false,
   className = '',
 }) {
   const isDisabled = disabled || loading;
+
+  if (hidden) return null;
 
   return (
     <div

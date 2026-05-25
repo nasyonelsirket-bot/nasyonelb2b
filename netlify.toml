@@ -166,6 +166,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/orders/payment-status"
+  to = "/.netlify/functions/orders-payment-status"
+  status = 200
+  force = true
+
 # PayTR iFrame — müşteri dönüş URL'leri (merchant_ok_url / merchant_fail_url)
 [[redirects]]
   from = "/odeme/basarili"
