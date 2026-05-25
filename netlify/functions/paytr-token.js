@@ -238,7 +238,9 @@ exports.handler = async (event) => {
       user_phone: userPhone,
       user_basket: userBasket,
       debug_on: config.debugOn,
+      lang: 'tr',
       client_lang: 'tr',
+      timeout_limit: config.timeoutLimit,
       paytr_token: paytrToken,
       non3d_test_failed: '0',
     };
