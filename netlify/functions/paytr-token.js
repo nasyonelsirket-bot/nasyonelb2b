@@ -9,10 +9,10 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  buildUserBasket,
+  buildDirectUserBasket,
   formatDirectPaymentAmount,
-  createPaytrTokenHash,
-  resolveClientIp,
+  createDirectPaytrTokenHash,
+  resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
 
@@ -118,13 +118,20 @@ exports.handler = async (event) => {
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
   const paymentAmount = formatDirectPaymentAmount(orderTotal);
-  const userBasket = buildUserBasket(items);
-  const userIp = resolveClientIp(event);
+  const userBasket = buildDirectUserBasket(items);
+  const userIp = resolvePaytrUserIp(event, body);
+  if (!userIp) {
+    return {
+      statusCode: 400,
+      headers: HEADERS,
+      body: JSON.stringify({ error: 'Ödeme için müşteri IP adresi alınamadı. Sayfayı yenileyip tekrar deneyin.' }),
+    };
+  }
   const installmentCount = '0';
   const paymentType = 'card';
   const non3d = '0';
 
-  const paytrToken = createPaytrTokenHash({
+  const paytrToken = createDirectPaytrTokenHash({
     merchantId: config.merchantId,
     merchantKey: config.merchantKey,
     merchantSalt: config.merchantSalt,
@@ -132,11 +139,11 @@ exports.handler = async (event) => {
     merchantOid,
     email,
     paymentAmount,
-    userBasket,
-    noInstallment: config.noInstallment,
-    maxInstallment: config.maxInstallment,
+    paymentType,
+    installmentCount,
     currency: config.currency,
     testMode: config.testMode,
+    non3d,
   });
 
   const userName = customerName.slice(0, 60);
