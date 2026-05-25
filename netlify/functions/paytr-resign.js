@@ -49,7 +49,7 @@ exports.handler = async (event) => {
 
   try {
     const store = getOrderStore(event);
-    const order = await store.getJSON(`order-${orderId}`);
+    const order = await store.get(`order-${orderId}`, { type: 'json' });
     if (!order) {
       return { statusCode: 404, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş bulunamadı' }) };
     }
