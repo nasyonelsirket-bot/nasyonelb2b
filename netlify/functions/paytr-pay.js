@@ -8,10 +8,34 @@ const {
   parseCheckoutRequestBody,
   paytrErrorHtml,
   buildBrowserRelayHtml,
+  postToPaytrOdeme,
   getPaytrConfig,
   resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrCheckout.cjs');
+
+function relayPaytrResponse(result) {
+  const body = result.body || '';
+  const trimmed = body.trim();
+  if (trimmed.startsWith('{')) {
+    try {
+      const json = JSON.parse(trimmed);
+      const reason = json.reason || json.err_msg || trimmed;
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+        body: paytrErrorHtml(reason),
+      };
+    } catch {
+      /* HTML veya düz metin */
+    }
+  }
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+    body,
+  };
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -112,14 +136,23 @@ exports.handler = async (event) => {
       userIp,
     });
 
-    const html = buildBrowserRelayHtml({
+    const allFields = {
       ...paytrFields,
       cc_owner: ccOwner,
       card_number: cardNumber,
       expiry_month: expiryMonth,
       expiry_year: expiryYear,
       cvv,
-    });
+    };
+
+  // Sunucu POST — URLSearchParams ile base64/token encoding güvenli
+    const paytrResult = await postToPaytrOdeme(allFields);
+    if (paytrResult.body && !paytrResult.body.trim().startsWith('{')) {
+      return relayPaytrResponse(paytrResult);
+    }
+
+    // Token/alan hatası: tarayıcıdan doğrudan PayTR'ye ilet (IP eşleşmesi)
+    const html = buildBrowserRelayHtml(allFields);
 
     return {
       statusCode: 200,
