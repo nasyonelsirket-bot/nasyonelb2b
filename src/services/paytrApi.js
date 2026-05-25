@@ -1,21 +1,9 @@
 /** PayTR Direct API — sipariş hazırla, imzalı form alanları döndür */
-export async function fetchClientIp() {
-  try {
-    const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(4000) });
-    const data = await res.json();
-    const ip = String(data?.ip || '').trim();
-    return /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) ? ip : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export async function startPaytrPayment(payload) {
-  const userIp = payload.userIp || (await fetchClientIp());
   const res = await fetch('/api/paytr/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...payload, userIp }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -28,12 +16,11 @@ export async function startPaytrPayment(payload) {
   return data;
 }
 
-export async function resignPaytrForm(orderId, userIp) {
-  const ip = userIp || (await fetchClientIp());
+export async function resignPaytrForm(orderId) {
   const res = await fetch('/api/paytr/resign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderId, userIp: ip }),
+    body: JSON.stringify({ orderId }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

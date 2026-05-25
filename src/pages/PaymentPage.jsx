@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { CreditCard, ArrowLeft, Lock, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -6,9 +6,8 @@ import Button from '@/components/ui/Button';
 import CardScanButton from '@/components/payment/CardScanButton';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
-import { fetchClientIp, resignPaytrForm } from '@/services/paytrApi';
-
-const PAYTR_POST_URL = 'https://www.paytr.com/odeme';
+import { resignPaytrForm } from '@/services/paytrApi';
+import { forwardPaytrPayment } from '@/utils/paytrSubmit';
 
 const CARD_BRANDS = ['VISA', 'MASTERCARD', 'TROY'];
 
@@ -27,7 +26,6 @@ export default function PaymentPage() {
   const [formReady, setFormReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const formRef = useRef(null);
 
   const [card, setCard] = useState({
     cc_owner: '',
@@ -43,8 +41,7 @@ export default function PaymentPage() {
 
     (async () => {
       try {
-        const userIp = await fetchClientIp();
-        const data = await resignPaytrForm(orderId, userIp);
+        const data = await resignPaytrForm(orderId);
         if (!cancelled) {
           setPaytrForm(data.form);
           setFormReady(true);
@@ -80,38 +77,13 @@ export default function PaymentPage() {
     }));
   };
 
-  const applyHiddenFields = (formEl, fields) => {
-    for (const [key, value] of Object.entries(fields)) {
-      let input = formEl.querySelector(`input[name="${key}"]`);
-      if (!input) {
-        input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        formEl.appendChild(input);
-      }
-      input.value = String(value ?? '');
-    }
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormError('');
     setSubmitting(true);
 
     try {
-      const userIp = await fetchClientIp();
-      const data = await resignPaytrForm(orderId, userIp);
-      setPaytrForm(data.form);
-
-      const formEl = formRef.current || event.currentTarget;
-      applyHiddenFields(formEl, data.form);
-
-      const cardInput = formEl.querySelector('[name="card_number"]');
-      if (cardInput) {
-        cardInput.value = card.card_number.replace(/\D/g, '');
-      }
-
-      formEl.submit();
+      forwardPaytrPayment(orderId, card);
     } catch (err) {
       setFormError(err?.message || 'Ödeme gönderilemedi.');
       setSubmitting(false);
@@ -188,20 +160,20 @@ export default function PaymentPage() {
             </div>
 
             <form
-              ref={formRef}
-              action={PAYTR_POST_URL}
-              method="POST"
               className="p-5 sm:p-6 space-y-4"
               autoComplete="off"
               onSubmit={handleSubmit}
             >
-              {Object.entries(paytrForm).map(([key, value]) => (
-                <input key={key} type="hidden" name={key} value={String(value ?? '')} readOnly />
-              ))}
-
               {formError && (
                 <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
                   {formError}
+                </p>
+              )}
+
+              {!formReady && !formError && (
+                <p className="rounded-xl border border-brand-100 bg-brand-50/80 px-3 py-2.5 text-sm text-brand-700 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  Ödeme formu hazırlanıyor…
                 </p>
               )}
 
@@ -216,7 +188,6 @@ export default function PaymentPage() {
                 <label className="text-xs font-semibold text-brand-800">Kart üzerindeki isim</label>
                 <input
                   type="text"
-                  name="cc_owner"
                   autoComplete="cc-name"
                   value={card.cc_owner}
                   onChange={(e) => handleChange('cc_owner', e.target.value.toUpperCase())}
@@ -229,7 +200,6 @@ export default function PaymentPage() {
                 <label className="text-xs font-semibold text-brand-800">Kart numarası</label>
                 <input
                   type="text"
-                  name="card_number"
                   inputMode="numeric"
                   autoComplete="cc-number"
                   value={formatCardNumber(card.card_number)}
@@ -244,7 +214,6 @@ export default function PaymentPage() {
                   <label className="text-xs font-semibold text-brand-800">Ay</label>
                   <input
                     type="text"
-                    name="expiry_month"
                     inputMode="numeric"
                     autoComplete="cc-exp-month"
                     value={card.expiry_month}
@@ -258,7 +227,6 @@ export default function PaymentPage() {
                   <label className="text-xs font-semibold text-brand-800">Yıl</label>
                   <input
                     type="text"
-                    name="expiry_year"
                     inputMode="numeric"
                     autoComplete="cc-exp-year"
                     value={card.expiry_year}
@@ -272,7 +240,6 @@ export default function PaymentPage() {
                   <label className="text-xs font-semibold text-brand-800">CVV</label>
                   <input
                     type="password"
-                    name="cvv"
                     inputMode="numeric"
                     autoComplete="cc-csc"
                     value={card.cvv}
@@ -288,7 +255,7 @@ export default function PaymentPage() {
                 type="submit"
                 variant="gold"
                 size="lg"
-                disabled={submitting || !formReady}
+                disabled={submitting || !formReady || !paytrForm?.paytr_token}
                 className="w-full mt-2 shadow-lg shadow-accent-gold/30 hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-70"
               >
                 {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}

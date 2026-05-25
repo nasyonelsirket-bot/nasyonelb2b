@@ -166,6 +166,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/paytr/forward"
+  to = "/.netlify/functions/paytr-forward"
+  status = 200
+  force = true
+
 # PayTR Direct API — POST dönüşleri (eski merchant_* URL'leri için geriye dönük)
 [[redirects]]
   from = "/odeme/basarili"

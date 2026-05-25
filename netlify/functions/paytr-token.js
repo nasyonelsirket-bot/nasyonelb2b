@@ -10,6 +10,7 @@ const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
   formatDirectPaymentAmount,
+  formatDirectPaymentAmountDecimal,
   resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
