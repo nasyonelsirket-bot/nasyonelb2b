@@ -10,6 +10,7 @@ const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
   formatPaytrPaymentAmount,
+  analyzePaytrAmount,
   resolvePaytrUserIpDetailed,
   siteBaseUrl,
   logPaytrPayload,
@@ -127,7 +128,8 @@ exports.handler = async (event) => {
     };
   }
 
-  const paymentAmount = formatPaytrPaymentAmount(orderTotal, config.amountMode);
+  const amountAnalysis = analyzePaytrAmount(orderTotal, config.amountMode);
+  const paymentAmount = amountAnalysis.paymentAmountSent;
 
   const discount = {
     ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
@@ -219,7 +221,8 @@ exports.handler = async (event) => {
       generatedToken: form.paytr_token,
       userIpDebug: ipResult.debug,
       amountDebug: {
-        paymentAmountRaw: form.payment_amount,
+        ...analyzePaytrAmount(orderTotal, config.amountMode),
+        orderTotalRaw: orderTotal,
         userBasketRaw: form.user_basket,
         basketMode: config.basketMode,
       },

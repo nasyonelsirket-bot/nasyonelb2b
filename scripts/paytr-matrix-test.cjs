@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { getPaytrConfig, formatPaytrPaymentAmount, buildDirectUserBasket, PAYTR_ODEME_URL } =
+const { getPaytrConfig, analyzePaytrAmount, buildDirectUserBasket, PAYTR_ODEME_URL } =
   require('../lib/paytrHelpers.cjs');
 const {
   PAYTR_MATRIX_COMBOS,
@@ -105,19 +105,21 @@ function sleep(ms) {
 }
 
 function buildSampleCheckout(config, merchantOid, userIp) {
-  const orderTotal = Number(process.env.PAYTR_TEST_AMOUNT || '125');
-  const paymentAmount = formatPaytrPaymentAmount(orderTotal, config.amountMode);
-  const items = [{ name: 'Matrix Test Ürün', price: orderTotal, quantity: 1 }];
-  const userBasket = buildDirectUserBasket(items, orderTotal, config.basketMode);
+  // TL cinsinden — 125 TL → payment_amount "12500", basket [["Test","125.00","1"]]
+  const orderTotalTl = Number(process.env.PAYTR_TEST_AMOUNT_TL || process.env.PAYTR_TEST_AMOUNT || '125');
+  const items = [{ name: 'Test', price: orderTotalTl, quantity: 1 }];
+  const amountAnalysis = analyzePaytrAmount(orderTotalTl, config.amountMode);
+  const userBasket = buildDirectUserBasket(items, amountAnalysis.parsedTlAmount, 'decimal');
   const base = String(process.env.URL || process.env.VITE_SITE_URL || 'https://nasyoneltoys.com').replace(
     /\/$/,
     '',
   );
 
   return {
-    orderTotal,
-    paymentAmount,
+    orderTotal: amountAnalysis.parsedTlAmount,
+    paymentAmount: amountAnalysis.paymentAmountSent,
     userBasket,
+    amountAnalysis,
     email: process.env.PAYTR_TEST_EMAIL || 'test@paytr.com',
     merchantOid,
     userIp,
@@ -242,7 +244,14 @@ async function main() {
 
   console.log(`PayTR matrix test — ${PAYTR_MATRIX_COMBOS.length} kombinasyon`);
   console.log(`Debug dir: ${resolvePaytrDebugDir()}`);
-  console.log(`User IP: ${userIp}\n`);
+  console.log(`User IP: ${userIp}`);
+  const samplePreview = buildSampleCheckout(config, 'preview', userIp);
+  console.log(`Test amount TL: ${samplePreview.orderTotal}`);
+  console.log(`payment_amount: ${samplePreview.paymentAmount}`);
+  console.log(`user_basket: ${samplePreview.userBasket}`);
+  console.log(
+    `amount probe: ${JSON.stringify(samplePreview.amountAnalysis.doubleConversionProbe)}\n`,
+  );
 
   for (let i = 0; i < PAYTR_MATRIX_COMBOS.length; i += 1) {
     const combo = PAYTR_MATRIX_COMBOS[i];
