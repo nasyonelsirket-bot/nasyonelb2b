@@ -243,6 +243,8 @@ exports.handler = async (event) => {
       currency: config.currency,
       test_mode: config.testMode,
       lang: 'tr',
+      iframe_v2: '1',
+      iframe_v2_dark: '0',
     };
 
     const tokenResult = await requestPaytrIframeToken(getTokenFields);
