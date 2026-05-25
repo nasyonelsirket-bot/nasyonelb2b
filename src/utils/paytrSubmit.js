@@ -6,6 +6,7 @@ const LOG_KEYS = [
   'payment_type',
   'installment_count',
   'no_installment',
+  'max_installment',
   'currency',
   'lang',
   'paytr_token',
@@ -53,6 +54,7 @@ export function submitPaytrPayment(formFields, card) {
   }
 
   console.log('[paytr:browser] no_installment', safe.no_installment ?? '(missing)');
+  console.log('[paytr:browser] max_installment', safe.max_installment ?? '(missing)');
   console.log('[paytr:browser] direct api key fields', summary);
   console.log('[paytr:browser] direct api full payload', safe);
   console.log('[paytr:browser] post body', formatPostBody(safe));
