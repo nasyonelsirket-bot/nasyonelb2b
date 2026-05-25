@@ -1,5 +1,5 @@
 /**
- * PayTR Direct API — sipariş kaydı + imzalı ödeme formu alanları.
+ * PayTR iFrame API — sipariş kaydı (ödeme token'ı /odeme sayfasında alınır).
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
@@ -9,13 +9,10 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  formatPaytrPaymentAmount,
   analyzePaytrAmount,
   resolvePaytrUserIpDetailed,
   siteBaseUrl,
-  logPaytrPayload,
 } = require('../../lib/paytrHelpers.cjs');
-const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -128,8 +125,8 @@ exports.handler = async (event) => {
     };
   }
 
-  const amountAnalysis = analyzePaytrAmount(orderTotal, config.amountMode);
-  const paymentAmount = amountAnalysis.paymentAmountSent;
+  const amountAnalysis = analyzePaytrAmount(orderTotal, 'kurus');
+  const paymentAmount = String(amountAnalysis.parsedKurusAmount);
 
   const discount = {
     ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
@@ -166,6 +163,7 @@ exports.handler = async (event) => {
     status,
     merchantOid,
     paymentAmount,
+    paytrMode: 'iframe',
     createdAt: new Date().toISOString(),
   };
 
@@ -203,29 +201,12 @@ exports.handler = async (event) => {
     });
     await store.setJSON('order-index', index.slice(0, 500));
 
-    const form = buildPaytrDirectForm({
-      config,
-      base,
-      orderId: id,
+    console.log(`[paytr:token:${id}] order saved iframe mode`, {
       merchantOid,
-      email,
       orderTotal,
-      items,
-      customer: payload.customer,
+      paymentAmount,
       userIp,
-      userIpDebug: ipResult.debug,
-    });
-
-    logPaytrPayload(`token:${id}`, form, {
-      config,
-      generatedToken: form.paytr_token,
-      userIpDebug: ipResult.debug,
-      amountDebug: {
-        ...analyzePaytrAmount(orderTotal, config.amountMode),
-        orderTotalRaw: orderTotal,
-        userBasketRaw: form.user_basket,
-        basketMode: config.basketMode,
-      },
+      testMode: config.testMode,
     });
 
     return {
@@ -233,12 +214,11 @@ exports.handler = async (event) => {
       headers: HEADERS,
       body: JSON.stringify({
         ok: true,
-        mode: 'direct',
+        mode: 'iframe',
         orderId: id,
         orderNumber,
         merchantOid,
         orderTotal,
-        form,
       }),
     };
   } catch (err) {

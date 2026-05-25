@@ -1,9 +1,9 @@
 /**
- * Bekleyen sipariş için PayTR formunu güncel müşteri IP'si ile yeniden imzalar.
+ * Bekleyen sipariş için PayTR iFrame token alır (get-token).
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIpDetailed, siteBaseUrl, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
-const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
+const { getPaytrConfig, resolvePaytrUserIpDetailed, siteBaseUrl } = require('../../lib/paytrHelpers.cjs');
+const { buildPaytrIframeCheckout } = require('../../lib/paytrForm.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -60,7 +60,8 @@ exports.handler = async (event) => {
 
     const base = siteBaseUrl(event);
     const email = String(order.customer?.email || '').trim().slice(0, 100);
-    const form = buildPaytrDirectForm({
+
+    const checkout = await buildPaytrIframeCheckout({
       config,
       base,
       orderId: order.id,
@@ -71,17 +72,7 @@ exports.handler = async (event) => {
       customer: order.customer,
       userIp,
       userIpDebug: ipResult.debug,
-    });
-
-    logPaytrPayload(`resign:${order.id}`, form, {
-      config,
-      generatedToken: form.paytr_token,
-      userIpDebug: ipResult.debug,
-      amountDebug: {
-        paymentAmountRaw: form.payment_amount,
-        userBasketRaw: form.user_basket,
-        basketMode: config.basketMode,
-      },
+      context: `iframe:${order.id}`,
     });
 
     return {
@@ -89,19 +80,24 @@ exports.handler = async (event) => {
       headers: HEADERS,
       body: JSON.stringify({
         ok: true,
+        mode: 'iframe',
         orderId: order.id,
         orderNumber: order.orderNumber,
         orderTotal: order.orderTotal,
         userIp,
-        form,
+        iframeToken: checkout.iframeToken,
+        iframeUrl: checkout.iframeUrl,
       }),
     };
   } catch (err) {
     console.error('paytr-resign:', err);
     return {
-      statusCode: 500,
+      statusCode: err.httpStatus && err.httpStatus >= 400 && err.httpStatus < 600 ? err.httpStatus : 500,
       headers: HEADERS,
-      body: JSON.stringify({ error: err.message || 'Ödeme formu yenilenemedi' }),
+      body: JSON.stringify({
+        error: err.message || 'PayTR iFrame token alınamadı',
+        paytr: err.paytr || null,
+      }),
     };
   }
 };

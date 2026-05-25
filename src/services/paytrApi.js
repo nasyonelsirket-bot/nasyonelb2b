@@ -1,4 +1,4 @@
-/** PayTR Direct API — sipariş hazırla, imzalı form alanları döndür */
+/** PayTR iFrame API — sipariş hazırla, ödeme sayfasında iframe token al */
 export async function startPaytrPayment(payload) {
   const res = await fetch('/api/paytr/token', {
     method: 'POST',
@@ -10,13 +10,14 @@ export async function startPaytrPayment(payload) {
     const msg = [data.error, data.paytr?.reason].filter(Boolean).join(' — ') || 'Ödeme başlatılamadı';
     throw new Error(msg);
   }
-  if (!data?.form || !data?.orderId) {
+  if (!data?.orderId) {
     throw new Error('PayTR yanıtı geçersiz');
   }
   return data;
 }
 
-export async function resignPaytrForm(orderId) {
+/** Ödeme sayfasında güncel IP ile iFrame token alır */
+export async function fetchPaytrIframeToken(orderId) {
   const res = await fetch('/api/paytr/resign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,11 +25,11 @@ export async function resignPaytrForm(orderId) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg = [data.error, data.paytr?.reason].filter(Boolean).join(' — ') || 'Ödeme formu yenilenemedi';
+    const msg = [data.error, data.paytr?.reason].filter(Boolean).join(' — ') || 'PayTR ödeme ekranı açılamadı';
     throw new Error(msg);
   }
-  if (!data?.form) {
-    throw new Error('PayTR yanıtı geçersiz');
+  if (!data?.iframeUrl || !data?.iframeToken) {
+    throw new Error('PayTR iFrame yanıtı geçersiz');
   }
   return data;
 }

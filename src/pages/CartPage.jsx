@@ -239,7 +239,6 @@ export default function CartPage() {
       trackFormSubmit(items, { success: true });
       navigate('/odeme', {
         state: {
-          form: result.form,
           orderId: result.orderId,
           orderNumber: result.orderNumber,
           orderTotal,
