@@ -1,21 +1,12 @@
 /**
- * Kart bilgileri + imzalı PayTR alanlarını HTML auto-submit ile paytr.com/odeme'ye iletir.
- * Token IP'si Netlify'dan alınır (ipify ile uyuşmazlık riski yok).
+ * İmzalı PayTR alanları + kart bilgisi — sunucuda birleştir, tarayıcıdan PayTR'ye POST et.
+ * Alan değerleri JSON ile aktarılır (base64 + bozulmasın).
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const PAYTR_URL = 'https://www.paytr.com/odeme';
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 function parseRequestBody(event) {
   let raw = event.body || '';
@@ -38,13 +29,7 @@ function parseRequestBody(event) {
 }
 
 function buildAutoSubmitHtml(fields) {
-  const inputs = Object.entries(fields)
-    .filter(([, value]) => value != null && value !== '')
-    .map(
-      ([name, value]) =>
-        `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`,
-    )
-    .join('\n');
+  const payload = JSON.stringify(fields).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="tr">
@@ -62,10 +47,27 @@ function buildAutoSubmitHtml(fields) {
     <p>Güvenli ödeme sayfasına yönlendiriliyorsunuz…</p>
     <p style="font-size:0.875rem;color:#64748b">Lütfen bekleyin.</p>
   </div>
-  <form id="paytr" method="POST" action="${PAYTR_URL}" accept-charset="UTF-8">
-    ${inputs}
-  </form>
-  <script>document.getElementById('paytr').submit();</script>
+  <script>
+    (function () {
+      var fields = ${payload};
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = ${JSON.stringify(PAYTR_URL)};
+      form.acceptCharset = 'UTF-8';
+      form.style.display = 'none';
+      Object.keys(fields).forEach(function (key) {
+        var value = fields[key];
+        if (value == null || value === '') return;
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value);
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -87,7 +89,7 @@ exports.handler = async (event) => {
 
   const body = parseRequestBody(event);
   if (!body) {
-    return { statusCode: 400, body: 'Geçersiz JSON' };
+    return { statusCode: 400, body: 'Geçersiz istek' };
   }
 
   const orderId = String(body.orderId || '').trim();

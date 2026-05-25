@@ -7,9 +7,7 @@ import CardScanButton from '@/components/payment/CardScanButton';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { resignPaytrForm } from '@/services/paytrApi';
-import { submitPaytrForm } from '@/utils/paytrSubmit';
-
-const PAYTR_POST_URL = 'https://www.paytr.com/odeme';
+import { forwardPaytrPayment } from '@/utils/paytrSubmit';
 
 const CARD_BRANDS = ['VISA', 'MASTERCARD', 'TROY'];
 
@@ -85,17 +83,7 @@ export default function PaymentPage() {
     setSubmitting(true);
 
     try {
-      const data = await resignPaytrForm(orderId);
-      setPaytrForm(data.form);
-
-      submitPaytrForm(PAYTR_POST_URL, {
-        ...data.form,
-        cc_owner: card.cc_owner.trim(),
-        card_number: card.card_number.replace(/\D/g, ''),
-        expiry_month: card.expiry_month,
-        expiry_year: card.expiry_year,
-        cvv: card.cvv,
-      });
+      forwardPaytrPayment(orderId, card);
     } catch (err) {
       setFormError(err?.message || 'Ödeme gönderilemedi.');
       setSubmitting(false);
