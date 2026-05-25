@@ -19,7 +19,9 @@ export default function MobileBottomNav() {
       active ? 'bg-brand-100 text-brand-900' : 'text-gray-600'
     }`;
 
-  if (pathname.startsWith('/admin') || pathname.startsWith('/odeme')) return null;
+  if (pathname.startsWith('/admin') || pathname.startsWith('/odeme') || pathname.startsWith('/sepet')) {
+    return null;
+  }
 
   return (
     <nav

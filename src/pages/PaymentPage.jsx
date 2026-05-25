@@ -5,7 +5,6 @@ import SEO from '@/components/seo/SEO';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
-import CardScanButton from '@/components/payment/CardScanButton';
 
 const IFRAME_RESIZER_SRC = 'https://www.paytr.com/js/iframeResizer.min.js';
 
@@ -104,8 +103,8 @@ export default function PaymentPage() {
   return (
     <>
       <SEO title="Güvenli Ödeme" path="/odeme" noindex />
-      <div className="min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 py-6 sm:py-10">
-        <div className="mx-auto max-w-2xl px-4">
+      <div className="checkout-shell md:min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 py-6 sm:py-10">
+        <div className="checkout-shell__main md:pb-0 mx-auto max-w-2xl px-4 w-full">
           <Link
             to="/sepet"
             className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-900 mb-5"
@@ -148,11 +147,7 @@ export default function PaymentPage() {
               )}
 
               {!loading && iframeUrl && (
-                <>
-                  <div className="mb-4">
-                    <CardScanButton onScan={() => {}} disabled={loading} />
-                  </div>
-                  <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
+                <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
                   <iframe
                     ref={iframeRef}
                     id="paytriframe"
@@ -160,11 +155,10 @@ export default function PaymentPage() {
                     src={iframeUrl}
                     frameBorder="0"
                     scrolling="no"
-                    className="w-full min-h-[480px] border-0"
+                    className="w-full min-h-[480px] max-md:min-h-[420px] border-0"
                     allow="payment"
                   />
                 </div>
-                </>
               )}
 
               <p className="text-center text-[11px] text-gray-500 pt-4">

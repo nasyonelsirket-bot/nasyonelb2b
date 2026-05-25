@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import { loginMember } from '@/services/memberApi';
 import { useMember } from '@/context/MemberContext';
 
@@ -55,7 +56,7 @@ export default function LoginPage() {
   return (
     <>
       <SEO title="Giriş Yap" path="/giris" />
-      <div className="mx-auto max-w-md px-4 py-12">
+      <div className="mx-auto max-w-md px-4 py-8 sm:py-12 pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <h1 className="font-display text-2xl font-bold text-brand-900">Giriş Yap</h1>
         <p className="mt-2 text-sm text-gray-600">Üye olmadan da alışveriş yapabilirsiniz.</p>
 
@@ -124,39 +125,13 @@ export default function LoginPage() {
             Kayıt olun
           </Link>
         </p>
-        <p className="mt-3 text-center text-sm text-gray-600">
+        <p className="mt-4 text-center text-sm text-gray-600">
           <Link to="/siparis-takip" className="font-semibold text-brand-700 hover:underline">
             Sipariş takip
           </Link>
         </p>
 
-        <div className="mt-8 space-y-2">
-          <p className="text-xs text-center text-gray-500">Hızlı kayıt (yakında aktif)</p>
-          <div className="grid grid-cols-1 gap-2">
-            <button
-              type="button"
-              disabled
-              className="rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-400 bg-gray-50"
-            >
-              Google ile devam et
-            </button>
-            <button
-              type="button"
-              disabled
-              className="rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-400 bg-gray-50"
-            >
-              Facebook ile devam et
-            </button>
-            <button
-              type="button"
-              disabled
-              className="rounded-lg border border-gray-200 py-2.5 text-sm font-medium text-gray-400 bg-gray-50"
-            >
-              Apple ile devam et
-            </button>
-          </div>
-        </div>
-
+        <SocialLoginButtons mode="login" />
       </div>
     </>
   );

@@ -278,7 +278,8 @@ export default function CartPage() {
         path="/sepet"
         noindex
       />
-      <div className="mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8 animate-fade-in">
+      <div className="checkout-shell w-full">
+        <div className="checkout-shell__main mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8 animate-fade-in">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900">Ödeme</h1>
 
         <nav className="mt-6 flex items-center gap-2 sm:gap-4" aria-label="Ödeme adımları">
@@ -477,32 +478,60 @@ export default function CartPage() {
             />
 
             {formError && (
-              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 max-md:hidden">
                 {formError}
               </p>
             )}
-            <div className="flex flex-col gap-2">
-              {step > 1 && (
-                <Button variant="secondary" onClick={() => setStep((s) => s - 1)}>
-                  <ChevronLeft className="h-4 w-4" /> Geri
-                </Button>
-              )}
-              {step < 3 ? (
-                <Button variant="primary" onClick={goNext}>
-                  Devam Et <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button variant="gold" size="lg" onClick={handleSubmit} disabled={submitting}>
-                  <CreditCard className="h-5 w-5" />
-                  {submitting ? 'Ödeme hazırlanıyor...' : 'Kredi Kartı ile Öde'}
-                </Button>
-              )}
-            </div>
+            <CheckoutActions
+              step={step}
+              setStep={setStep}
+              goNext={goNext}
+              handleSubmit={handleSubmit}
+              submitting={submitting}
+              className="hidden md:flex"
+            />
+          </div>
+        </div>
+        </div>
 
-            </div>
+        <div className="checkout-sticky-bar md:hidden">
+          {formError && (
+            <p className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              {formError}
+            </p>
+          )}
+          <CheckoutActions
+            step={step}
+            setStep={setStep}
+            goNext={goNext}
+            handleSubmit={handleSubmit}
+            submitting={submitting}
+          />
         </div>
       </div>
     </>
+  );
+}
+
+function CheckoutActions({ step, setStep, goNext, handleSubmit, submitting, className = '' }) {
+  return (
+    <div className={`flex flex-col gap-2 ${className}`.trim()}>
+      {step > 1 && (
+        <Button variant="secondary" onClick={() => setStep((s) => s - 1)}>
+          <ChevronLeft className="h-4 w-4" /> Geri
+        </Button>
+      )}
+      {step < 3 ? (
+        <Button variant="primary" onClick={goNext}>
+          Devam Et <ChevronRight className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button variant="gold" size="lg" onClick={handleSubmit} disabled={submitting} className="w-full">
+          <CreditCard className="h-5 w-5" />
+          {submitting ? 'Ödeme hazırlanıyor...' : 'Kredi Kartı ile Öde'}
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -523,7 +552,7 @@ function OrderSummary({
   const parts = Array.isArray(discount.parts) ? discount.parts : [];
 
   return (
-    <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card sticky top-24">
+    <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card sticky top-24">
       <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
         <Truck className="h-5 w-5 text-accent-gold" /> Sipariş Özeti
       </h2>
