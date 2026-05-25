@@ -7,6 +7,7 @@ const { allocateOrderNumber } = require('../../lib/orderNumber.cjs');
 const { loadPromotions } = require('../../lib/catalogPromotions.cjs');
 const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
+const { registerMerchantOidMapping, upsertOrderIndexRow } = require('../../lib/orderIndex.cjs');
 const {
   getPaytrConfig,
   analyzePaytrAmount,
@@ -140,6 +141,7 @@ exports.handler = async (event) => {
 
   const payload = {
     id,
+    orderId: id,
     orderNumber: null,
     siteName: body.siteName || 'Nasyonel Toys',
     siteUrl: String(body.siteUrl || '').trim() || base,
@@ -162,10 +164,16 @@ exports.handler = async (event) => {
     orderTotal,
     notifyEmail: body.notifyEmail || process.env.ORDER_NOTIFY_EMAIL || '',
     status,
+    orderStatus: status,
+    paymentStatus: 'pending',
+    payment_status: 'pending',
+    paid: false,
     merchantOid,
+    paytrMerchantOid: merchantOid,
     paymentAmount,
     paytrMode: 'iframe',
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   try {
@@ -173,40 +181,31 @@ exports.handler = async (event) => {
     const orderNumber = String(body.orderNumber || '').trim() || (await allocateOrderNumber(store));
     payload.orderNumber = orderNumber;
 
+    console.log('[paytr-token] order created', {
+      order_id: id,
+      merchant_oid: merchantOid,
+      orderTotal,
+      paymentAmount,
+      status,
+    });
+
     await store.setJSON(`order-${id}`, payload);
+    console.log('[paytr-token] order saved', { order_id: id, blob_key: `order-${id}` });
+
+    await registerMerchantOidMapping(store, merchantOid, id);
 
     try {
       await cancelSupersededPendingOrders(store, { customerEmail: email, excludeId: id });
     } catch (dedupErr) {
-      console.error('paytr-token dedup:', dedupErr);
+      console.error('[paytr-token] dedup error:', dedupErr);
     }
 
-    let index = [];
-    try {
-      index = await store.get('order-index', { type: 'json' });
-    } catch {
-      index = [];
-    }
-    if (!Array.isArray(index)) index = [];
+    await upsertOrderIndexRow(store, payload, id, 'paytr-token-create');
 
-    index.unshift({
-      id,
+    console.log('[paytr-token] admin order sync complete', {
+      order_id: id,
       orderNumber,
-      createdAt: payload.createdAt,
-      customerName,
-      customerEmail: email,
-      orderTotal,
-      paymentMethod,
-      status,
-      paymentStatus: 'pending',
-      itemCount: items.length,
-    });
-    await store.setJSON('order-index', index.slice(0, 500));
-
-    console.log(`[paytr:token:${id}] order saved iframe mode`, {
       merchantOid,
-      orderTotal,
-      paymentAmount,
       userIp,
       testMode: config.testMode,
     });
@@ -224,7 +223,7 @@ exports.handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error('paytr-token:', err);
+    console.error('[paytr-token] error:', err?.stack || err);
     return {
       statusCode: 500,
       headers: HEADERS,

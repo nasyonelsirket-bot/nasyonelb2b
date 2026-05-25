@@ -335,7 +335,7 @@ function RejectModal({ open, onClose, onConfirm, busy }) {
 export default function OrdersAdmin({ setMsg }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [orderNoQuery, setOrderNoQuery] = useState('');
   const [customerQuery, setCustomerQuery] = useState('');

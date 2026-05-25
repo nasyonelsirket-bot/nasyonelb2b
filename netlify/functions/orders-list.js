@@ -2,6 +2,7 @@
  * Admin: kayıtlı sipariş listesi
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
+const { loadOrderIndexForAdmin } = require('../../lib/orderIndex.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -39,13 +40,14 @@ exports.handler = async (event) => {
 
   try {
     const store = getOrderStore(event);
-    let index = [];
-    try {
-      index = await store.get('order-index', { type: 'json' });
-    } catch {
-      index = [];
-    }
-    if (!Array.isArray(index)) index = [];
+    const index = await loadOrderIndexForAdmin(store, { rebuildIfEmpty: true });
+
+    console.log('[orders-list] admin order sync', {
+      count: index.length,
+      pending_payment: index.filter((o) => o.status === 'pending_payment').length,
+      paid: index.filter((o) => o.status === 'paid').length,
+      kargoya_hazir: index.filter((o) => o.status === 'kargoya_hazir').length,
+    });
 
     return {
       statusCode: 200,
@@ -53,7 +55,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ orders: index }),
     };
   } catch (err) {
-    console.error('orders-list:', err);
+    console.error('[orders-list] error:', err?.stack || err);
     return {
       statusCode: 500,
       headers: HEADERS,

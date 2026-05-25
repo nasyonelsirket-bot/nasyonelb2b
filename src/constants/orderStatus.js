@@ -17,6 +17,13 @@ export const ORDER_STATUS_META = {
     color: 'text-amber-700 bg-amber-50',
     icon: CreditCard,
   },
+  paid: {
+    label: 'Ödeme alındı',
+    shortLabel: 'Ödendi',
+    phase: 'preparing',
+    color: 'text-emerald-700 bg-emerald-50',
+    icon: CheckCircle,
+  },
   pending_iban_check: {
     label: 'IBAN ödemesi bekleniyor',
     shortLabel: 'Ödeme bekliyor',
@@ -141,7 +148,7 @@ export function getAdminStatusActions(order) {
     return actions;
   }
 
-  if (status === 'iban_verified' || status === 'confirmed' || status === 'kargoya_hazir') {
+  if (status === 'iban_verified' || status === 'confirmed' || status === 'kargoya_hazir' || status === 'paid') {
     return actions;
   }
 
@@ -195,7 +202,7 @@ export function matchesStatusFilter(order, filterId) {
   const s = order?.status;
   if (filterId === 'all') return true;
   if (filterId === 'pending') return isUnpaidOrderStatus(s);
-  if (filterId === 'preparing') return s === 'kargoya_hazir' || s === 'confirmed' || s === 'iban_verified';
+  if (filterId === 'preparing') return s === 'kargoya_hazir' || s === 'confirmed' || s === 'iban_verified' || s === 'paid';
   if (filterId === 'packed') return s === 'packed';
   if (filterId === 'shipping') return s === 'shipped';
   if (filterId === 'completed') return s === 'completed';

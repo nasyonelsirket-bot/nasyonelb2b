@@ -7,32 +7,26 @@ const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
 const { markCouponUsed } = require('../../lib/catalogPromotions.cjs');
 const { deductOrderStock } = require('../../lib/orderStock.cjs');
 const {
+  upsertOrderIndexRow,
+  resolveOrderByMerchantOid,
+  registerMerchantOidMapping,
+} = require('../../lib/orderIndex.cjs');
+const {
   getPaytrConfig,
   verifyCallbackHash,
   parseEventFormBody,
   paytrOkResponse,
-  parseOrderIdFromMerchantOid,
 } = require('../../lib/paytrHelpers.cjs');
 
-function isCallbackFullyProcessed(order) {
+function isPaymentFinalized(order) {
   return (
-    order.status === 'kargoya_hazir' &&
-    (order.paymentStatus === 'success' || order.payment_status === 'success' || order.paid === true) &&
-    Boolean(order.emailSentAt) &&
-    Boolean(order.stockDeductedAt)
+    (order.status === 'kargoya_hazir' || order.status === 'paid') &&
+    (order.paymentStatus === 'success' || order.payment_status === 'success' || order.paid === true)
   );
 }
 
-async function updateOrderIndex(store, orderId, patch) {
-  let index = [];
-  try {
-    index = await store.get('order-index', { type: 'json' });
-  } catch {
-    index = [];
-  }
-  if (!Array.isArray(index)) return;
-  const next = index.map((row) => (row.id === orderId ? { ...row, ...patch } : row));
-  await store.setJSON('order-index', next);
+function needsCallbackSideEffects(order) {
+  return !order.emailSentAt || !order.stockDeductedAt;
 }
 
 async function runSuccessSideEffects(event, store, key, order, orderId) {
@@ -77,13 +71,9 @@ async function runSuccessSideEffects(event, store, key, order, orderId) {
     }
   }
 
-  await updateOrderIndex(store, orderId, {
-    status: 'kargoya_hazir',
-    paymentStatus: 'success',
-    updatedAt: new Date().toISOString(),
-  });
-
+  current.updatedAt = new Date().toISOString();
   await store.setJSON(key, current);
+  await upsertOrderIndexRow(store, current, orderId, 'callback-side-effects');
   return current;
 }
 
@@ -109,7 +99,7 @@ exports.handler = async (event) => {
   const totalAmount = post.total_amount;
   const hash = String(post.hash || '').trim();
 
-  console.log('[paytr-callback] incoming', {
+  console.log('[paytr-callback] callback received', {
     merchant_oid: merchantOid || null,
     payment_status: status || null,
     total_amount: totalAmount ?? null,
@@ -136,7 +126,7 @@ exports.handler = async (event) => {
     hash,
   });
 
-  console.log('[paytr-callback] hash verification', {
+  console.log('[paytr-callback] callback verified', {
     merchant_oid: merchantOid,
     payment_status: status,
     total_amount: totalAmount,
@@ -148,82 +138,102 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'PAYTR notification failed: bad hash' };
   }
 
-  const orderId = parseOrderIdFromMerchantOid(merchantOid);
-  if (!orderId) {
-    console.error('[paytr-callback] geçersiz merchant_oid', merchantOid);
-    return paytrOkResponse();
-  }
-
   try {
     const store = getOrderStore(event);
-    const key = `order-${orderId}`;
-    const order = await store.get(key, { type: 'json' });
+    const resolved = await resolveOrderByMerchantOid(store, merchantOid);
 
-    if (!order) {
-      console.error('[paytr-callback] sipariş yok', orderId, merchantOid);
+    if (!resolved) {
+      console.error('[paytr-callback] sipariş bulunamadı', { merchant_oid: merchantOid });
       return paytrOkResponse();
     }
 
+    const { order, orderId, key } = resolved;
     const statusBefore = order.status;
-    console.log('[paytr-callback] order status before', {
+
+    console.log('[paytr-callback] order loaded', {
       order_id: orderId,
       merchant_oid: merchantOid,
       order_status_before: statusBefore,
-      payment_status: status,
-      total_amount: totalAmount,
-      hash_valid: valid,
-      emailSentAt: order.emailSentAt || null,
-      stockDeductedAt: order.stockDeductedAt || null,
+      payment_status_incoming: status,
     });
 
     if (status === 'success') {
-      if (isCallbackFullyProcessed(order)) {
+      if (isPaymentFinalized(order) && !needsCallbackSideEffects(order)) {
         console.log('[paytr-callback] already complete — skip', { order_id: orderId });
         return paytrOkResponse();
       }
 
       const now = new Date().toISOString();
+      const transactionId = String(
+        post.payment_id || post.paytr_payment_id || post.transaction_id || merchantOid,
+      ).trim();
+
+      if (!isPaymentFinalized(order)) {
+        const paidStep = {
+          ...order,
+          status: 'paid',
+          paymentStatus: 'paid',
+          payment_status: 'paid',
+          paid: true,
+          paytrTotalAmount: totalAmount,
+          paytrMerchantOid: merchantOid,
+          paytrTransactionId: transactionId,
+          paytrCallbackAt: order.paytrCallbackAt || now,
+          paidAt: order.paidAt || now,
+          updatedAt: now,
+          paytrCallbackRaw: {
+            status: post.status,
+            total_amount: post.total_amount,
+            payment_type: post.payment_type || null,
+            currency: post.currency || null,
+            test_mode: post.test_mode || null,
+          },
+        };
+        await store.setJSON(key, paidStep);
+        await registerMerchantOidMapping(store, merchantOid, orderId);
+        await upsertOrderIndexRow(store, paidStep, orderId, 'callback-paid');
+        console.log('[paytr-callback] order updated → paid', {
+          order_id: orderId,
+          transaction_id: transactionId,
+        });
+        order.status = paidStep.status;
+        order.paymentStatus = paidStep.paymentStatus;
+      }
+
       let updated = {
         ...order,
         status: 'kargoya_hazir',
+        orderStatus: 'kargoya_hazir',
         paymentStatus: 'success',
         payment_status: 'success',
         paid: true,
         paytrTotalAmount: totalAmount,
         paytrMerchantOid: merchantOid,
-        paytrTransactionId: String(post.payment_id || post.paytr_payment_id || merchantOid).trim(),
+        paytrTransactionId: transactionId,
         paytrCallbackAt: order.paytrCallbackAt || now,
         paidAt: order.paidAt || now,
         confirmedAt: order.confirmedAt || now,
-        paytrCallbackRaw: {
-          status: post.status,
-          total_amount: post.total_amount,
-          payment_type: post.payment_type || null,
-          currency: post.currency || null,
-          test_mode: post.test_mode || null,
-        },
+        updatedAt: now,
       };
 
       await store.setJSON(key, updated);
+      await registerMerchantOidMapping(store, merchantOid, orderId);
+      await upsertOrderIndexRow(store, updated, orderId, 'callback-kargoya_hazir');
 
-      console.log('[paytr-callback] order saved', {
+      console.log('[paytr-callback] order updated → kargoya_hazir', {
         order_id: orderId,
         order_status_after: updated.status,
         payment_status: updated.paymentStatus,
-        paytrTransactionId: updated.paytrTransactionId,
+        transaction_id: transactionId,
       });
 
       updated = await runSuccessSideEffects(event, store, key, updated, orderId);
 
-      console.log('[paytr-callback] order status after', {
+      console.log('[paytr-callback] order finalized', {
         order_id: orderId,
         merchant_oid: merchantOid,
         order_status_before: statusBefore,
         order_status_after: updated.status,
-        payment_status: status,
-        total_amount: totalAmount,
-        hash_valid: valid,
-        paid: updated.paid,
         emailSentAt: updated.emailSentAt || null,
         stockDeductedAt: updated.stockDeductedAt || null,
       });
@@ -231,33 +241,29 @@ exports.handler = async (event) => {
       const failed = {
         ...order,
         status: 'cancelled',
+        orderStatus: 'cancelled',
         paymentStatus: 'failed',
         payment_status: 'failed',
         paid: false,
         paytrCallbackAt: new Date().toISOString(),
         paytrMerchantOid: merchantOid,
+        updatedAt: new Date().toISOString(),
         paytrRaw: {
           failed_reason_code: post.failed_reason_code || null,
           failed_reason_msg: post.failed_reason_msg || null,
         },
       };
       await store.setJSON(key, failed);
-
-      await updateOrderIndex(store, orderId, {
-        status: 'cancelled',
-        paymentStatus: 'failed',
-        updatedAt: new Date().toISOString(),
-      });
+      await upsertOrderIndexRow(store, failed, orderId, 'callback-failed');
 
       console.log('[paytr-callback] payment failed', {
         order_id: orderId,
         order_status_before: statusBefore,
         order_status_after: failed.status,
-        payment_status: status,
       });
     }
   } catch (err) {
-    console.error('[paytr-callback] store error:', err);
+    console.error('[paytr-callback] store error:', err?.stack || err);
     return { statusCode: 500, body: '' };
   }
 

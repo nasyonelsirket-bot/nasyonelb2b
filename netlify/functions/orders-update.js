@@ -5,6 +5,7 @@ const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { loadPromotions, appendCouponAndSave } = require('../../lib/catalogPromotions.cjs');
 const { buildDeliveryRewardCoupon } = require('../../lib/promotions.cjs');
 const { sendShippedEmail } = require('../../lib/orderEmail.cjs');
+const { upsertOrderIndexRow } = require('../../lib/orderIndex.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,7 @@ exports.handler = async (event) => {
     const prevCarrier = String(order.shippingCarrier || '').trim();
     const prevTracking = String(order.trackingNumber || '').trim();
     order.status = status;
+    order.orderStatus = status;
     order.updatedAt = now;
 
     if (status === 'cancelled') {
@@ -95,6 +97,7 @@ exports.handler = async (event) => {
     }
 
     await store.setJSON(key, order);
+    await upsertOrderIndexRow(store, order, id, 'orders-update');
 
     let shippedEmail = null;
     if (status === 'shipped') {
@@ -139,27 +142,6 @@ exports.handler = async (event) => {
       }
     }
 
-    let index = [];
-    try {
-      index = await store.get('order-index', { type: 'json' });
-    } catch {
-      index = [];
-    }
-    if (Array.isArray(index)) {
-      const next = index.map((row) =>
-        row.id === id
-          ? {
-              ...row,
-              status,
-              paymentStatus: order.paymentStatus || row.paymentStatus || '',
-              updatedAt: now,
-              cancelReason: order.cancelReason || '',
-            }
-          : row,
-      );
-      await store.setJSON('order-index', next);
-    }
-
     return {
       statusCode: 200,
       headers: HEADERS,
@@ -171,7 +153,7 @@ exports.handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error('orders-update:', err);
+    console.error('[orders-update] error:', err?.stack || err);
     return {
       statusCode: 500,
       headers: HEADERS,

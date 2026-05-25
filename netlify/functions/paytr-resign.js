@@ -9,6 +9,7 @@ const {
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrIframeCheckout } = require('../../lib/paytrForm.cjs');
+const { registerMerchantOidMapping, upsertOrderIndexRow } = require('../../lib/orderIndex.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -71,13 +72,19 @@ exports.handler = async (event) => {
     const updatedOrder = {
       ...order,
       merchantOid,
+      paytrMerchantOid: merchantOid,
       paytrMerchantOidAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     await store.setJSON(`order-${orderId}`, updatedOrder);
+    await registerMerchantOidMapping(store, merchantOid, orderId);
+    await upsertOrderIndexRow(store, updatedOrder, orderId, 'paytr-resign');
 
-    console.log(`[paytr-resign:${orderId}] merchant_oid minted`, merchantOid);
-    console.log(`[paytr-resign:${orderId}] user_ip resolved`, userIp);
-    console.log(`[paytr-resign:${orderId}] user_ip debug`, JSON.stringify(ipResult.debug, null, 2));
+    console.log('[paytr-resign] order saved', {
+      order_id: orderId,
+      merchant_oid: merchantOid,
+      user_ip: userIp,
+    });
 
     const base = siteBaseUrl(event);
     const email = String(order.customer?.email || '').trim().slice(0, 100);
