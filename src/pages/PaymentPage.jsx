@@ -131,15 +131,18 @@ export default function PaymentPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-brand-800">Kart numarası</label>
+                <input type="hidden" name="card_number" value={card.card_number} />
                 <input
                   type="text"
-                  name="card_number"
                   inputMode="numeric"
+                  autoComplete="cc-number"
                   value={formatCardNumber(card.card_number)}
                   onChange={(e) => handleChange('card_number', e.target.value.replace(/\D/g, '').slice(0, 16))}
                   placeholder="0000 0000 0000 0000"
                   className="mt-1.5 w-full rounded-xl border-2 border-brand-100 bg-gradient-to-r from-brand-50 to-orange-50/60 px-4 py-3 text-sm font-mono tracking-[0.12em] focus:border-brand-600 focus:bg-white focus:ring-4 focus:ring-brand-200 outline-none transition-all"
                   required
+                  minLength={13}
+                  aria-label="Kart numarası"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
