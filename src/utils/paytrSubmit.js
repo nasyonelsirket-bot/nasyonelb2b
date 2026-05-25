@@ -7,8 +7,9 @@ const LOG_KEYS = [
   'installment_count',
   'no_installment',
   'max_installment',
-  'currency',
+  'client_lang',
   'lang',
+  'currency',
   'paytr_token',
   'user_ip',
   'test_mode',
@@ -60,9 +61,18 @@ function inspectString(label, value, options = {}) {
 function formatPostBody(fields) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(fields)) {
-    params.append(key, value);
+    if (value == null || value === '') continue;
+    params.append(key, String(value));
   }
   return params.toString();
+}
+
+function escapeShellSingleQuoted(value) {
+  return String(value).replace(/'/g, "'\\''");
+}
+
+function buildCurlCommand(body, url = PAYTR_ODEME_URL) {
+  return `curl -sS -X POST '${url}' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' --data-raw '${escapeShellSingleQuoted(body)}'`;
 }
 
 function analyzeUrlEncoding(fields) {
@@ -115,6 +125,7 @@ export function submitPaytrPayment(formFields, card) {
     );
   }
 
+  console.log('[paytr:browser] payment_type', safe.payment_type ?? '(missing)');
   console.log('[paytr:browser] user_ip', safe.user_ip ?? '(missing)');
   console.log('[paytr:browser] user_basket exact', safe.user_basket ?? '(missing)');
   console.log(
@@ -123,12 +134,14 @@ export function submitPaytrPayment(formFields, card) {
   );
   console.log('[paytr:browser] no_installment', safe.no_installment ?? '(missing)');
   console.log('[paytr:browser] max_installment', safe.max_installment ?? '(missing)');
+  console.log('[paytr:browser] client_lang', safe.client_lang ?? '(missing)');
   console.log('[paytr:browser] direct api key fields', summary);
   console.log('[paytr:browser] direct api full payload', safe);
 
-  const postBody = formatPostBody(safe);
-  console.log('[paytr:browser] post body', postBody);
-  console.log('[paytr:browser] url encoding analysis', JSON.stringify(analyzeUrlEncoding(safe), null, 2));
+  const finalBody = formatPostBody(fields);
+  console.log('[paytr:browser] final form body exact', finalBody);
+  console.log('[paytr:browser] curl', buildCurlCommand(finalBody));
+  console.log('[paytr:browser] url encoding analysis', JSON.stringify(analyzeUrlEncoding(fields), null, 2));
 
   for (const [name, value] of Object.entries(fields)) {
     if (value == null || value === '') continue;
