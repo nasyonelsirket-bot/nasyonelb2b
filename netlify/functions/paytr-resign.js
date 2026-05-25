@@ -2,7 +2,7 @@
  * Bekleyen sipariş için PayTR formunu güncel müşteri IP'si ile yeniden imzalar.
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl } = require('../../lib/paytrHelpers.cjs');
+const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const HEADERS = {
@@ -70,6 +70,8 @@ exports.handler = async (event) => {
       customer: order.customer,
       userIp,
     });
+
+    logPaytrPayload(`resign:${order.id}`, form, config);
 
     return {
       statusCode: 200,

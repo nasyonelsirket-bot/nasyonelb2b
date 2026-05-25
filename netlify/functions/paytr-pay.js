@@ -12,6 +12,7 @@ const {
   resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrCheckout.cjs');
+const { sanitizePaytrFields, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -112,14 +113,16 @@ exports.handler = async (event) => {
       userIp,
     });
 
-    const allFields = {
+    const allFields = sanitizePaytrFields({
       ...paytrFields,
       cc_owner: ccOwner,
       card_number: cardNumber,
       expiry_month: expiryMonth,
       expiry_year: expiryYear,
       cvv,
-    };
+    });
+
+    logPaytrPayload(`pay:${orderId}`, allFields, config);
 
     const html = buildBrowserRelayHtml(allFields);
 

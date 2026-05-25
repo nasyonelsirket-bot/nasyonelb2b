@@ -3,7 +3,7 @@
  * Alan değerleri JSON ile aktarılır (base64 + bozulmasın).
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl } = require('../../lib/paytrHelpers.cjs');
+const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl, sanitizePaytrFields, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const PAYTR_URL = 'https://www.paytr.com/odeme';
@@ -143,14 +143,18 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: 'Kart bilgileri eksik veya geçersiz' };
     }
 
-    const html = buildAutoSubmitHtml({
-      ...paytrFields,
-      cc_owner: ccOwner,
-      card_number: cardNumber,
-      expiry_month: expiryMonth,
-      expiry_year: expiryYear,
-      cvv,
-    });
+    const html = buildAutoSubmitHtml(
+      sanitizePaytrFields({
+        ...paytrFields,
+        cc_owner: ccOwner,
+        card_number: cardNumber,
+        expiry_month: expiryMonth,
+        expiry_year: expiryYear,
+        cvv,
+      }),
+    );
+
+    logPaytrPayload(`forward:${orderId}`, paytrFields, config);
 
     return {
       statusCode: 200,

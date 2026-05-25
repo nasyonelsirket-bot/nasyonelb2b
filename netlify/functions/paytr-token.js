@@ -12,6 +12,7 @@ const {
   formatPaytrPaymentAmountKurus,
   resolvePaytrUserIp,
   siteBaseUrl,
+  logPaytrPayload,
 } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
@@ -210,6 +211,8 @@ exports.handler = async (event) => {
       customer: payload.customer,
       userIp,
     });
+
+    logPaytrPayload(`token:${id}`, form, config);
 
     return {
       statusCode: 200,
