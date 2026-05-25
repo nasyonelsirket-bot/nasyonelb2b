@@ -2,13 +2,11 @@
 const PAYTR_ODEME_URL = 'https://www.paytr.com/odeme';
 
 const LOG_KEYS = [
-  'merchant_id',
   'payment_amount',
   'payment_type',
   'installment_count',
+  'no_installment',
   'currency',
-  'test_mode',
-  'non_3d',
   'lang',
   'paytr_token',
 ];
@@ -22,6 +20,14 @@ function sanitizeForLog(fields) {
   if (out.card_number) out.card_number = `****${out.card_number.slice(-4)}`;
   if (out.cvv) out.cvv = '***';
   return out;
+}
+
+function formatPostBody(fields) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(fields)) {
+    params.append(key, value);
+  }
+  return params.toString();
 }
 
 export function submitPaytrPayment(formFields, card) {
@@ -45,8 +51,11 @@ export function submitPaytrPayment(formFields, card) {
   for (const key of LOG_KEYS) {
     if (safe[key] != null) summary[key] = safe[key];
   }
+
+  console.log('[paytr:browser] no_installment', safe.no_installment ?? '(missing)');
   console.log('[paytr:browser] direct api key fields', summary);
   console.log('[paytr:browser] direct api full payload', safe);
+  console.log('[paytr:browser] post body', formatPostBody(safe));
 
   for (const [name, value] of Object.entries(fields)) {
     if (value == null || value === '') continue;
