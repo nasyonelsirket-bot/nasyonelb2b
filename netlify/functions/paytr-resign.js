@@ -2,7 +2,7 @@
  * Bekleyen sipariş için PayTR formunu güncel müşteri IP'si ile yeniden imzalar.
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
+const { getPaytrConfig, resolvePaytrUserIpDetailed, siteBaseUrl, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const HEADERS = {
@@ -31,7 +31,8 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş ID gerekli' }) };
   }
 
-  const userIp = resolvePaytrUserIp(event, body);
+  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const userIp = ipResult.ip;
   if (!userIp) {
     return {
       statusCode: 400,
@@ -69,9 +70,19 @@ exports.handler = async (event) => {
       items: order.items,
       customer: order.customer,
       userIp,
+      userIpDebug: ipResult.debug,
     });
 
-    logPaytrPayload(`resign:${order.id}`, form, config);
+    logPaytrPayload(`resign:${order.id}`, form, {
+      config,
+      generatedToken: form.paytr_token,
+      userIpDebug: ipResult.debug,
+      amountDebug: {
+        paymentAmountRaw: form.payment_amount,
+        userBasketRaw: form.user_basket,
+        basketMode: config.basketMode,
+      },
+    });
 
     return {
       statusCode: 200,

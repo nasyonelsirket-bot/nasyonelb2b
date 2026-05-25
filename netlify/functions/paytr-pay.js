@@ -9,7 +9,7 @@ const {
   paytrErrorHtml,
   buildBrowserRelayHtml,
   getPaytrConfig,
-  resolvePaytrUserIp,
+  resolvePaytrUserIpDetailed,
   siteBaseUrl,
 } = require('../../lib/paytrCheckout.cjs');
 const { sanitizePaytrFields, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
@@ -47,7 +47,8 @@ exports.handler = async (event) => {
     };
   }
 
-  const userIp = resolvePaytrUserIp(event, body);
+  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const userIp = ipResult.ip;
   if (!userIp) {
     return {
       statusCode: 400,
@@ -111,6 +112,7 @@ exports.handler = async (event) => {
       items: order.items,
       customer: order.customer,
       userIp,
+      userIpDebug: ipResult.debug,
     });
 
     const allFields = sanitizePaytrFields({

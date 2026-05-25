@@ -3,7 +3,7 @@
  * Alan değerleri JSON ile aktarılır (base64 + bozulmasın).
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIp, siteBaseUrl, sanitizePaytrFields, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
+const { getPaytrConfig, resolvePaytrUserIpDetailed, siteBaseUrl, sanitizePaytrFields, logPaytrPayload } = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrDirectForm } = require('../../lib/paytrForm.cjs');
 
 const PAYTR_URL = 'https://www.paytr.com/odeme';
@@ -97,7 +97,8 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'Sipariş ID gerekli' };
   }
 
-  const userIp = resolvePaytrUserIp(event, body);
+  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const userIp = ipResult.ip;
   if (!userIp) {
     return { statusCode: 400, body: 'Müşteri IP adresi alınamadı' };
   }
@@ -131,6 +132,7 @@ exports.handler = async (event) => {
       items: order.items,
       customer: order.customer,
       userIp,
+      userIpDebug: ipResult.debug,
     });
 
     const cardNumber = String(body.card_number || '').replace(/\D/g, '');

@@ -10,7 +10,7 @@ const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
   formatPaytrPaymentAmount,
-  resolvePaytrUserIp,
+  resolvePaytrUserIpDetailed,
   siteBaseUrl,
   logPaytrPayload,
 } = require('../../lib/paytrHelpers.cjs');
@@ -117,7 +117,8 @@ exports.handler = async (event) => {
   const base = siteBaseUrl(event);
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
-  const userIp = resolvePaytrUserIp(event, body);
+  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const userIp = ipResult.ip;
   if (!userIp) {
     return {
       statusCode: 400,
@@ -210,10 +211,13 @@ exports.handler = async (event) => {
       items,
       customer: payload.customer,
       userIp,
+      userIpDebug: ipResult.debug,
     });
 
     logPaytrPayload(`token:${id}`, form, {
       config,
+      generatedToken: form.paytr_token,
+      userIpDebug: ipResult.debug,
       amountDebug: {
         paymentAmountRaw: form.payment_amount,
         userBasketRaw: form.user_basket,
