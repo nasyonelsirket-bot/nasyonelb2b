@@ -494,7 +494,7 @@ export default function CartPage() {
         </div>
         </div>
 
-        <div className="checkout-sticky-bar md:hidden">
+        <div className="checkout-sticky-bar md:hidden px-1">
           {formError && (
             <p className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               {formError}
