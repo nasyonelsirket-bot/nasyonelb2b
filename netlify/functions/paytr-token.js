@@ -1,5 +1,5 @@
 /**
- * PayTR Direct API — sipariş kaydı + ödeme formu alanları.
+ * PayTR iFrame API — sipariş kaydı + PayTR get-token ile iframe token al.
  */
 const crypto = require('crypto');
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
@@ -9,9 +9,10 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  buildDirectUserBasket,
-  formatDirectPaymentAmount,
-  createDirectPaytrTokenHash,
+  buildPaytrUserBasketBase64,
+  formatPaytrPaymentAmountKurus,
+  createPaytrTokenHash,
+  requestPaytrIframeToken,
   resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
@@ -117,8 +118,8 @@ exports.handler = async (event) => {
   const base = siteBaseUrl(event);
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
-  const paymentAmount = formatDirectPaymentAmount(orderTotal);
-  const userBasket = buildDirectUserBasket(items);
+  const paymentAmount = formatPaytrPaymentAmountKurus(orderTotal);
+  const userBasket = buildPaytrUserBasketBase64(items, orderTotal);
   const userIp = resolvePaytrUserIp(event, body);
   if (!userIp) {
     return {
@@ -127,24 +128,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: 'Ödeme için müşteri IP adresi alınamadı. Sayfayı yenileyip tekrar deneyin.' }),
     };
   }
-  const installmentCount = '0';
-  const paymentType = 'card';
-  const non3d = '0';
-
-  const paytrToken = createDirectPaytrTokenHash({
-    merchantId: config.merchantId,
-    merchantKey: config.merchantKey,
-    merchantSalt: config.merchantSalt,
-    userIp,
-    merchantOid,
-    email,
-    paymentAmount,
-    paymentType,
-    installmentCount,
-    currency: config.currency,
-    testMode: config.testMode,
-    non3d,
-  });
 
   const userName = customerName.slice(0, 60);
   const userAddress = [customer.address, customer.district, customer.city]
@@ -152,6 +135,21 @@ exports.handler = async (event) => {
     .join(', ')
     .slice(0, 400);
   const userPhone = String(customer.phone || '').replace(/\D/g, '').slice(0, 20);
+
+  const paytrToken = createPaytrTokenHash({
+    merchantId: config.merchantId,
+    merchantKey: config.merchantKey,
+    merchantSalt: config.merchantSalt,
+    userIp,
+    merchantOid,
+    email,
+    paymentAmount,
+    userBasket,
+    noInstallment: config.noInstallment,
+    maxInstallment: config.maxInstallment,
+    currency: config.currency,
+    testMode: config.testMode,
+  });
 
   const discount = {
     ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
@@ -225,44 +223,53 @@ exports.handler = async (event) => {
     });
     await store.setJSON('order-index', index.slice(0, 500));
 
-    const form = {
+    const getTokenFields = {
       merchant_id: config.merchantId,
       user_ip: userIp,
       merchant_oid: merchantOid,
       email,
-      payment_type: paymentType,
       payment_amount: paymentAmount,
-      installment_count: installmentCount,
-      currency: config.currency,
-      test_mode: config.testMode,
-      non_3d: non3d,
+      paytr_token: paytrToken,
+      user_basket: userBasket,
+      debug_on: config.debugOn,
       no_installment: config.noInstallment,
       max_installment: config.maxInstallment,
-      merchant_ok_url: `${base}/odeme/basarili?oid=${id}`,
-      merchant_fail_url: `${base}/odeme/hata?oid=${id}`,
       user_name: userName,
       user_address: userAddress || '-',
       user_phone: userPhone,
-      user_basket: userBasket,
-      debug_on: config.debugOn,
-      lang: 'tr',
-      client_lang: 'tr',
+      merchant_ok_url: `${base}/odeme/basarili?oid=${id}`,
+      merchant_fail_url: `${base}/odeme/hata?oid=${id}`,
       timeout_limit: config.timeoutLimit,
-      paytr_token: paytrToken,
-      non3d_test_failed: '0',
+      currency: config.currency,
+      test_mode: config.testMode,
+      lang: 'tr',
     };
+
+    const tokenResult = await requestPaytrIframeToken(getTokenFields);
+
+    if (tokenResult?.status !== 'success' || !tokenResult?.token) {
+      console.error('paytr-token get-token:', tokenResult);
+      return {
+        statusCode: 400,
+        headers: HEADERS,
+        body: JSON.stringify({
+          error: tokenResult?.reason || 'PayTR ödeme oturumu başlatılamadı',
+          paytr: tokenResult,
+        }),
+      };
+    }
 
     return {
       statusCode: 200,
       headers: HEADERS,
       body: JSON.stringify({
         ok: true,
-        mode: 'direct',
+        mode: 'iframe',
+        iframeToken: tokenResult.token,
         orderId: id,
         orderNumber,
         merchantOid,
         orderTotal,
-        form,
       }),
     };
   } catch (err) {

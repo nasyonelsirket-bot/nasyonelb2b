@@ -237,9 +237,9 @@ export default function CartPage() {
       });
       saveCheckoutCustomer(customer);
       trackFormSubmit(items, { success: true });
-      navigate('/odeme', {
+        navigate('/odeme', {
         state: {
-          form: result.form,
+          iframeToken: result.iframeToken,
           orderId: result.orderId,
           orderNumber: result.orderNumber,
           orderTotal,
