@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import CardScanButton from '@/components/payment/CardScanButton';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
+import { resignPaytrForm } from '@/services/paytrApi';
 import { submitPaytrPayment } from '@/utils/paytrSubmit';
 
 const CARD_BRANDS = ['VISA', 'MASTERCARD', 'TROY'];
@@ -50,13 +51,14 @@ export default function PaymentPage() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setFormError('');
     setSubmitting(true);
 
     try {
-      submitPaytrPayment(orderId, card);
+      const data = await resignPaytrForm(orderId);
+      submitPaytrPayment(data.form, card);
     } catch (err) {
       setFormError(err?.message || 'Ödeme gönderilemedi.');
       setSubmitting(false);
