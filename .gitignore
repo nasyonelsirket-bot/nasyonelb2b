@@ -7,3 +7,7 @@ dist/
 # Build sırasında üretilir (Netlify + local build)
 lib/catalogAuth.cjs
 lib/fontData.cjs
+
+# PayTR debug çıktıları (npm run paytr:matrix / PAYTR_DEBUG_FILES=1)
+logs/paytr-debug/*
+!logs/paytr-debug/.gitkeep

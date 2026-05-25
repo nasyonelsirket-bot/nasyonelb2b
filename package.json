@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "node scripts/generate-catalog-auth.cjs && node scripts/inline-order-fonts.cjs && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "paytr:matrix": "node scripts/paytr-matrix-test.cjs"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.7",
