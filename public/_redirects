@@ -1,6 +1,8 @@
 /api/coupon/validate  /.netlify/functions/coupon-validate  200!
 /api/paytr/token  /.netlify/functions/paytr-token  200!
 /api/paytr/callback  /.netlify/functions/paytr-callback  200!
+/api/paytr/return-ok  /.netlify/functions/paytr-return-ok  200!
+/api/paytr/return-fail  /.netlify/functions/paytr-return-fail  200!
 /api/trendyol/sync  /.netlify/functions/trendyol-sync  200!
 /api/catalog  /.netlify/functions/catalog-get  200!
 /api/catalog/save  /.netlify/functions/catalog-save  200!

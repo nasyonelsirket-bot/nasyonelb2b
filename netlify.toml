@@ -149,6 +149,33 @@
   force = true
 
 [[redirects]]
+  from = "/api/paytr/return-ok"
+  to = "/.netlify/functions/paytr-return-ok"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/paytr/return-fail"
+  to = "/.netlify/functions/paytr-return-fail"
+  status = 200
+  force = true
+
+# PayTR Direct API — POST dönüşleri (eski merchant_* URL'leri için geriye dönük)
+[[redirects]]
+  from = "/odeme/basarili"
+  to = "/.netlify/functions/paytr-return-ok"
+  status = 200
+  force = true
+  conditions = {Method = ["POST"]}
+
+[[redirects]]
+  from = "/odeme/hata"
+  to = "/.netlify/functions/paytr-return-fail"
+  status = 200
+  force = true
+  conditions = {Method = ["POST"]}
+
+[[redirects]]
   from = "/api/members/orders"
   to = "/.netlify/functions/members-orders"
   status = 200
