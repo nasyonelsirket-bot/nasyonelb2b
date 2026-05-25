@@ -2,7 +2,12 @@
  * Bekleyen sipariş için PayTR iFrame token alır (get-token).
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { getPaytrConfig, resolvePaytrUserIpDetailed, siteBaseUrl } = require('../../lib/paytrHelpers.cjs');
+const {
+  getPaytrConfig,
+  resolvePaytrUserIpDetailedAsync,
+  mintPaytrMerchantOid,
+  siteBaseUrl,
+} = require('../../lib/paytrHelpers.cjs');
 const { buildPaytrIframeCheckout } = require('../../lib/paytrForm.cjs');
 
 const HEADERS = {
@@ -31,13 +36,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş ID gerekli' }) };
   }
 
-  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const ipResult = await resolvePaytrUserIpDetailedAsync(event, body);
   const userIp = ipResult.ip;
   if (!userIp) {
+    console.error('paytr-resign: user_ip alınamadı', JSON.stringify(ipResult.debug, null, 2));
     return {
       statusCode: 400,
       headers: HEADERS,
-      body: JSON.stringify({ error: 'Müşteri IP adresi alınamadı' }),
+      body: JSON.stringify({
+        error: 'Müşteri IP adresi alınamadı (IPv4 gerekli)',
+        reason: 'Müşteri IP adresi alınamadı (IPv4 gerekli)',
+      }),
     };
   }
 
@@ -58,6 +67,18 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş ödemeye uygun değil' }) };
     }
 
+    const merchantOid = mintPaytrMerchantOid(order.id);
+    const updatedOrder = {
+      ...order,
+      merchantOid,
+      paytrMerchantOidAt: new Date().toISOString(),
+    };
+    await store.setJSON(`order-${orderId}`, updatedOrder);
+
+    console.log(`[paytr-resign:${orderId}] merchant_oid minted`, merchantOid);
+    console.log(`[paytr-resign:${orderId}] user_ip resolved`, userIp);
+    console.log(`[paytr-resign:${orderId}] user_ip debug`, JSON.stringify(ipResult.debug, null, 2));
+
     const base = siteBaseUrl(event);
     const email = String(order.customer?.email || '').trim().slice(0, 100);
 
@@ -65,15 +86,17 @@ exports.handler = async (event) => {
       config,
       base,
       orderId: order.id,
-      merchantOid: order.merchantOid,
+      merchantOid,
       email,
       orderTotal: order.orderTotal,
       items: order.items,
       customer: order.customer,
       userIp,
       userIpDebug: ipResult.debug,
-      context: `iframe:${order.id}`,
+      context: `resign:${order.id}`,
     });
+
+    console.log(`[paytr-resign:${orderId}] PayTR FULL RAW response`, JSON.stringify(checkout.paytrResponse));
 
     return {
       statusCode: 200,
@@ -84,19 +107,30 @@ exports.handler = async (event) => {
         orderId: order.id,
         orderNumber: order.orderNumber,
         orderTotal: order.orderTotal,
+        merchantOid,
         userIp,
         iframeToken: checkout.iframeToken,
         iframeUrl: checkout.iframeUrl,
       }),
     };
   } catch (err) {
-    console.error('paytr-resign:', err);
+    console.error(`[paytr-resign:${orderId}] PayTR FULL RAW response`, err.paytrRaw || '(yok)');
+    console.error(`[paytr-resign:${orderId}] PayTR parsed response`, JSON.stringify(err.paytr || null));
+    console.error(`[paytr-resign:${orderId}] error`, err.message);
+
+    const reason = err.paytr?.reason || err.message || 'PayTR iFrame token alınamadı';
+    const statusCode =
+      err.paytrStatus === 'failed' ? 422 : err.httpStatus >= 400 && err.httpStatus < 600 ? err.httpStatus : 500;
+
     return {
-      statusCode: err.httpStatus && err.httpStatus >= 400 && err.httpStatus < 600 ? err.httpStatus : 500,
+      statusCode,
       headers: HEADERS,
       body: JSON.stringify({
-        error: err.message || 'PayTR iFrame token alınamadı',
+        error: reason,
+        reason,
+        paytrStatus: err.paytrStatus || err.paytr?.status || null,
         paytr: err.paytr || null,
+        paytrRaw: err.paytrRaw || null,
       }),
     };
   }

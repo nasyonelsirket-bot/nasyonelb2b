@@ -10,7 +10,8 @@ const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
   analyzePaytrAmount,
-  resolvePaytrUserIpDetailed,
+  resolvePaytrUserIpDetailedAsync,
+  mintPaytrMerchantOid,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
 
@@ -63,7 +64,7 @@ exports.handler = async (event) => {
   }
 
   const id = crypto.randomBytes(10).toString('hex');
-  const merchantOid = `NT${id}`;
+  const merchantOid = mintPaytrMerchantOid(id);
   const paymentMethod = 'paytr';
   const status = 'pending_payment';
 
@@ -115,7 +116,7 @@ exports.handler = async (event) => {
   const base = siteBaseUrl(event);
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
-  const ipResult = resolvePaytrUserIpDetailed(event, body);
+  const ipResult = await resolvePaytrUserIpDetailedAsync(event, body);
   const userIp = ipResult.ip;
   if (!userIp) {
     return {

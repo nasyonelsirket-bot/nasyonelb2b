@@ -10,6 +10,7 @@ const {
   verifyCallbackHash,
   parseEventFormBody,
   paytrOkResponse,
+  parseOrderIdFromMerchantOid,
 } = require('../../lib/paytrHelpers.cjs');
 
 function scheduleCallbackSideEffects(event, { order, orderId, status, post }) {
@@ -87,7 +88,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'PAYTR notification failed: bad hash' };
   }
 
-  const orderId = String(merchantOid).replace(/^NT/i, '');
+  const orderId = parseOrderIdFromMerchantOid(merchantOid);
   if (!orderId) {
     console.error('paytr-callback: geçersiz merchant_oid', merchantOid);
     return paytrOkResponse();
