@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { CreditCard, ArrowLeft, Lock, ShieldCheck, Sparkles } from 'lucide-react';
+import { CreditCard, ArrowLeft, Lock, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import Button from '@/components/ui/Button';
 import CardScanButton from '@/components/payment/CardScanButton';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
+import { fetchClientIp, resignPaytrForm } from '@/services/paytrApi';
 
 const PAYTR_POST_URL = 'https://www.paytr.com/odeme';
 
@@ -18,10 +19,15 @@ function formatCardNumber(value) {
 
 export default function PaymentPage() {
   const location = useLocation();
-  const form = location.state?.form;
   const orderId = location.state?.orderId;
   const orderNumber = location.state?.orderNumber;
   const orderTotal = location.state?.orderTotal;
+
+  const [paytrForm, setPaytrForm] = useState(location.state?.form ?? {});
+  const [formReady, setFormReady] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const formRef = useRef(null);
 
   const [card, setCard] = useState({
     cc_owner: '',
@@ -31,7 +37,32 @@ export default function PaymentPage() {
     cvv: '',
   });
 
-  if (!form) {
+  useEffect(() => {
+    if (!orderId) return undefined;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const userIp = await fetchClientIp();
+        const data = await resignPaytrForm(orderId, userIp);
+        if (!cancelled) {
+          setPaytrForm(data.form);
+          setFormReady(true);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setFormReady(true);
+          setFormError(err?.message || 'Ödeme formu hazırlanamadı.');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
+
+  if (!orderId) {
     return <Navigate to="/sepet" replace />;
   }
 
@@ -49,10 +80,41 @@ export default function PaymentPage() {
     }));
   };
 
-  const handleSubmit = (event) => {
-    const cardInput = event.currentTarget.querySelector('[name="card_number"]');
-    if (cardInput) {
-      cardInput.value = card.card_number.replace(/\D/g, '');
+  const applyHiddenFields = (formEl, fields) => {
+    for (const [key, value] of Object.entries(fields)) {
+      let input = formEl.querySelector(`input[name="${key}"]`);
+      if (!input) {
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        formEl.appendChild(input);
+      }
+      input.value = String(value ?? '');
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFormError('');
+    setSubmitting(true);
+
+    try {
+      const userIp = await fetchClientIp();
+      const data = await resignPaytrForm(orderId, userIp);
+      setPaytrForm(data.form);
+
+      const formEl = formRef.current || event.currentTarget;
+      applyHiddenFields(formEl, data.form);
+
+      const cardInput = formEl.querySelector('[name="card_number"]');
+      if (cardInput) {
+        cardInput.value = card.card_number.replace(/\D/g, '');
+      }
+
+      formEl.submit();
+    } catch (err) {
+      setFormError(err?.message || 'Ödeme gönderilemedi.');
+      setSubmitting(false);
     }
   };
 
@@ -126,15 +188,22 @@ export default function PaymentPage() {
             </div>
 
             <form
+              ref={formRef}
               action={PAYTR_POST_URL}
               method="POST"
               className="p-5 sm:p-6 space-y-4"
               autoComplete="off"
               onSubmit={handleSubmit}
             >
-              {Object.entries(form).map(([key, value]) => (
+              {Object.entries(paytrForm).map(([key, value]) => (
                 <input key={key} type="hidden" name={key} value={String(value ?? '')} readOnly />
               ))}
+
+              {formError && (
+                <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                  {formError}
+                </p>
+              )}
 
               <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 px-3 py-2.5 flex items-center gap-2 text-xs text-emerald-800">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
@@ -219,10 +288,11 @@ export default function PaymentPage() {
                 type="submit"
                 variant="gold"
                 size="lg"
-                className="w-full mt-2 shadow-lg shadow-accent-gold/30 hover:shadow-xl hover:scale-[1.01] transition-all"
+                disabled={submitting || !formReady}
+                className="w-full mt-2 shadow-lg shadow-accent-gold/30 hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-70"
               >
-                <Lock className="h-5 w-5" />
-                Güvenli Ödeme Yap
+                {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
+                {submitting ? 'PayTR\'ye yönlendiriliyor…' : 'Güvenli Ödeme Yap'}
               </Button>
 
               <p className="text-center text-[11px] text-gray-500 pt-1">

@@ -1,5 +1,5 @@
 /** PayTR Direct API — sipariş hazırla, imzalı form alanları döndür */
-async function fetchClientIp() {
+export async function fetchClientIp() {
   try {
     const res = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(4000) });
     const data = await res.json();
@@ -23,6 +23,24 @@ export async function startPaytrPayment(payload) {
     throw new Error(msg);
   }
   if (!data?.form || !data?.orderId) {
+    throw new Error('PayTR yanıtı geçersiz');
+  }
+  return data;
+}
+
+export async function resignPaytrForm(orderId, userIp) {
+  const ip = userIp || (await fetchClientIp());
+  const res = await fetch('/api/paytr/resign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId, userIp: ip }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = [data.error, data.paytr?.reason].filter(Boolean).join(' — ') || 'Ödeme formu yenilenemedi';
+    throw new Error(msg);
+  }
+  if (!data?.form) {
     throw new Error('PayTR yanıtı geçersiz');
   }
   return data;

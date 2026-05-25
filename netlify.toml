@@ -160,6 +160,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/paytr/resign"
+  to = "/.netlify/functions/paytr-resign"
+  status = 200
+  force = true
+
 # PayTR Direct API — POST dönüşleri (eski merchant_* URL'leri için geriye dönük)
 [[redirects]]
   from = "/odeme/basarili"
