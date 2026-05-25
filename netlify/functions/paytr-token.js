@@ -217,6 +217,7 @@ exports.handler = async (event) => {
       amountDebug: {
         paymentAmountRaw: form.payment_amount,
         userBasketRaw: form.user_basket,
+        basketMode: config.basketMode,
       },
     });
 
