@@ -1,8 +1,8 @@
-/** Ödeme isteğini /api/paytr/forward üzerinden PayTR auto-submit sayfasına yönlendir. */
-export function forwardPaytrPayment(orderId, card) {
+/** Kart + sipariş bilgisini /api/paytr/pay endpoint'ine POST et. */
+export function submitPaytrPayment(orderId, card) {
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = '/api/paytr/forward';
+  form.action = '/api/paytr/pay';
   form.acceptCharset = 'UTF-8';
   form.style.display = 'none';
 

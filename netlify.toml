@@ -167,8 +167,14 @@
   force = true
 
 [[redirects]]
+  from = "/api/paytr/pay"
+  to = "/.netlify/functions/paytr-pay"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/paytr/forward"
-  to = "/.netlify/functions/paytr-forward"
+  to = "/.netlify/functions/paytr-pay"
   status = 200
   force = true
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { CreditCard, ArrowLeft, Lock, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
@@ -6,8 +6,7 @@ import Button from '@/components/ui/Button';
 import CardScanButton from '@/components/payment/CardScanButton';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
-import { resignPaytrForm } from '@/services/paytrApi';
-import { forwardPaytrPayment } from '@/utils/paytrSubmit';
+import { submitPaytrPayment } from '@/utils/paytrSubmit';
 
 const CARD_BRANDS = ['VISA', 'MASTERCARD', 'TROY'];
 
@@ -22,8 +21,6 @@ export default function PaymentPage() {
   const orderNumber = location.state?.orderNumber;
   const orderTotal = location.state?.orderTotal;
 
-  const [paytrForm, setPaytrForm] = useState(location.state?.form ?? {});
-  const [formReady, setFormReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -34,30 +31,6 @@ export default function PaymentPage() {
     expiry_year: '',
     cvv: '',
   });
-
-  useEffect(() => {
-    if (!orderId) return undefined;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const data = await resignPaytrForm(orderId);
-        if (!cancelled) {
-          setPaytrForm(data.form);
-          setFormReady(true);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setFormReady(true);
-          setFormError(err?.message || 'Ödeme formu hazırlanamadı.');
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId]);
 
   if (!orderId) {
     return <Navigate to="/sepet" replace />;
@@ -77,13 +50,13 @@ export default function PaymentPage() {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     setFormError('');
     setSubmitting(true);
 
     try {
-      forwardPaytrPayment(orderId, card);
+      submitPaytrPayment(orderId, card);
     } catch (err) {
       setFormError(err?.message || 'Ödeme gönderilemedi.');
       setSubmitting(false);
@@ -170,13 +143,6 @@ export default function PaymentPage() {
                 </p>
               )}
 
-              {!formReady && !formError && (
-                <p className="rounded-xl border border-brand-100 bg-brand-50/80 px-3 py-2.5 text-sm text-brand-700 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                  Ödeme formu hazırlanıyor…
-                </p>
-              )}
-
               <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 px-3 py-2.5 flex items-center gap-2 text-xs text-emerald-800">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
                 <span>{PAYTR_TRUST_LABEL} · 256 Bit SSL · 3D Secure</span>
@@ -255,7 +221,7 @@ export default function PaymentPage() {
                 type="submit"
                 variant="gold"
                 size="lg"
-                disabled={submitting || !formReady || !paytrForm?.paytr_token}
+                disabled={submitting}
                 className="w-full mt-2 shadow-lg shadow-accent-gold/30 hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-70"
               >
                 {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}

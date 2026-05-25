@@ -4,7 +4,8 @@
 /api/paytr/return-ok  /.netlify/functions/paytr-return-ok  200!
 /api/paytr/return-fail  /.netlify/functions/paytr-return-fail  200!
 /api/paytr/resign  /.netlify/functions/paytr-resign  200!
-/api/paytr/forward  /.netlify/functions/paytr-forward  200!
+/api/paytr/pay  /.netlify/functions/paytr-pay  200!
+/api/paytr/forward  /.netlify/functions/paytr-pay  200!
 /api/trendyol/sync  /.netlify/functions/trendyol-sync  200!
 /api/catalog  /.netlify/functions/catalog-get  200!
 /api/catalog/save  /.netlify/functions/catalog-save  200!
