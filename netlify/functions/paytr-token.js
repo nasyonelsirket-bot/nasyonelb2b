@@ -9,9 +9,9 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  buildDirectUserBasket,
+  buildUserBasket,
   formatDirectPaymentAmount,
-  createDirectPaytrTokenHash,
+  createPaytrTokenHash,
   resolveClientIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
@@ -118,13 +118,13 @@ exports.handler = async (event) => {
   const pdfUrl = `${base}/api/order-pdf?id=${id}`;
   const email = String(customer.email).trim().slice(0, 100);
   const paymentAmount = formatDirectPaymentAmount(orderTotal);
-  const userBasket = buildDirectUserBasket(items);
+  const userBasket = buildUserBasket(items);
   const userIp = resolveClientIp(event);
   const installmentCount = '0';
   const paymentType = 'card';
   const non3d = '0';
 
-  const paytrToken = createDirectPaytrTokenHash({
+  const paytrToken = createPaytrTokenHash({
     merchantId: config.merchantId,
     merchantKey: config.merchantKey,
     merchantSalt: config.merchantSalt,
@@ -132,11 +132,11 @@ exports.handler = async (event) => {
     merchantOid,
     email,
     paymentAmount,
-    paymentType,
-    installmentCount,
+    userBasket,
+    noInstallment: config.noInstallment,
+    maxInstallment: config.maxInstallment,
     currency: config.currency,
     testMode: config.testMode,
-    non3d,
   });
 
   const userName = customerName.slice(0, 60);
