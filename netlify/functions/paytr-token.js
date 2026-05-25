@@ -9,7 +9,7 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  formatPaytrPaymentAmountKurus,
+  formatPaytrPaymentAmount,
   resolvePaytrUserIp,
   siteBaseUrl,
   logPaytrPayload,
@@ -126,7 +126,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const paymentAmount = formatPaytrPaymentAmountKurus(orderTotal);
+  const paymentAmount = formatPaytrPaymentAmount(orderTotal, config.amountMode);
 
   const discount = {
     ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
@@ -212,7 +212,13 @@ exports.handler = async (event) => {
       userIp,
     });
 
-    logPaytrPayload(`token:${id}`, form, config);
+    logPaytrPayload(`token:${id}`, form, {
+      config,
+      amountDebug: {
+        paymentAmountRaw: form.payment_amount,
+        userBasketRaw: form.user_basket,
+      },
+    });
 
     return {
       statusCode: 200,
