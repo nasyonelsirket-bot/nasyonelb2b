@@ -11,6 +11,9 @@
   node_bundler = "esbuild"
   included_files = ["lib/**", "lib/fonts/**"]
 
+[functions."paytr-callback"]
+  timeout = 26
+
 [[redirects]]
   from = "/api/feed/products.xml"
   to = "/.netlify/functions/product-feed"

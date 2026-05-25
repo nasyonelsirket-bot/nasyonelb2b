@@ -12,6 +12,34 @@ const {
   paytrOkResponse,
 } = require('../../lib/paytrHelpers.cjs');
 
+function scheduleCallbackSideEffects(event, { order, orderId, status, post }) {
+  if (status !== 'success') return;
+
+  if (order.couponCode) {
+    markCouponUsed(event, order.couponCode).catch((useErr) => {
+      console.error('paytr-callback coupon:', useErr);
+    });
+  }
+
+  sendOrderEmails(order, {
+    pdfUrl: order.pdfUrl,
+    siteUrl: order.siteUrl,
+  }).catch((emailErr) => {
+    console.error('paytr-callback email:', emailErr);
+  });
+
+  getOrderStore(event)
+    .get('order-index', { type: 'json' })
+    .then((index) => {
+      if (!Array.isArray(index)) return;
+      const next = index.map((row) => (row.id === orderId ? { ...row, status: 'confirmed' } : row));
+      return getOrderStore(event).setJSON('order-index', next);
+    })
+    .catch((idxErr) => {
+      console.error('paytr-callback index:', idxErr);
+    });
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'GET' || event.httpMethod === 'HEAD') {
     return paytrOkResponse();
@@ -89,35 +117,7 @@ exports.handler = async (event) => {
         paidAt: new Date().toISOString(),
       };
       await store.setJSON(key, updated);
-
-      if (order.couponCode) {
-        try {
-          await markCouponUsed(event, order.couponCode);
-        } catch (useErr) {
-          console.error('paytr-callback coupon:', useErr);
-        }
-      }
-
-      try {
-        const index = await store.get('order-index', { type: 'json' });
-        if (Array.isArray(index)) {
-          const next = index.map((row) =>
-            row.id === orderId ? { ...row, status: 'confirmed' } : row,
-          );
-          await store.setJSON('order-index', next);
-        }
-      } catch (idxErr) {
-        console.error('paytr-callback index:', idxErr);
-      }
-
-      try {
-        await sendOrderEmails(updated, {
-          pdfUrl: updated.pdfUrl,
-          siteUrl: updated.siteUrl,
-        });
-      } catch (emailErr) {
-        console.error('paytr-callback email:', emailErr);
-      }
+      scheduleCallbackSideEffects(event, { order: updated, orderId, status, post });
     } else {
       await store.setJSON(key, {
         ...order,
@@ -130,20 +130,20 @@ exports.handler = async (event) => {
         },
       });
 
-      try {
-        const index = await store.get('order-index', { type: 'json' });
-        if (Array.isArray(index)) {
+      getOrderStore(event)
+        .get('order-index', { type: 'json' })
+        .then((index) => {
+          if (!Array.isArray(index)) return;
           const next = index.map((row) =>
             row.id === orderId ? { ...row, status: 'cancelled' } : row,
           );
-          await store.setJSON('order-index', next);
-        }
-      } catch (idxErr) {
-        console.error('paytr-callback failed index:', idxErr);
-      }
+          return getOrderStore(event).setJSON('order-index', next);
+        })
+        .catch((idxErr) => {
+          console.error('paytr-callback failed index:', idxErr);
+        });
     }
   } catch (err) {
-    // Hash doğrulandı — PayTR'ye OK dön; işlem tekrar bildirim göndermesin.
     console.error('paytr-callback store:', err);
   }
 
