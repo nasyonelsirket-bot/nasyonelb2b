@@ -80,6 +80,19 @@ export async function deleteOrder(id) {
   return data;
 }
 
+export async function deleteOrders(ids) {
+  const list = [...new Set((Array.isArray(ids) ? ids : []).map(String).filter(Boolean))];
+  if (!list.length) return { ok: true, deleted: 0, ids: [] };
+  const res = await fetch(ORDERS_DELETE, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify(list.length === 1 ? { id: list[0] } : { ids: list }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Siparişler silinemedi');
+  return data;
+}
+
 export async function trackOrder(orderNumber, email) {
   const res = await fetch(ORDERS_TRACK, {
     method: 'POST',

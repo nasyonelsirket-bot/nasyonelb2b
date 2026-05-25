@@ -1,8 +1,8 @@
 /**
- * Admin: siparişi kalıcı olarak sil
+ * Admin: sipariş(ler)i kalıcı olarak sil
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
-const { deleteOrderFromStore } = require('../../lib/orderDelete.cjs');
+const { deleteOrderFromStore, deleteOrdersFromStore } = require('../../lib/orderDelete.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +26,14 @@ function verifyAdmin(headers) {
   return allowedPasswords().includes(given);
 }
 
+function normalizeIds(body) {
+  if (Array.isArray(body.ids) && body.ids.length) {
+    return body.ids.map((id) => String(id || '').trim()).filter(Boolean);
+  }
+  const single = String(body.id || '').trim();
+  return single ? [single] : [];
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: HEADERS, body: '' };
@@ -45,14 +53,15 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Geçersiz JSON' }) };
   }
 
-  const id = String(body.id || '').trim();
-  if (!id) {
-    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'id gerekli' }) };
+  const ids = normalizeIds(body);
+  if (!ids.length) {
+    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'id veya ids gerekli' }) };
   }
 
   try {
     const store = getOrderStore(event);
-    const result = await deleteOrderFromStore(store, id);
+    const result =
+      ids.length === 1 ? await deleteOrderFromStore(store, ids[0]) : await deleteOrdersFromStore(store, ids);
     return {
       statusCode: 200,
       headers: HEADERS,

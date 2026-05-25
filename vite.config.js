@@ -773,7 +773,7 @@ function orderPdfDevProxy(env = {}) {
           order.cancelReason = String(body.cancelReason || '').trim()
           order.cancelNote = String(body.cancelNote || '').trim()
           order.cancelledAt = now
-        } else if (status === 'confirmed' || status === 'iban_verified') {
+        } else if (status === 'confirmed' || status === 'iban_verified' || status === 'kargoya_hazir') {
           order.confirmedAt = now
         } else if (status === 'packed') {
           order.packedAt = now
@@ -879,18 +879,22 @@ function orderPdfDevProxy(env = {}) {
           res.end(JSON.stringify({ error: 'Geçersiz JSON' }))
           return
         }
-        const id = String(body.id || '').trim()
-        if (!id) {
+        const ids = Array.isArray(body.ids)
+          ? body.ids.map((x) => String(x || '').trim()).filter(Boolean)
+          : String(body.id || '').trim()
+            ? [String(body.id).trim()]
+            : []
+        if (!ids.length) {
           res.statusCode = 400
           res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify({ error: 'id gerekli' }))
+          res.end(JSON.stringify({ error: 'id veya ids gerekli' }))
           return
         }
         try {
           const { deleteOrderFromFilesystem } = require('./lib/orderDelete.cjs')
-          const result = deleteOrderFromFilesystem(ordersDir, id, fs)
+          const results = ids.map((id) => deleteOrderFromFilesystem(ordersDir, id, fs))
           res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify(result))
+          res.end(JSON.stringify({ ok: true, deleted: results.length, ids: results.map((r) => r.id) }))
         } catch (err) {
           res.statusCode = 500
           res.setHeader('Content-Type', 'application/json')

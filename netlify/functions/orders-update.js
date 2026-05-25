@@ -72,7 +72,7 @@ exports.handler = async (event) => {
       order.cancelReason = String(body.cancelReason || '').trim();
       order.cancelNote = String(body.cancelNote || '').trim();
       order.cancelledAt = now;
-    } else if (status === 'confirmed' || status === 'iban_verified') {
+    } else if (status === 'confirmed' || status === 'iban_verified' || status === 'kargoya_hazir') {
       order.confirmedAt = now;
       if (body.cancelReason) order.cancelReason = '';
       if (body.cancelNote) order.cancelNote = '';

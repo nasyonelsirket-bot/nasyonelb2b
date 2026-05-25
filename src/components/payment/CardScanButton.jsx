@@ -1,62 +1,50 @@
-import { useRef, useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
-import { scanCardFromImage } from '@/utils/cardScan';
+import { useState } from 'react';
+import { Camera, ScanLine } from 'lucide-react';
+import CardLiveScanner from '@/components/payment/CardLiveScanner';
+
+function formatCardNumber(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 16);
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+}
 
 export default function CardScanButton({ onScan, disabled }) {
-  const inputRef = useRef(null);
-  const [scanning, setScanning] = useState(false);
-  const [error, setError] = useState('');
+  const [open, setOpen] = useState(false);
+  const [lastScan, setLastScan] = useState(null);
 
-  const handleFile = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    setScanning(true);
-    setError('');
-    try {
-      const parsed = await scanCardFromImage(file);
-      if (!parsed.card_number) {
-        setError('Kart numarası okunamadı. Işığı artırıp tekrar deneyin.');
-        return;
-      }
-      onScan(parsed);
-    } catch {
-      setError('Kart okunamadı. Elle girmeyi deneyin.');
-    } finally {
-      setScanning(false);
-    }
+  const handleScan = (parsed) => {
+    setLastScan(parsed);
+    onScan?.(parsed);
+    setOpen(false);
   };
 
   return (
-    <div className="space-y-1.5">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFile}
-      />
-      <button
-        type="button"
-        disabled={disabled || scanning}
-        onClick={() => inputRef.current?.click()}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/60 px-4 py-3 text-sm font-medium text-brand-800 hover:border-accent-gold hover:bg-accent-gold/10 transition-colors disabled:opacity-60"
-      >
-        {scanning ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Kart okunuyor…
-          </>
-        ) : (
-          <>
-            <Camera className="h-4 w-4" />
-            Kartı tara / fotoğraf çek
-          </>
+    <>
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-200 bg-gradient-to-r from-brand-50 to-orange-50/80 px-4 py-3.5 text-sm font-semibold text-brand-800 hover:border-accent-gold hover:shadow-md transition-all disabled:opacity-60"
+        >
+          <ScanLine className="h-4 w-4 text-accent-gold" />
+          <Camera className="h-4 w-4" />
+          Kartı canlı tara (OCR)
+        </button>
+        {lastScan?.card_number && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 text-xs text-emerald-900 space-y-1">
+            <p className="font-semibold">Okunan kart (PayTR ekranına girin)</p>
+            <p className="font-mono tracking-wide">{formatCardNumber(lastScan.card_number)}</p>
+            {(lastScan.expiry_month || lastScan.expiry_year) && (
+              <p>
+                SKT: {String(lastScan.expiry_month || 'AA').padStart(2, '0')}/
+                {String(lastScan.expiry_year || 'YY').padStart(2, '0')}
+              </p>
+            )}
+            {lastScan.cc_owner && <p>{lastScan.cc_owner}</p>}
+          </div>
         )}
-      </button>
-      {error && <p className="text-xs text-amber-700">{error}</p>}
-    </div>
+      </div>
+      <CardLiveScanner open={open} onClose={() => setOpen(false)} onScan={handleScan} />
+    </>
   );
 }

@@ -5,6 +5,7 @@ import SEO from '@/components/seo/SEO';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
+import CardScanButton from '@/components/payment/CardScanButton';
 
 const IFRAME_RESIZER_SRC = 'https://www.paytr.com/js/iframeResizer.min.js';
 
@@ -147,7 +148,11 @@ export default function PaymentPage() {
               )}
 
               {!loading && iframeUrl && (
-                <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
+                <>
+                  <div className="mb-4">
+                    <CardScanButton onScan={() => {}} disabled={loading} />
+                  </div>
+                  <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
                   <iframe
                     ref={iframeRef}
                     id="paytriframe"
@@ -159,6 +164,7 @@ export default function PaymentPage() {
                     allow="payment"
                   />
                 </div>
+                </>
               )}
 
               <p className="text-center text-[11px] text-gray-500 pt-4">

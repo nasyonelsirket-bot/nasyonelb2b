@@ -17,7 +17,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder, markOrdersPacked } from '@/services/orderApi';
+import { fetchOrders, fetchOrderDetail, updateOrderStatus, deleteOrder, deleteOrders, markOrdersPacked } from '@/services/orderApi';
 import { ORDER_CANCEL_PRESETS } from '@/data/orderCancelReasons';
 import { formatPrice } from '@/utils/whatsapp';
 import {
@@ -27,6 +27,8 @@ import {
   formatPaymentMethod,
   matchesStatusFilter,
   ADMIN_STATUS_FILTERS,
+  PAYMENT_METHOD_FILTERS,
+  isUnpaidOrderStatus,
 } from '@/constants/orderStatus';
 import { matchesOrderNumberSearch, matchesCustomerNameSearch } from '@/utils/orderNumberSearch';
 import ShippingLabelPrint from '@/components/admin/ShippingLabelPrint';
@@ -334,6 +336,7 @@ export default function OrdersAdmin({ setMsg }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('pending');
+  const [paymentFilter, setPaymentFilter] = useState('all');
   const [orderNoQuery, setOrderNoQuery] = useState('');
   const [customerQuery, setCustomerQuery] = useState('');
   const [expandedId, setExpandedId] = useState(null);
@@ -341,7 +344,8 @@ export default function OrdersAdmin({ setMsg }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
-  const [printSelectedIds, setPrintSelectedIds] = useState(() => new Set());
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -361,11 +365,11 @@ export default function OrdersAdmin({ setMsg }) {
   }, [load]);
 
   useEffect(() => {
-    if (filter !== 'preparing') setPrintSelectedIds(new Set());
-  }, [filter]);
+    setSelectedIds(new Set());
+  }, [filter, paymentFilter]);
 
-  const togglePrintSelected = (id) => {
-    setPrintSelectedIds((prev) => {
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -399,7 +403,7 @@ export default function OrdersAdmin({ setMsg }) {
       const status =
         order.paymentMethod === 'iban' && order.status === 'pending_iban_check'
           ? 'iban_verified'
-          : 'confirmed';
+          : 'kargoya_hazir';
       await updateOrderStatus(order.id, status);
       setMsg('Sipariş onaylandı');
       setExpandedId(null);
@@ -511,11 +515,63 @@ export default function OrdersAdmin({ setMsg }) {
       orders.filter(
         (o) =>
           matchesStatusFilter(o, filter) &&
+          (paymentFilter === 'all' || o.paymentMethod === paymentFilter) &&
           matchesOrderNumberSearch(o, orderNoQuery) &&
           matchesCustomerNameSearch(o, customerQuery),
       ),
-    [orders, filter, orderNoQuery, customerQuery],
+    [orders, filter, paymentFilter, orderNoQuery, customerQuery],
   );
+
+  const toggleSelectAllFiltered = () => {
+    const ids = filtered.map((o) => o.id);
+    const allSelected = ids.length > 0 && ids.every((id) => selectedIds.has(id));
+    setSelectedIds(allSelected ? new Set() : new Set(ids));
+  };
+
+  const confirmDeleteOrders = async (ids, label) => {
+    const list = [...new Set((Array.isArray(ids) ? ids : []).map(String).filter(Boolean))];
+    if (!list.length) return;
+    if (
+      !window.confirm(
+        `${list.length} sipariş kalıcı olarak silinsin mi? (${label})\nBu işlem geri alınamaz.`,
+      )
+    ) {
+      return;
+    }
+    setBulkBusy(true);
+    try {
+      await deleteOrders(list);
+      setMsg(`${list.length} sipariş silindi`);
+      setSelectedIds(new Set());
+      setExpandedId(null);
+      setDetail(null);
+      load();
+    } catch (err) {
+      setMsg(err.message, 'error');
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = () => confirmDeleteOrders([...selectedIds], 'seçili');
+
+  const handleQuickDelete = async (order, event) => {
+    event?.stopPropagation?.();
+    await confirmDeleteOrders([order.id], order.orderNumber || order.id);
+  };
+
+  const handleCleanupCancelled = () => {
+    const ids = orders.filter((o) => o.status === 'cancelled').map((o) => o.id);
+    confirmDeleteOrders(ids, 'iptal edilenler');
+  };
+
+  const handleCleanupStalePending = () => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const ids = orders
+      .filter((o) => isUnpaidOrderStatus(o.status) && o.createdAt && new Date(o.createdAt).getTime() < cutoff)
+      .map((o) => o.id);
+    confirmDeleteOrders(ids, '7 günden eski ödeme bekleyenler');
+  };
 
   const clearSearch = () => {
     setOrderNoQuery('');
@@ -571,6 +627,32 @@ export default function OrdersAdmin({ setMsg }) {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {PAYMENT_METHOD_FILTERS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setPaymentFilter(id)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              paymentFilter === id ? 'bg-accent-gold text-brand-900' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" size="sm" disabled={bulkBusy || loading} onClick={handleCleanupCancelled}>
+          <Trash2 className="h-3.5 w-3.5" />
+          İptal edilenleri temizle
+        </Button>
+        <Button type="button" variant="secondary" size="sm" disabled={bulkBusy || loading} onClick={handleCleanupStalePending}>
+          <Trash2 className="h-3.5 w-3.5" />
+          Eski ödeme bekleyenleri temizle
+        </Button>
+      </div>
+
       <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-3">
         <p className="text-xs font-semibold text-brand-800 flex items-center gap-1.5">
           <Search className="h-3.5 w-3.5" />
@@ -620,11 +702,34 @@ export default function OrdersAdmin({ setMsg }) {
         </div>
       </div>
 
+      {!loading && filtered.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-100 bg-brand-50/60 px-3 py-2.5 text-sm">
+          <label className="inline-flex items-center gap-2 font-medium text-brand-800 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filtered.length > 0 && filtered.every((o) => selectedIds.has(o.id))}
+              onChange={toggleSelectAllFiltered}
+              className="h-4 w-4 rounded border-brand-300 text-brand-700"
+            />
+            Tümünü seç ({filtered.length})
+          </label>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-gray-500 hidden sm:inline">|</span>
+              <Button type="button" variant="danger" size="sm" disabled={bulkBusy} onClick={handleBulkDelete}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Seçilenleri sil ({selectedIds.size})
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
       {filter === 'preparing' && !loading && filtered.length > 0 && (
         <PreparingBulkPrintBar
           orders={filtered}
-          selectedIds={printSelectedIds}
-          onSelectedIdsChange={setPrintSelectedIds}
+          selectedIds={selectedIds}
+          onSelectedIdsChange={setSelectedIds}
           setMsg={setMsg}
           onOrdersUpdated={load}
         />
@@ -647,15 +752,14 @@ export default function OrdersAdmin({ setMsg }) {
             return (
               <li key={o.id} className="py-4 first:pt-0">
                 <div className="flex items-start gap-2">
-                  {filter === 'preparing' && (
-                    <input
-                      type="checkbox"
-                      checked={printSelectedIds.has(o.id)}
-                      onChange={() => togglePrintSelected(o.id)}
-                      className="mt-2 h-4 w-4 shrink-0 rounded border-brand-300 text-brand-700 focus:ring-brand-500"
-                      aria-label={`${o.orderNumber || o.id} seç`}
-                    />
-                  )}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(o.id)}
+                    onChange={() => toggleSelected(o.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-2 h-4 w-4 shrink-0 rounded border-brand-300 text-brand-700 focus:ring-brand-500"
+                    aria-label={`${o.orderNumber || o.id} seç`}
+                  />
                 <button
                   type="button"
                   onClick={() => openDetail(o.id)}
@@ -688,6 +792,16 @@ export default function OrdersAdmin({ setMsg }) {
                     <p className="text-xs text-gray-500">{formatPaymentMethod(o.paymentMethod)}</p>
                   </div>
                 </button>
+                  <button
+                    type="button"
+                    title="Siparişi sil"
+                    disabled={bulkBusy || busyId === o.id}
+                    onClick={(e) => handleQuickDelete(o, e)}
+                    className="mt-1 shrink-0 rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    aria-label="Siparişi sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
 
                 {expanded && (

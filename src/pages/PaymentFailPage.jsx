@@ -12,7 +12,7 @@ export default function PaymentFailPage() {
 
   return (
     <>
-      <SEO title="Ödeme Başarısız" path="/odeme/hata" noindex />
+      <SEO title="Ödeme Başarısız" path="/odeme/basarisiz" noindex />
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <XCircle className="mx-auto h-16 w-16 text-red-500" />
         <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">Ödeme Tamamlanamadı</h1>

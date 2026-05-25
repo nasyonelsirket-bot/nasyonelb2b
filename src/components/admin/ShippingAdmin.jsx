@@ -36,7 +36,7 @@ function bucket(status) {
   if (status === 'shipped') return 'in_transit';
   if (status === 'completed') return 'delivered';
   if (status === 'cancelled') return 'cancelled';
-  if (status === 'confirmed' || status === 'iban_verified') return 'preparing';
+  if (status === 'confirmed' || status === 'iban_verified' || status === 'kargoya_hazir') return 'preparing';
   return null;
 }
 
@@ -83,7 +83,7 @@ export default function ShippingAdmin({ setMsg }) {
   };
 
   const shippable = orders.filter((o) =>
-    ['confirmed', 'iban_verified', 'packed', 'shipped', 'completed', 'cancelled'].includes(o.status),
+    ['kargoya_hazir', 'confirmed', 'iban_verified', 'packed', 'shipped', 'completed', 'cancelled'].includes(o.status),
   );
 
   const filtered = shippable.filter((o) => {

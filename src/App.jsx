@@ -77,6 +77,7 @@ export default function App() {
                 <Route path="sepet" element={<CartPage />} />
                 <Route path="odeme" element={<PaymentPage />} />
                 <Route path="odeme/basarili" element={<PaymentSuccessPage />} />
+                <Route path="odeme/basarisiz" element={<PaymentFailPage />} />
                 <Route path="odeme/hata" element={<PaymentFailPage />} />
                 <Route path="hakkimizda" element={<Suspense fallback={<PageLoader />}><AboutPage /></Suspense>} />
                 <Route path="iletisim" element={<Suspense fallback={<PageLoader />}><ContactPage /></Suspense>} />

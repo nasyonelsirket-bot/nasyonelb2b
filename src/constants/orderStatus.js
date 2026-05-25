@@ -45,6 +45,13 @@ export const ORDER_STATUS_META = {
     color: 'text-emerald-700 bg-emerald-50',
     icon: CheckCircle,
   },
+  kargoya_hazir: {
+    label: 'Kargoya hazır',
+    shortLabel: 'Kargoya hazır',
+    phase: 'preparing',
+    color: 'text-emerald-700 bg-emerald-50',
+    icon: CheckCircle,
+  },
   packed: {
     label: 'Paket yapıldı',
     shortLabel: 'Paket yapıldı',
@@ -127,14 +134,14 @@ export function getAdminStatusActions(order) {
     actions.push({
       id: 'approve',
       label: paymentMethod === 'iban' && status === 'pending_iban_check' ? 'IBAN onayla' : 'Onayla',
-      nextStatus: paymentMethod === 'iban' && status === 'pending_iban_check' ? 'iban_verified' : 'confirmed',
+      nextStatus: paymentMethod === 'iban' && status === 'pending_iban_check' ? 'iban_verified' : 'kargoya_hazir',
       variant: 'primary',
     });
     actions.push({ id: 'cancel', label: 'Reddet', nextStatus: 'cancelled', variant: 'danger' });
     return actions;
   }
 
-  if (status === 'iban_verified' || status === 'confirmed') {
+  if (status === 'iban_verified' || status === 'confirmed' || status === 'kargoya_hazir') {
     return actions;
   }
 
@@ -177,11 +184,18 @@ export const ADMIN_STATUS_FILTERS = [
   { id: 'cancelled', label: 'İptal' },
 ];
 
+export const PAYMENT_METHOD_FILTERS = [
+  { id: 'all', label: 'Tüm ödemeler' },
+  { id: 'paytr', label: 'Kart (PayTR)' },
+  { id: 'iban', label: 'Havale / EFT' },
+  { id: 'cod', label: 'Kapıda ödeme' },
+];
+
 export function matchesStatusFilter(order, filterId) {
   const s = order?.status;
   if (filterId === 'all') return true;
   if (filterId === 'pending') return isUnpaidOrderStatus(s);
-  if (filterId === 'preparing') return s === 'confirmed' || s === 'iban_verified';
+  if (filterId === 'preparing') return s === 'kargoya_hazir' || s === 'confirmed' || s === 'iban_verified';
   if (filterId === 'packed') return s === 'packed';
   if (filterId === 'shipping') return s === 'shipped';
   if (filterId === 'completed') return s === 'completed';
