@@ -9,7 +9,7 @@ const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs'
 const { cancelSupersededPendingOrders } = require('../../lib/orderPending.cjs');
 const {
   getPaytrConfig,
-  formatDirectPaymentAmountDecimal,
+  formatPaytrPaymentAmountKurus,
   resolvePaytrUserIp,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
@@ -125,7 +125,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const paymentAmount = formatDirectPaymentAmountDecimal(orderTotal);
+  const paymentAmount = formatPaytrPaymentAmountKurus(orderTotal);
 
   const discount = {
     ...(body.discount && typeof body.discount === 'object' ? body.discount : {}),
