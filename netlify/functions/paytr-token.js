@@ -237,6 +237,8 @@ exports.handler = async (event) => {
       currency: config.currency,
       test_mode: config.testMode,
       non_3d: non3d,
+      no_installment: config.noInstallment,
+      max_installment: config.maxInstallment,
       merchant_ok_url: `${base}/api/paytr/return-ok?oid=${id}`,
       merchant_fail_url: `${base}/api/paytr/return-fail?oid=${id}`,
       user_name: userName,
@@ -244,7 +246,9 @@ exports.handler = async (event) => {
       user_phone: userPhone,
       user_basket: userBasket,
       debug_on: config.debugOn,
+      lang: 'tr',
       client_lang: 'tr',
+      timeout_limit: config.timeoutLimit,
       paytr_token: paytrToken,
       non3d_test_failed: '0',
     };

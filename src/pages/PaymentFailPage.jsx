@@ -8,6 +8,7 @@ import { SUPPORT_EMAIL } from '@/constants/companyInfo';
 export default function PaymentFailPage() {
   const [params] = useSearchParams();
   const orderId = params.get('oid');
+  const failReason = params.get('reason');
 
   return (
     <>
@@ -19,6 +20,11 @@ export default function PaymentFailPage() {
           Ödeme işlemi iptal edildi, süresi doldu veya bankanız tarafından onaylanmadı.
           Kart bilgileriniz kaydedilmedi; güvenle tekrar deneyebilirsiniz.
         </p>
+        {failReason && (
+          <p className="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl px-4 py-3 max-w-md mx-auto">
+            PayTR: {failReason}
+          </p>
+        )}
         {orderId && (
           <p className="mt-2 text-sm text-gray-500">Referans: {orderId}</p>
         )}
