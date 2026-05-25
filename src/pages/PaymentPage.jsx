@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { CreditCard, ArrowLeft, ShieldCheck, Sparkles, ExternalLink } from 'lucide-react';
+import { CreditCard, ArrowLeft, ShieldCheck, Sparkles } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
-import Button from '@/components/ui/Button';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
-
-const paytrIframeUrl = (token) => `https://www.paytr.com/odeme/guvenli/${token}`;
 
 function PaytrIframe({ token }) {
   const iframeRef = useRef(null);
@@ -36,12 +33,10 @@ function PaytrIframe({ token }) {
     <iframe
       ref={iframeRef}
       title="PayTR güvenli ödeme"
-      src={paytrIframeUrl(token)}
+      src={`https://www.paytr.com/odeme/guvenli/${token}`}
       id="paytriframe"
       frameBorder="0"
       scrolling="no"
-      allow="payment *; publickey-credentials-get *; clipboard-write *"
-      referrerPolicy="strict-origin-when-cross-origin"
       className="w-full min-h-[520px] rounded-xl border border-gray-200 bg-white"
     />
   );
@@ -53,22 +48,6 @@ export default function PaymentPage() {
   const orderId = location.state?.orderId;
   const orderNumber = location.state?.orderNumber;
   const orderTotal = location.state?.orderTotal;
-  const [popupBlocked, setPopupBlocked] = useState(false);
-
-  const paytrUrl = iframeToken ? paytrIframeUrl(iframeToken) : '';
-
-  const openPaytrPopup = useCallback(() => {
-    if (!paytrUrl) return;
-    const popup = window.open(
-      paytrUrl,
-      'paytr_odeme',
-      'width=480,height=720,scrollbars=yes,resizable=yes',
-    );
-    if (!popup) {
-      setPopupBlocked(true);
-      window.location.assign(paytrUrl);
-    }
-  }, [paytrUrl]);
 
   if (!iframeToken) {
     return <Navigate to="/sepet" replace />;
@@ -113,23 +92,6 @@ export default function PaymentPage() {
                 <span>{PAYTR_TRUST_LABEL} · 256 Bit SSL · 3D Secure</span>
               </div>
 
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
-                <p className="font-medium">Ödeme formu görünmüyorsa</p>
-                <p className="mt-1 text-xs text-amber-800">
-                  Bazı tarayıcılar güvenlik nedeniyle gömülü formu engeller. Bu sayfa açık kalır; ödeme yeni
-                  pencerede güvenle tamamlanır.
-                </p>
-                <Button type="button" variant="primary" className="mt-3 w-full" onClick={openPaytrPopup}>
-                  <ExternalLink className="h-4 w-4" />
-                  Güvenli ödeme penceresini aç
-                </Button>
-                {popupBlocked && (
-                  <p className="mt-2 text-xs text-amber-800">
-                    Pop-up engellendi; ödeme sayfasına yönlendiriliyorsunuz.
-                  </p>
-                )}
-              </div>
-
               <PaytrIframe token={iframeToken} />
 
               <p className="text-center text-[11px] text-gray-500">
@@ -142,6 +104,3 @@ export default function PaymentPage() {
     </>
   );
 }
-
-
-
