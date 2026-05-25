@@ -1,12 +1,21 @@
 /**
  * PayTR bildirim URL — ödeme sonucu (2. adım).
+ * PayTR yalnızca düz metin "OK" yanıtını kabul eder.
  */
 const { getOrderStore } = require('../../lib/orderBlobStore.cjs');
 const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
 const { markCouponUsed } = require('../../lib/catalogPromotions.cjs');
-const { getPaytrConfig, verifyCallbackHash, parseFormBody } = require('../../lib/paytrHelpers.cjs');
+const {
+  getPaytrConfig,
+  verifyCallbackHash,
+  parseEventFormBody,
+  paytrOkResponse,
+} = require('../../lib/paytrHelpers.cjs');
 
 exports.handler = async (event) => {
+  if (event.httpMethod === 'GET' || event.httpMethod === 'HEAD') {
+    return paytrOkResponse();
+  }
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: '' };
   }
@@ -19,11 +28,20 @@ exports.handler = async (event) => {
     return { statusCode: 500, body: '' };
   }
 
-  const post = parseFormBody(event.body);
-  const { merchant_oid: merchantOid, status, total_amount: totalAmount, hash } = post;
+  const post = parseEventFormBody(event);
+  const merchantOid = post.merchant_oid;
+  const status = post.status;
+  const totalAmount = post.total_amount;
+  const hash = post.hash;
 
-  if (!merchantOid || !status || !totalAmount || !hash) {
-    console.error('paytr-callback: eksik alan', post);
+  if (!merchantOid || !status || totalAmount == null || totalAmount === '' || !hash) {
+    console.error('paytr-callback: eksik alan', {
+      merchant_oid: merchantOid || null,
+      status: status || null,
+      total_amount: totalAmount ?? null,
+      hasHash: Boolean(hash),
+      isBase64Encoded: Boolean(event.isBase64Encoded),
+    });
     return { statusCode: 400, body: 'Eksik alan' };
   }
 
@@ -41,9 +59,10 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'PAYTR notification failed: bad hash' };
   }
 
-  const orderId = String(merchantOid).replace(/^NT/, '');
+  const orderId = String(merchantOid).replace(/^NT/i, '');
   if (!orderId) {
-    return { statusCode: 400, body: 'Geçersiz sipariş' };
+    console.error('paytr-callback: geçersiz merchant_oid', merchantOid);
+    return paytrOkResponse();
   }
 
   try {
@@ -52,12 +71,12 @@ exports.handler = async (event) => {
     const order = await store.get(key, { type: 'json' });
 
     if (!order) {
-      console.error('paytr-callback: sipariş yok', orderId);
-      return { statusCode: 404, body: 'Sipariş bulunamadı' };
+      console.error('paytr-callback: sipariş yok', orderId, merchantOid);
+      return paytrOkResponse();
     }
 
     if (order.paymentStatus === 'success' || order.status === 'confirmed') {
-      return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: 'OK' };
+      return paytrOkResponse();
     }
 
     if (status === 'success') {
@@ -124,9 +143,9 @@ exports.handler = async (event) => {
       }
     }
   } catch (err) {
+    // Hash doğrulandı — PayTR'ye OK dön; işlem tekrar bildirim göndermesin.
     console.error('paytr-callback store:', err);
-    return { statusCode: 500, body: '' };
   }
 
-  return { statusCode: 200, headers: { 'Content-Type': 'text/plain' }, body: 'OK' };
+  return paytrOkResponse();
 };
