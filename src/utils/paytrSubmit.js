@@ -1,22 +1,14 @@
-/** Ödeme isteğini sunucu üzerinden PayTR auto-submit HTML'ine yönlendir. */
-export function forwardPaytrPayment(orderId, card) {
+/** PayTR /odeme — kart bilgileri doğrudan PayTR'ye POST (merchant sunucusuna değil). */
+export function submitPaytrForm(postUrl, fields) {
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = '/api/paytr/forward';
+  form.action = postUrl;
   form.acceptCharset = 'UTF-8';
+  form.enctype = 'application/x-www-form-urlencoded';
   form.style.display = 'none';
 
-  const fields = {
-    orderId,
-    cc_owner: card.cc_owner.trim(),
-    card_number: card.card_number.replace(/\D/g, ''),
-    expiry_month: card.expiry_month,
-    expiry_year: card.expiry_year,
-    cvv: card.cvv,
-  };
-
   for (const [name, value] of Object.entries(fields)) {
-    if (!value) continue;
+    if (value == null || value === '') continue;
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = name;
