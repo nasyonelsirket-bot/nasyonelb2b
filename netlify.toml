@@ -20,6 +20,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/feed.xml"
+  to = "/.netlify/functions/product-feed"
+  status = 200
+  force = true
+
 # HTTPS yönlendirme
 [[redirects]]
   from = "http://nasyoneltoys.com/*"
