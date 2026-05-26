@@ -10,6 +10,7 @@ import Layout from '@/components/layout/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
 import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
+import GlobalSiteHead from '@/components/seo/GlobalSiteHead';
 import MemberActivityTracker from '@/components/account/MemberActivityTracker';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 
@@ -50,6 +51,7 @@ function PageLoader() {
 export default function App() {
   return (
     <HelmetProvider>
+      <GlobalSiteHead />
       <ErrorBoundary>
       <StoreProvider>
         <CartProvider>
