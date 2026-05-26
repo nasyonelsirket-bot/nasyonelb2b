@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl, rewriteUrlToCanonical } from '@/utils/canonicalSiteUrl';
 
 export default function SEO({
   title,
@@ -14,16 +15,15 @@ export default function SEO({
 }) {
   const { settings } = useStore();
   const siteName = settings.siteName || 'Nasyonel Toys';
-  const siteUrl = settings.siteUrl || import.meta.env.VITE_SITE_URL || '';
+  const siteUrl = getSiteUrl(settings);
   const fullTitle =
     metaTitle?.trim() ||
     (title ? `${title} | ${siteName}` : `${siteName} - ${settings.tagline}`);
   const desc = description || settings.tagline;
   const ogImage = image || `${siteUrl}/logo.svg`;
-  const base = siteUrl.replace(/\/$/, '');
-  const canonical =
-    canonicalOverride?.trim() ||
-    (base ? `${base}${path}` : path);
+  const canonical = canonicalOverride?.trim()
+    ? rewriteUrlToCanonical(canonicalOverride)
+    : `${siteUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
   const organizationSchema = {
     '@context': 'https://schema.org',
@@ -40,8 +40,7 @@ export default function SEO({
     },
   };
 
-  const websiteSchema = base
-    ? {
+  const websiteSchema = {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         name: siteName,
@@ -50,12 +49,11 @@ export default function SEO({
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: `${base}/?q={search_term_string}#urunler`,
+            urlTemplate: `${siteUrl}/?q={search_term_string}#urunler`,
           },
           'query-input': 'required name=search_term_string',
         },
-      }
-    : null;
+      };
 
   return (
     <Helmet>

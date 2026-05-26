@@ -8,6 +8,7 @@ const { sendOrderEmails } = require('../../lib/orderEmail.cjs');
 const { allocateOrderNumber } = require('../../lib/orderNumber.cjs');
 const { loadPromotions, markCouponUsed } = require('../../lib/catalogPromotions.cjs');
 const { validateCoupon, computeCartTotals } = require('../../lib/promotions.cjs');
+const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -16,10 +17,15 @@ const HEADERS = {
 };
 
 function siteBaseUrl(event) {
-  if (process.env.URL) return String(process.env.URL).replace(/\/$/, '');
   const host = event.headers['x-forwarded-host'] || event.headers.host || '';
   const proto = event.headers['x-forwarded-proto'] || 'https';
-  return `${proto}://${host}`.replace(/\/$/, '');
+  const fromRequest = host ? `${proto}://${host}` : '';
+  return resolveCanonicalSiteUrl(
+    process.env.SITE_URL,
+    process.env.VITE_SITE_URL,
+    process.env.URL,
+    fromRequest,
+  );
 }
 
 exports.handler = async (event) => {
@@ -126,7 +132,7 @@ exports.handler = async (event) => {
     id,
     orderNumber: null,
     siteName: body.siteName || 'Nasyonel Toys',
-    siteUrl: String(body.siteUrl || '').trim() || base,
+    siteUrl: resolveCanonicalSiteUrl(body.siteUrl, base),
     siteLogoUrl: body.siteLogoUrl || '',
     pdfUrl,
     pdfSettings: body.pdfSettings || null,

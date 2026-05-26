@@ -6,6 +6,8 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-audit"
+  SITE_URL = "https://nasyoneltoys.com"
+  VITE_SITE_URL = "https://nasyoneltoys.com"
 
 [functions]
   node_bundler = "esbuild"

@@ -1,5 +1,6 @@
 import SEO from '@/components/seo/SEO';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 import {
   getProductMetaTitle,
   getProductMetaDescription,
@@ -14,7 +15,7 @@ import {
 export default function ProductSEO({ product }) {
   const { settings } = useStore();
   const siteName = settings.siteName || 'Nasyonel Toys';
-  const siteUrl = settings.siteUrl || import.meta.env.VITE_SITE_URL || '';
+  const siteUrl = getSiteUrl(settings);
   const path = getProductPath(product);
   const metaTitle = getProductMetaTitle(product, siteName);
   const description = getProductMetaDescription(product, settings);

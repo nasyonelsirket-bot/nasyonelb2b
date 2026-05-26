@@ -3,6 +3,7 @@
  */
 const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { sanitizeProductsSeo } = require('../../lib/productSeo.cjs');
+const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -94,7 +95,10 @@ exports.handler = async (event) => {
   const products = sanitizeProductsSeo(Array.isArray(body.products) ? body.products : []);
   const categories = Array.isArray(body.categories) ? body.categories : [];
   const banners = Array.isArray(body.banners) ? body.banners : [];
-  const settings = body.settings && typeof body.settings === 'object' ? body.settings : null;
+  const rawSettings = body.settings && typeof body.settings === 'object' ? body.settings : null;
+  const settings = rawSettings
+    ? { ...rawSettings, siteUrl: resolveCanonicalSiteUrl(rawSettings.siteUrl) }
+    : null;
 
   if (!products.length) {
     return {

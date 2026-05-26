@@ -1,5 +1,7 @@
 /** Ürün SEO alanları — slug, meta title/description, canonical */
 
+import { rewriteUrlToCanonical, resolveCanonicalSiteUrl } from '@/utils/canonicalSiteUrl';
+
 export const META_TITLE_MAX = 60;
 export const META_DESCRIPTION_MAX = 160;
 
@@ -52,15 +54,14 @@ export function sanitizeMetaDescription(value, fallback = '') {
 }
 
 export function sanitizeCanonicalUrl(value, siteUrl, productPath) {
+  const base = resolveCanonicalSiteUrl(siteUrl);
   const raw = String(value || '').trim();
   if (!raw) {
-    const base = String(siteUrl || '').replace(/\/$/, '');
-    return base ? `${base}${productPath}` : productPath;
+    return productPath ? `${base}${productPath.startsWith('/') ? productPath : `/${productPath}`}` : '';
   }
-  if (/^https?:\/\//i.test(raw)) return raw.slice(0, 512);
-  const base = String(siteUrl || '').replace(/\/$/, '');
+  if (/^https?:\/\//i.test(raw)) return rewriteUrlToCanonical(raw);
   const path = raw.startsWith('/') ? raw : `/${raw}`;
-  return base ? `${base}${path}`.slice(0, 512) : path.slice(0, 512);
+  return rewriteUrlToCanonical(`${base}${path}`);
 }
 
 export function getProductPath(product) {

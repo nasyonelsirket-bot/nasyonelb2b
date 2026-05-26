@@ -6,6 +6,7 @@ const { loadPromotions, appendCouponAndSave } = require('../../lib/catalogPromot
 const { buildDeliveryRewardCoupon } = require('../../lib/promotions.cjs');
 const { sendShippedEmail } = require('../../lib/orderEmail.cjs');
 const { upsertOrderIndexRow } = require('../../lib/orderIndex.cjs');
+const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -109,7 +110,7 @@ exports.handler = async (event) => {
         newTracking !== prevTracking;
       if (shouldNotify) {
         try {
-          const siteUrl = String(process.env.URL || order.siteUrl || '').trim();
+          const siteUrl = resolveCanonicalSiteUrl(order.siteUrl, process.env.SITE_URL, process.env.URL);
           shippedEmail = await sendShippedEmail(order, {
             siteUrl,
             isUpdate: prevStatus === 'shipped',

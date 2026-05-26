@@ -1,12 +1,13 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 
 /**
  * Yasal sayfalar için WebPage + BreadcrumbList schema
  */
 export default function LegalPageSchema({ title, description, path, slug }) {
   const { settings } = useStore();
-  const siteUrl = (settings.siteUrl || import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '');
+  const siteUrl = getSiteUrl(settings);
   const siteName = settings.siteName || 'Nasyonel Toys';
   if (!siteUrl || !path) return null;
 

@@ -1,9 +1,10 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl, rewriteUrlToCanonical } from '@/utils/canonicalSiteUrl';
 
 export default function BreadcrumbSchema({ items }) {
   const { settings } = useStore();
-  const siteUrl = (settings.siteUrl || '').replace(/\/$/, '');
+  const siteUrl = getSiteUrl(settings);
   const list = Array.isArray(items) ? items : [];
   if (!list.length || !siteUrl) return null;
 
@@ -14,7 +15,7 @@ export default function BreadcrumbSchema({ items }) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: item.href?.startsWith('http') ? item.href : `${siteUrl}${item.href || ''}`,
+      item: item.href?.startsWith('http') ? rewriteUrlToCanonical(item.href) : `${siteUrl}${item.href || ''}`,
     })),
   };
 

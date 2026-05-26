@@ -1,12 +1,13 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 import { getProductMetaDescription, getProductCanonical } from '@/utils/productSeo';
 import { getCompareAtPrice, hasProductDiscount } from '@/utils/productPricing';
 import { getProductRatingSummary } from '@/utils/productReviews';
 
 export default function ProductSchema({ product }) {
   const { settings } = useStore();
-  const siteUrl = settings.siteUrl || '';
+  const siteUrl = getSiteUrl(settings);
   const productUrl = getProductCanonical(product, siteUrl);
   const price = Number(product.price) || 0;
   const compare = getCompareAtPrice(product);

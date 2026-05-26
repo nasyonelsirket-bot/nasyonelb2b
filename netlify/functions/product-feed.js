@@ -3,6 +3,7 @@
  */
 const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { getProductPath } = require('../../lib/productSeoPath.cjs');
+const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
 
 const HEADERS = {
   'Content-Type': 'application/xml; charset=utf-8',
@@ -27,11 +28,15 @@ function stripHtml(str) {
 }
 
 function getSiteUrl(event, settings) {
-  const fromSettings = String(settings?.siteUrl || process.env.VITE_SITE_URL || '').trim();
-  if (fromSettings) return fromSettings.replace(/\/$/, '');
   const host = event.headers?.host || event.headers?.Host;
-  if (host) return `https://${host}`.replace(/\/$/, '');
-  return (process.env.URL || 'https://nasyoneltoys.com').replace(/\/$/, '');
+  const fromHost = host ? `https://${host}` : '';
+  return resolveCanonicalSiteUrl(
+    settings?.siteUrl,
+    process.env.SITE_URL,
+    process.env.VITE_SITE_URL,
+    process.env.URL,
+    fromHost,
+  );
 }
 
 function resolveImageUrl(product, siteUrl) {

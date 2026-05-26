@@ -5,6 +5,7 @@ import ImageDropzone from '@/components/admin/ImageDropzone';
 import ProductSeoFields from '@/components/admin/ProductSeoFields';
 import { processImageFile } from '@/utils/imageUpload';
 import { validateProductSeoForm } from '@/utils/productSeo';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 import {
   getCompareAtPrice,
   getDiscountPercent,
@@ -188,7 +189,7 @@ function validateProductForm(form, products, excludeId) {
 
 export default function ProductsAdmin({ store, showMsg }) {
   const products = Array.isArray(store.products) ? store.products : [];
-  const siteUrl = store.settings?.siteUrl || import.meta.env.VITE_SITE_URL || '';
+  const siteUrl = getSiteUrl(store.settings);
   const siteName = store.settings?.siteName || 'Nasyonel Toys';
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState(EMPTY_PRODUCT);

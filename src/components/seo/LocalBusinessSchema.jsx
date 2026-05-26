@@ -1,10 +1,11 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
 import { COMPANY_ADDRESS } from '@/constants/companyInfo';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 
 export default function LocalBusinessSchema() {
   const { settings } = useStore();
-  const siteUrl = (settings.siteUrl || import.meta.env.VITE_SITE_URL || '').replace(/\/$/, '');
+  const siteUrl = getSiteUrl(settings);
   const siteName = settings.siteName || 'Nasyonel Toys';
 
   const schema = {

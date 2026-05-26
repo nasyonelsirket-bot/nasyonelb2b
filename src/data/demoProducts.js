@@ -183,7 +183,7 @@ export const DEFAULT_SETTINGS = {
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
   gaId: import.meta.env.VITE_GA_ID || '',
-  siteUrl: import.meta.env.VITE_SITE_URL || 'https://www.nasyoneltoys.com',
+  siteUrl: import.meta.env.VITE_SITE_URL || 'https://nasyoneltoys.com',
   contactEmail: 'info@nasyoneltoys.com',
   contactPhone: '+90 850 305 81 34',
   contactAddress: 'Oruçreis, Giyimkent 17. Sk. 35/a, 34000 Esenler/İstanbul',

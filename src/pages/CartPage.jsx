@@ -21,6 +21,7 @@ import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
+import { getSiteUrl } from '@/utils/canonicalSiteUrl';
 import { useMember } from '@/context/MemberContext';
 import {
   resolveCartCustomerPrefill,
@@ -218,7 +219,7 @@ export default function CartPage() {
     try {
       const result = await startPaytrPayment({
         siteName: settings.siteName || 'Nasyonel Toys',
-        siteUrl: settings.siteUrl || import.meta.env.VITE_SITE_URL || window.location.origin,
+        siteUrl: getSiteUrl(settings),
         siteLogoUrl: settings.logoUrl,
         pdfSettings: settings.pdfSettings,
         notifyEmail: settings.contactEmail,
