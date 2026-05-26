@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useState, useMemo, useEffect } from 'react';
 import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics/ga4';
+import { trackMetaAddToCart } from '@/lib/analytics/meta';
 import { getCartSubtotal } from '@/utils/cartLinePricing';
 
 const CartContext = createContext(null);
@@ -56,6 +57,7 @@ export function CartProvider({ children }) {
         return [...prev, { ...product, quantity: qty }];
       });
       trackAddToCart(product, qty);
+      trackMetaAddToCart(product, qty);
       notifyAddedToCart(product, qty);
     },
     [notifyAddedToCart],
@@ -85,6 +87,7 @@ export function CartProvider({ children }) {
         return [...prev, { ...product, quantity: qty, ...lineExtras }];
       });
       trackAddToCart(product, qty);
+      trackMetaAddToCart(product, qty);
       notifyAddedToCart(product, qty);
     },
     [notifyAddedToCart],

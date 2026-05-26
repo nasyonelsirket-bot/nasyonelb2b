@@ -182,7 +182,7 @@ export const DEFAULT_SETTINGS = {
     'Nasyonel Toys\u2019ta çocuklar için eğitici, eğlenceli ve kaliteli oyuncakları keşfet. Hızlı kargo, güvenli ödeme ve uygun fiyatlarla hemen sipariş ver.',
   logoUrl: '/nasyonel-logo.png?v=5',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
-  metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '',
+  metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '961867176690620',
   gaId: import.meta.env.VITE_GA_ID || '',
   siteUrl: import.meta.env.VITE_SITE_URL || 'https://nasyoneltoys.com',
   contactEmail: 'info@nasyoneltoys.com',

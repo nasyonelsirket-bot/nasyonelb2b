@@ -10,6 +10,7 @@ import Layout from '@/components/layout/Layout';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Ga4Bootstrap from '@/components/analytics/Ga4Bootstrap';
 import Ga4PageTracker from '@/components/analytics/Ga4PageTracker';
+import MetaPageTracker from '@/components/analytics/MetaPageTracker';
 import GlobalSiteHead from '@/components/seo/GlobalSiteHead';
 import MemberActivityTracker from '@/components/account/MemberActivityTracker';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
@@ -60,6 +61,7 @@ export default function App() {
             <MemberActivityTracker />
             <Ga4Bootstrap />
             <Ga4PageTracker />
+            <MetaPageTracker />
             <Routes>
               <Route element={<Layout />}>
                 <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />

@@ -17,6 +17,12 @@
   timeout = 26
 
 [[redirects]]
+  from = "/api/meta/capi"
+  to = "/.netlify/functions/meta-capi"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap"
   status = 200

@@ -16,6 +16,7 @@ import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
 import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
 import { trackViewItem } from '@/lib/analytics/ga4';
+import { trackMetaViewContent } from '@/lib/analytics/meta';
 import { getProductPath } from '@/utils/productSeo';
 import ProductRatingStars from '@/components/product/ProductRatingStars';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
@@ -59,6 +60,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (product) {
       trackViewItem(product);
+      trackMetaViewContent(product);
       trackRecentlyViewed(product);
     }
   }, [product?.id]);

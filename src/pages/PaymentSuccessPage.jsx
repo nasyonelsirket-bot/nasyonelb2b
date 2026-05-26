@@ -8,6 +8,8 @@ import { useCart } from '@/context/CartContext';
 import { fetchPaymentStatus } from '@/services/paytrApi';
 import { clearPaymentSession } from '@/utils/paytrPaymentSession';
 import { trackPurchase } from '@/lib/analytics/ga4';
+import { trackMetaPurchase } from '@/lib/analytics/meta';
+import { loadSavedCheckoutCustomer } from '@/utils/checkoutCustomer';
 
 const REDIRECT_SECONDS = 5;
 const POLL_INTERVAL_MS = 2000;
@@ -68,10 +70,21 @@ export default function PaymentSuccessPage() {
       clearPaymentSession(orderId);
 
       if (!tracked.current && items?.length) {
+        const purchaseValue = items.reduce(
+          (s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0),
+          0,
+        );
+        const userData = loadSavedCheckoutCustomer();
         trackPurchase({
           transactionId: orderId,
           items,
-          value: items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0),
+          value: purchaseValue,
+        });
+        trackMetaPurchase({
+          transactionId: orderId,
+          items,
+          value: purchaseValue,
+          userData,
         });
         tracked.current = true;
       }

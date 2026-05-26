@@ -27,6 +27,7 @@ import {
   resolveCartCustomerPrefill,
   saveCheckoutCustomer,
   isCheckoutCustomerComplete,
+  loadSavedCheckoutCustomer,
   EMPTY_CHECKOUT_CUSTOMER,
 } from '@/utils/checkoutCustomer';
 import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
@@ -43,6 +44,7 @@ import {
   trackFormStart,
   trackFormSubmit,
 } from '@/lib/analytics/ga4';
+import { trackMetaInitiateCheckout } from '@/lib/analytics/meta';
 
 const STEPS = [
   { id: 1, label: 'Sepet', icon: ShoppingBag },
@@ -122,8 +124,10 @@ export default function CartPage() {
   useEffect(() => {
     if (!items.length || checkoutTracked.current) return;
     checkoutTracked.current = true;
+    const userData = loadSavedCheckoutCustomer() || customer;
     trackBeginCheckout(items);
-  }, [items]);
+    trackMetaInitiateCheckout(items, { userData });
+  }, [items, customer]);
 
   useEffect(() => {
     if (step !== 2 || formViewTracked.current || !items.length) return;

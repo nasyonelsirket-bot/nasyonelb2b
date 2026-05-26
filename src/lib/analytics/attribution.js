@@ -1,8 +1,11 @@
+import { ensureFbcFromUrl } from './metaIdentity';
+
 const STORAGE_KEY = 'nt_attribution';
 
 export function captureAttribution() {
   if (typeof window === 'undefined') return;
   try {
+    ensureFbcFromUrl();
     const params = new URLSearchParams(window.location.search);
     const data = {
       landing_page: window.location.pathname + window.location.search,
