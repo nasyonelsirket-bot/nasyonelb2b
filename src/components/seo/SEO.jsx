@@ -1,6 +1,12 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
 import { getSiteUrl, rewriteUrlToCanonical } from '@/utils/canonicalSiteUrl';
+import {
+  SITE_NAME,
+  DEFAULT_META_TITLE,
+  DEFAULT_META_DESCRIPTION,
+  DEFAULT_OG_IMAGE_PATH,
+} from '@/constants/siteSeo';
 
 export default function SEO({
   title,
@@ -14,51 +20,70 @@ export default function SEO({
   skipOrganizationSchema = false,
 }) {
   const { settings } = useStore();
-  const siteName = settings.siteName || 'Nasyonel Toys';
+  const siteName = settings.siteName || SITE_NAME;
   const siteUrl = getSiteUrl(settings);
   const fullTitle =
     metaTitle?.trim() ||
-    (title ? `${title} | ${siteName}` : `${siteName} - ${settings.tagline}`);
-  const desc = description || settings.tagline;
-  const ogImage = image || `${siteUrl}/logo.svg`;
+    (title ? `${title} | ${siteName}` : DEFAULT_META_TITLE);
+  const desc =
+    description?.trim() ||
+    settings.tagline?.trim() ||
+    DEFAULT_META_DESCRIPTION;
+  const ogImage = image?.startsWith('http')
+    ? image
+    : image
+      ? `${siteUrl}${image.startsWith('/') ? image : `/${image}`}`
+      : `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`;
   const canonical = canonicalOverride?.trim()
     ? rewriteUrlToCanonical(canonicalOverride)
     : `${siteUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
-  const organizationSchema = {
+  const onlineStoreSchema = {
     '@context': 'https://schema.org',
-    '@type': 'Organization',
+    '@type': 'OnlineStore',
     name: siteName,
     url: siteUrl,
-    logo: settings.logoUrl,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: settings.contactPhone,
-      contactType: 'sales',
-      areaServed: 'TR',
-      availableLanguage: 'Turkish',
-    },
+    logo: settings.logoUrl
+      ? `${siteUrl}${String(settings.logoUrl).startsWith('/') ? '' : '/'}${settings.logoUrl}`
+      : `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`,
+    image: ogImage,
+    description: desc,
+    telephone: settings.contactPhone,
+    email: settings.contactEmail,
+    priceRange: '₺₺',
+    currenciesAccepted: 'TRY',
+    paymentAccepted: 'Credit Card',
+    areaServed: { '@type': 'Country', name: 'Turkey' },
+    address: settings.contactAddress
+      ? {
+          '@type': 'PostalAddress',
+          streetAddress: settings.contactAddress,
+          addressLocality: 'İstanbul',
+          addressCountry: 'TR',
+        }
+      : undefined,
   };
 
   const websiteSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: siteName,
-        url: siteUrl,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${siteUrl}/?q={search_term_string}#urunler`,
-          },
-          'query-input': 'required name=search_term_string',
-        },
-      };
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteName,
+    url: siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteUrl}/?q={search_term_string}#urunler`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
 
   return (
-    <Helmet>
+    <Helmet prioritizeSeoTags>
       <title>{fullTitle}</title>
       <meta name="description" content={desc} />
+      {!noindex && <meta name="robots" content="index,follow,max-image-preview:large" />}
       {noindex && <meta name="robots" content="noindex,nofollow" />}
       <link rel="canonical" href={canonical} />
 
@@ -79,14 +104,12 @@ export default function SEO({
         <>
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(onlineStoreSchema) }}
           />
-          {websiteSchema && (
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-            />
-          )}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          />
         </>
       )}
     </Helmet>

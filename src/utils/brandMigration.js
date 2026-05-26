@@ -4,8 +4,33 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 15;
+export const BRAND_VERSION = 16;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
+
+function shouldResetTagline(tagline) {
+  const t = String(tagline || '').toLowerCase();
+  if (!t) return true;
+  return (
+    t.includes('toywholesale') ||
+    t.includes('b2b') ||
+    t.includes('toptan') ||
+    t.includes('bayi') ||
+    t.includes('toplu sipari') ||
+    t.includes('hayaller oyunla başlar')
+  );
+}
+
+function shouldResetAboutText(text) {
+  const t = String(text || '').toLowerCase();
+  if (!t) return true;
+  return (
+    /toywholesale/i.test(text) ||
+    t.includes('b2b') ||
+    t.includes('toptan') ||
+    t.includes('bayi') ||
+    t.includes('15 yılı aşkın')
+  );
+}
 
 function shouldResetLogo(logoUrl) {
   if (!logoUrl) return true;
@@ -49,7 +74,7 @@ export function runBrandMigration() {
     ) {
       settings.siteName = DEFAULT_SETTINGS.siteName;
     }
-    if (!settings.tagline || settings.tagline.includes('ToyWholesale')) {
+    if (shouldResetTagline(settings.tagline)) {
       settings.tagline = DEFAULT_SETTINGS.tagline;
     }
     if (
@@ -61,11 +86,7 @@ export function runBrandMigration() {
       settings.contactMapQuery = DEFAULT_SETTINGS.contactMapQuery;
       settings.contactEmail = DEFAULT_SETTINGS.contactEmail;
     }
-    if (
-      !settings.aboutText ||
-      /toywholesale/i.test(settings.aboutText) ||
-      settings.aboutText.includes('15 yılı aşkın')
-    ) {
+    if (shouldResetAboutText(settings.aboutText)) {
       settings.aboutText = DEFAULT_SETTINGS.aboutText;
     }
     delete settings.minOrderLineValue;

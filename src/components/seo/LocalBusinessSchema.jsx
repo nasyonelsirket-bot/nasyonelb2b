@@ -2,18 +2,21 @@ import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
 import { COMPANY_ADDRESS } from '@/constants/companyInfo';
 import { getSiteUrl } from '@/utils/canonicalSiteUrl';
+import { DEFAULT_META_DESCRIPTION, DEFAULT_OG_IMAGE_PATH, SITE_NAME } from '@/constants/siteSeo';
 
 export default function LocalBusinessSchema() {
   const { settings } = useStore();
   const siteUrl = getSiteUrl(settings);
-  const siteName = settings.siteName || 'Nasyonel Toys';
+  const siteName = settings.siteName || SITE_NAME;
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Store',
+    '@type': 'OnlineStore',
     name: siteName,
-    url: siteUrl || undefined,
-    image: settings.logoUrl ? `${siteUrl}${settings.logoUrl.startsWith('/') ? '' : '/'}${settings.logoUrl}` : undefined,
+    url: siteUrl,
+    image: settings.logoUrl
+      ? `${siteUrl}${settings.logoUrl.startsWith('/') ? '' : '/'}${settings.logoUrl}`
+      : `${siteUrl}${DEFAULT_OG_IMAGE_PATH}`,
     telephone: settings.contactPhone,
     email: settings.contactEmail,
     address: {
@@ -28,8 +31,10 @@ export default function LocalBusinessSchema() {
       opens: '09:00',
       closes: '18:00',
     },
-    description: settings.tagline || 'Online oyuncak mağazası',
+    description: settings.tagline || DEFAULT_META_DESCRIPTION,
     priceRange: '₺₺',
+    currenciesAccepted: 'TRY',
+    paymentAccepted: 'Credit Card',
     areaServed: {
       '@type': 'Country',
       name: 'Turkey',

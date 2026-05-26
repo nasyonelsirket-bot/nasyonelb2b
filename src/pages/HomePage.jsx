@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import SEO from '@/components/seo/SEO';
+import { DEFAULT_META_TITLE, DEFAULT_META_DESCRIPTION } from '@/constants/siteSeo';
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductGrid from '@/components/home/ProductGrid';
 import ProductStrip from '@/components/home/ProductStrip';
@@ -160,12 +161,12 @@ export default function HomePage() {
   return (
     <div className="pb-8 bg-gray-50">
       <SEO
-        title="Ana Sayfa"
-        description="Nasyonel Toys — eğitici oyuncaklar, çok satanlar, güvenli PayTR ödeme ve hızlı kargo. Türkiye geneli gönderim."
+        metaTitle={DEFAULT_META_TITLE}
+        description={DEFAULT_META_DESCRIPTION}
         path="/"
       />
 
-      <h1 className="sr-only">Nasyonel Toys — Online Oyuncak Mağazası</h1>
+      <h1 className="sr-only">Nasyonel Toys — Eğitici Oyuncaklar ve Çocuk Ürünleri</h1>
 
       {!q && <TrustBadges />}
 

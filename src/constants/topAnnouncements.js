@@ -16,7 +16,7 @@ export const TOP_ANNOUNCEMENTS = [
   },
   {
     highlight: 'Eğitici Oyuncak Koleksiyonu',
-    rest: 'Güvenilir tedarik · hızlı sevkiyat ·',
+    rest: 'Kaliteli ürünler · hızlı kargo ·',
   },
   {
     highlight: '%5 Sepet İndirimi',

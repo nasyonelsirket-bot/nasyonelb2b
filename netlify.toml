@@ -17,6 +17,12 @@
   timeout = 26
 
 [[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/feed/products.xml"
   to = "/.netlify/functions/product-feed"
   status = 200

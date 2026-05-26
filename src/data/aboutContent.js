@@ -55,4 +55,4 @@ export const ABOUT_CATEGORIES_FOCUS = [
 ];
 
 export const ABOUT_SEO_DESCRIPTION =
-  'Nasyonel Toys — eğitici oyuncaklar, montessori ve zeka oyunları. En çok satanlar, kargo bedava, güvenli kart ödemesi.';
+  'Nasyonel Toys — eğitici oyuncaklar, montessori ve zeka oyunları. Hızlı kargo, güvenli ödeme, kolay iade.';

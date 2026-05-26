@@ -4,12 +4,28 @@
 const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { sanitizeProductsSeo } = require('../../lib/productSeo.cjs');
 const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
+const { DEFAULT_META_DESCRIPTION } = require('../../lib/siteSeo.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
+
+function normalizeRetailTagline(tagline) {
+  const t = String(tagline || '').toLowerCase();
+  if (
+    !t ||
+    t.includes('toptan') ||
+    t.includes('b2b') ||
+    t.includes('bayi') ||
+    t.includes('toywholesale') ||
+    t.includes('toplu sipari')
+  ) {
+    return DEFAULT_META_DESCRIPTION;
+  }
+  return String(tagline || '').trim() || DEFAULT_META_DESCRIPTION;
+}
 
 function buildTimePassword() {
   try {
@@ -97,7 +113,11 @@ exports.handler = async (event) => {
   const banners = Array.isArray(body.banners) ? body.banners : [];
   const rawSettings = body.settings && typeof body.settings === 'object' ? body.settings : null;
   const settings = rawSettings
-    ? { ...rawSettings, siteUrl: resolveCanonicalSiteUrl(rawSettings.siteUrl) }
+    ? {
+        ...rawSettings,
+        siteUrl: resolveCanonicalSiteUrl(rawSettings.siteUrl),
+        tagline: normalizeRetailTagline(rawSettings.tagline),
+      }
     : null;
 
   if (!products.length) {

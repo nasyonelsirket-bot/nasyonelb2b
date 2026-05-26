@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useStore } from '@/context/StoreContext';
 import { getSiteUrl } from '@/utils/canonicalSiteUrl';
+import { SITE_NAME } from '@/constants/siteSeo';
 import { getProductMetaDescription, getProductCanonical } from '@/utils/productSeo';
 import { getCompareAtPrice, hasProductDiscount } from '@/utils/productPricing';
 import { getProductRatingSummary } from '@/utils/productReviews';
@@ -9,6 +10,7 @@ export default function ProductSchema({ product }) {
   const { settings } = useStore();
   const siteUrl = getSiteUrl(settings);
   const productUrl = getProductCanonical(product, siteUrl);
+  const siteName = settings.siteName || SITE_NAME;
   const price = Number(product.price) || 0;
   const compare = getCompareAtPrice(product);
 
@@ -19,6 +21,11 @@ export default function ProductSchema({ product }) {
     availability: 'https://schema.org/InStock',
     url: productUrl,
     itemCondition: 'https://schema.org/NewCondition',
+    seller: {
+      '@type': 'OnlineStore',
+      name: siteName,
+      url: siteUrl,
+    },
   };
 
   if (hasProductDiscount(product) && compare > price) {

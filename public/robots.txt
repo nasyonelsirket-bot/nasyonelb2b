@@ -7,3 +7,5 @@ Disallow: /admin
 Disallow: /hesabim
 Disallow: /giris
 Disallow: /kayit
+Disallow: /sepet
+Disallow: /odeme

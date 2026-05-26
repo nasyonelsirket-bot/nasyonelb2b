@@ -12,7 +12,7 @@ function paymentLabel(method) {
   return 'Online ödeme';
 }
 
-/** WhatsApp — kısa mesaj + PDF linki (toptan akışı gibi) */
+/** WhatsApp — kısa mesaj + PDF linki */
 export function buildOrderSubmitWhatsAppMessage({
   siteName = 'Nasyonel Toys',
   customer = {},

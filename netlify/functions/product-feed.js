@@ -4,6 +4,7 @@
 const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { getProductPath } = require('../../lib/productSeoPath.cjs');
 const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
+const { DEFAULT_META_DESCRIPTION } = require('../../lib/siteSeo.cjs');
 
 const HEADERS = {
   'Content-Type': 'application/xml; charset=utf-8',
@@ -107,7 +108,7 @@ exports.handler = async (event) => {
   <channel>
     <title>${escapeXml(brand)}</title>
     <link>${escapeXml(siteUrl)}</link>
-    <description>${escapeXml(settings.tagline || 'Nasyonel Toys online oyuncak mağazası')}</description>
+    <description>${escapeXml(settings.tagline || DEFAULT_META_DESCRIPTION)}</description>
     ${items}
   </channel>
 </rss>`;

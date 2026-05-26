@@ -12,7 +12,7 @@ export const MAIN_CATEGORIES = [
     intro:
       'Çocukların en sevdiği yumuşak peluş oyuncaklar; güvenli malzemeler ve geniş model seçeneği.',
     seoFooter:
-      'Peluş oyuncak kategorisinde Nasyonel Toys güvenilir tedarik ve uygun fiyat sunar. Türkiye geneli kargo.',
+      'Peluş oyuncak kategorisinde Nasyonel Toys güvenilir alışveriş ve uygun fiyat sunar. Türkiye geneli hızlı kargo.',
     keywords: ['peluş', 'pelus', 'yumuşak', 'bebek figür', 'bebek & figür', 'oyuncak bebek'],
   },
   {

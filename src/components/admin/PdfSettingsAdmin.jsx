@@ -45,10 +45,10 @@ export default function PdfSettingsAdmin({ store, setMsg }) {
         siteLogoUrl: store.settings.logoUrl,
         pdfSettings: s,
         customer: {
-          companyName: 'Örnek Bayi Ltd.',
+          companyName: 'Örnek Müşteri Ltd.',
           contactName: 'Ahmet Yılmaz',
           phone: '+90 555 000 00 00',
-          address: 'Örnek Mah. Toptan Cad. No:1 İstanbul',
+          address: 'Örnek Mah. Oyuncak Sk. No:1 İstanbul',
         },
         items: SAMPLE_ITEMS,
         discount,

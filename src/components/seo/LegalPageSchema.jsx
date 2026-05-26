@@ -35,7 +35,7 @@ export default function LegalPageSchema({ title, description, path, slug }) {
       name: title,
     },
     publisher: {
-      '@type': 'Organization',
+      '@type': 'OnlineStore',
       name: siteName,
       url: siteUrl,
     },
