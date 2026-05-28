@@ -1,6 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { useStore } from '@/context/StoreContext';
-import { WHATSAPP_DISPLAY } from '@/constants/companyInfo';
+import { WHATSAPP_DISPLAY, WHATSAPP_WA_NUMBER } from '@/constants/companyInfo';
 
 function buildWaLink(number) {
   const phone = String(number || '').replace(/\D/g, '');
@@ -9,10 +8,9 @@ function buildWaLink(number) {
   return `https://wa.me/${phone}?text=${text}`;
 }
 
-/** Checkout alt kısmı — WhatsApp destek CTA */
+/** Checkout alt kısmı — görünen hat ile wa.me hedefi ayrı */
 export default function CheckoutWhatsAppSupport({ className = '' }) {
-  const { settings } = useStore();
-  const href = buildWaLink(settings.whatsappNumber);
+  const href = buildWaLink(WHATSAPP_WA_NUMBER);
   if (!href) return null;
 
   return (

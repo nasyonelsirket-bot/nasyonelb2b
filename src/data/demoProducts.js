@@ -181,12 +181,12 @@ export const DEFAULT_SETTINGS = {
   tagline:
     'Nasyonel Toys\u2019ta çocuklar için eğitici, eğlenceli ve kaliteli oyuncakları keşfet. Hızlı kargo, güvenli ödeme ve uygun fiyatlarla hemen sipariş ver.',
   logoUrl: '/nasyonel-logo.png?v=5',
-  whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905551234567',
+  whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '905396494301',
   metaPixelId: import.meta.env.VITE_META_PIXEL_ID || '961867176690620',
   gaId: import.meta.env.VITE_GA_ID || '',
   siteUrl: import.meta.env.VITE_SITE_URL || 'https://nasyoneltoys.com',
   contactEmail: 'info@nasyoneltoys.com',
-  contactPhone: '+90 850 305 81 34',
+  contactPhone: '0850 305 61 34',
   contactAddress: 'Oruçreis, Giyimkent 17. Sk. 35/a, 34000 Esenler/İstanbul',
   contactMapQuery: 'Oruçreis, Giyimkent 17. Sk. 35/a, Esenler İstanbul',
   aboutText:
