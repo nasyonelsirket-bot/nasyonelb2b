@@ -16,6 +16,7 @@ export default function MobileCheckoutStickyBar({
   totalLabel = 'Toplam',
   onBack = null,
   showPaymentIcon = false,
+  trustHint = '',
   hidden = false,
   className = '',
 }) {
@@ -53,6 +54,10 @@ export default function MobileCheckoutStickyBar({
             <span className="mobile-checkout-sticky-bar__total-label">{totalLabel}</span>
             <span className="mobile-checkout-sticky-bar__total-value">{formatPrice(total)}</span>
           </div>
+        ) : null}
+
+        {trustHint ? (
+          <p className="mobile-checkout-sticky-bar__trust text-center">{trustHint}</p>
         ) : null}
 
         <button

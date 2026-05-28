@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
-import { CreditCard, ArrowLeft, Loader2, ShieldCheck } from 'lucide-react';
+import { CreditCard, ArrowLeft, Loader2, ShieldCheck, Lock } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
+import CheckoutTrustPanel from '@/components/checkout/CheckoutTrustPanel';
+import CheckoutUrgencyBanner from '@/components/checkout/CheckoutUrgencyBanner';
+import CheckoutWhatsAppSupport from '@/components/checkout/CheckoutWhatsAppSupport';
+import CardBrandIcons from '@/components/checkout/CardBrandIcons';
 import { formatPrice } from '@/utils/whatsapp';
 import { PAYTR_TRUST_LABEL } from '@/constants/companyInfo';
 import { fetchPaytrIframeToken } from '@/services/paytrApi';
@@ -151,80 +155,117 @@ export default function PaymentPage() {
     <>
       <SEO title="Güvenli Ödeme" path="/odeme" noindex />
       <div
-        className={`checkout-shell md:min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 py-6 sm:py-10 ${paymentFormActive ? 'checkout-shell--iframe-active' : ''}`}
+        className={`checkout-shell md:min-h-[calc(100vh-8rem)] bg-gradient-to-br from-brand-50 via-orange-50/30 to-emerald-50/20 py-5 sm:py-8 ${paymentFormActive ? 'checkout-shell--iframe-active' : ''}`}
       >
-        <div className="checkout-shell__main md:pb-0 mx-auto max-w-2xl px-4 w-full">
+        <div className="checkout-shell__main mx-auto max-w-6xl px-3 sm:px-6 w-full">
           <Link
             to="/sepet"
-            className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-900 mb-5"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-900 mb-4"
           >
             <ArrowLeft className="h-4 w-4" /> Sepete dön
           </Link>
 
-          <div className="rounded-3xl border border-white/80 bg-white/90 backdrop-blur-sm shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-br from-brand-900 via-brand-800 to-accent-gold px-5 py-5 text-white">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
-                  <CreditCard className="h-6 w-6 text-accent-gold" />
-                  Güvenli Ödeme
-                </h1>
-                {orderTotal != null && (
-                  <p className="text-2xl font-bold text-accent-gold tabular-nums">{formatPrice(orderTotal)}</p>
+          <CheckoutUrgencyBanner className="mb-5" />
+
+          <div className="checkout-grid grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
+            <div className="checkout-form-column order-2 lg:order-1 lg:col-span-3 space-y-4">
+              <div className="rounded-3xl border border-white/80 bg-white/95 backdrop-blur-sm shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-br from-brand-900 via-brand-800 to-accent-gold px-4 sm:px-5 py-4 sm:py-5 text-white">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h1 className="font-display text-xl sm:text-2xl font-bold flex items-center gap-2">
+                      <CreditCard className="h-6 w-6 text-accent-gold shrink-0" />
+                      256 Bit SSL Güvenli Ödeme
+                    </h1>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 border border-white/20 px-2.5 py-1">
+                      <Lock className="h-3 w-3 text-emerald-300" aria-hidden />
+                      SSL
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 border border-white/20 px-2.5 py-1">
+                      <ShieldCheck className="h-3 w-3 text-emerald-300" aria-hidden />
+                      PayTR Güvencesi
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 border border-white/20 px-2.5 py-1">
+                      Kapıda değil — online ödeme
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs text-brand-100 leading-relaxed">
+                    {PAYTR_TRUST_LABEL} · Kart bilgileriniz yalnızca PayTR ekranında girilir, sitemizde saklanmaz.
+                  </p>
+                </div>
+
+                <div className="p-4 sm:p-5">
+                  {formError && (
+                    <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+                      {formError}
+                    </p>
+                  )}
+
+                  {loading && !iframeUrl && (
+                    <div className="flex flex-col items-center justify-center gap-3 py-16 text-brand-700">
+                      <Loader2 className="h-10 w-10 animate-spin text-accent-gold" />
+                      <p className="text-sm font-medium">PayTR güvenli ödeme ekranı hazırlanıyor…</p>
+                      <p className="text-xs text-gray-500">256 bit şifreli bağlantı kuruluyor</p>
+                    </div>
+                  )}
+
+                  {iframeUrl ? (
+                    <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
+                      <iframe
+                        ref={iframeRef}
+                        id="paytriframe"
+                        title="PayTR Güvenli Ödeme"
+                        src={iframeUrl}
+                        frameBorder="0"
+                        scrolling="no"
+                        className="w-full min-h-[480px] max-md:min-h-[420px] border-0"
+                        allow="payment *; fullscreen"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        onLoad={(event) => {
+                          logPaytrIframeEvent('load', {
+                            src: redactPaytrIframeUrl(event.currentTarget.src),
+                          });
+                        }}
+                        onError={() => {
+                          logPaytrIframeEvent('error', {
+                            message: 'PayTR iframe yüklenemedi — CSP/X-Frame-Options kontrol edin',
+                          });
+                        }}
+                      />
+                    </div>
+                  ) : null}
+
+                  <p className="text-center text-[11px] text-gray-500 pt-4 leading-relaxed">
+                    Ödeme sonucu otomatik bildirilir. Başarılı ödeme sonrası onay e-postası gönderilir.
+                  </p>
+                </div>
+              </div>
+
+              <CheckoutTrustPanel className="lg:hidden" />
+              <CheckoutWhatsAppSupport className="lg:hidden" />
+            </div>
+
+            <aside className="checkout-summary-column order-1 lg:order-2 lg:col-span-2 space-y-4">
+              <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 shadow-card lg:sticky lg:top-24">
+                <h2 className="font-display font-bold text-brand-900">Sipariş Özeti</h2>
+                {(orderNumber || orderId) && (
+                  <p className="mt-1 text-xs text-gray-500">Sipariş no: {orderNumber || orderId}</p>
                 )}
-              </div>
-              {(orderNumber || orderId) && (
-                <p className="mt-1 text-xs text-brand-200">Sipariş: {orderNumber || orderId}</p>
-              )}
-              <div className="mt-3 rounded-xl bg-white/10 border border-white/20 px-3 py-2 flex items-center gap-2 text-xs text-brand-100">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" />
-                <span>{PAYTR_TRUST_LABEL} · Kart bilgileriniz PayTR güvenli ödeme ekranında girilir</span>
-              </div>
-            </div>
-
-            <div className="p-4 sm:p-6">
-              {formError && (
-                <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
-                  {formError}
+                {orderTotal != null && (
+                  <p className="mt-3 text-3xl font-extrabold text-brand-900 tabular-nums">{formatPrice(orderTotal)}</p>
+                )}
+                <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 leading-relaxed">
+                  Bugün sipariş ver, hızlı kargolansın — stoktaki ürünler genellikle aynı gün hazırlanır.
                 </p>
-              )}
-
-              {loading && !iframeUrl && (
-                <div className="flex flex-col items-center justify-center gap-3 py-16 text-brand-700">
-                  <Loader2 className="h-10 w-10 animate-spin text-accent-gold" />
-                  <p className="text-sm font-medium">PayTR ödeme ekranı hazırlanıyor…</p>
+                <div className="mt-4">
+                  <CardBrandIcons size="sm" />
                 </div>
-              )}
+              </div>
 
-              {iframeUrl ? (
-                <div className="rounded-2xl border border-brand-100 bg-white overflow-hidden shadow-inner">
-                  <iframe
-                    ref={iframeRef}
-                    id="paytriframe"
-                    title="PayTR Güvenli Ödeme"
-                    src={iframeUrl}
-                    frameBorder="0"
-                    scrolling="no"
-                    className="w-full min-h-[480px] max-md:min-h-[420px] border-0"
-                    allow="payment *; fullscreen"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    onLoad={(event) => {
-                      logPaytrIframeEvent('load', {
-                        src: redactPaytrIframeUrl(event.currentTarget.src),
-                      });
-                    }}
-                    onError={() => {
-                      logPaytrIframeEvent('error', {
-                        message: 'PayTR iframe yüklenemedi — CSP/X-Frame-Options kontrol edin',
-                      });
-                    }}
-                  />
-                </div>
-              ) : null}
-
-              <p className="text-center text-[11px] text-gray-500 pt-4">
-                Ödeme sonucu sipariş sistemimize otomatik bildirilir. Başarılı ödeme sonrası onay e-postası gönderilir.
-              </p>
-            </div>
+              <CheckoutTrustPanel />
+              <CheckoutWhatsAppSupport className="hidden lg:block" />
+            </aside>
           </div>
         </div>
 
@@ -238,6 +279,7 @@ export default function PaymentPage() {
             error={formError}
             total={orderTotal ?? null}
             showPaymentIcon
+            trustHint="256 Bit SSL · PayTR"
           />
         ) : null}
       </div>

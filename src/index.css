@@ -577,7 +577,34 @@
   }
 
   .checkout-order-summary {
-    position: static !important;
-    top: auto !important;
+    position: sticky !important;
+    top: 0;
+    z-index: 30;
+    box-shadow:
+      0 4px 24px rgba(10, 31, 77, 0.08),
+      0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  }
+
+  .checkout-order-summary::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.75rem;
+    height: 0.75rem;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), transparent);
+    pointer-events: none;
+  }
+
+  .checkout-whatsapp-support {
+    margin-bottom: 0.25rem;
+  }
+
+  .mobile-checkout-sticky-bar__trust {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #059669;
   }
 }

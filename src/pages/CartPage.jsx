@@ -18,6 +18,11 @@ import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 import CheckoutLegalConsent from '@/components/cart/CheckoutLegalConsent';
 import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
+import CheckoutTrustPanel from '@/components/checkout/CheckoutTrustPanel';
+import CheckoutUrgencyBanner from '@/components/checkout/CheckoutUrgencyBanner';
+import CheckoutWhatsAppSupport from '@/components/checkout/CheckoutWhatsAppSupport';
+import CardBrandIcons from '@/components/checkout/CardBrandIcons';
+import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
 import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -284,9 +289,17 @@ export default function CartPage() {
         path="/sepet"
         noindex
       />
-      <div className="checkout-shell w-full">
-        <div className="checkout-shell__main mx-auto max-w-7xl px-3 py-6 sm:px-6 sm:py-8 lg:px-8 animate-fade-in">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900">Ödeme</h1>
+      <div className="checkout-shell w-full bg-gradient-to-b from-brand-50/40 via-white to-white">
+        <div className="checkout-shell__main mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8 lg:px-8 animate-fade-in">
+        <CheckoutUrgencyBanner className="mb-5" />
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-900">Güvenli Ödeme</h1>
+            <p className="mt-1 text-sm text-brand-600">256 Bit SSL · PayTR güvencesi · Hızlı kargo</p>
+          </div>
+          <CheckoutTrustPanel compact className="sm:max-w-xs shrink-0" />
+        </div>
 
         <nav className="mt-6 flex items-center gap-2 sm:gap-4" aria-label="Ödeme adımları">
           {STEPS.map(({ id, label, icon: Icon }) => (
@@ -316,8 +329,46 @@ export default function CartPage() {
           <FreeShippingBanner subtotal={discount.subtotal} />
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="mt-8 checkout-grid grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="checkout-summary-column order-1 lg:order-2 lg:col-span-1 space-y-4">
+            {step === 1 && !shipping.eligible && (
+              <div className="hidden lg:block">
+                <CartUpsellPanel compact />
+              </div>
+            )}
+
+            <OrderSummary
+              items={items}
+              discount={discount}
+              shipping={shipping}
+              orderTotal={orderTotal}
+              couponInput={couponInput}
+              onCouponInput={setCouponInput}
+              onApplyCoupon={applyCoupon}
+              onRemoveCoupon={removeCoupon}
+              couponApplied={couponApplied}
+              couponError={couponError}
+              couponLoading={couponLoading}
+            />
+
+            <CheckoutTrustPanel className="hidden lg:block" />
+
+            {formError && (
+              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 max-md:hidden">
+                {formError}
+              </p>
+            )}
+            <CheckoutActions
+              step={step}
+              setStep={setStep}
+              goNext={goNext}
+              handleSubmit={handleSubmit}
+              submitting={submitting}
+              className="hidden md:flex"
+            />
+          </div>
+
+          <div className="checkout-form-column order-2 lg:order-1 lg:col-span-2 space-y-4">
             {step === 1 && (
               <div className="space-y-4 animate-slide-up">
                 {items.map((item) => {
@@ -333,8 +384,7 @@ export default function CartPage() {
                           <img src={item.image} alt={item.name || 'Ürün görseli'} className="product-media-img p-1" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-brand-900">{item.name}</h3>
-                          <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                          <h3 className="font-semibold text-brand-900 line-clamp-2">{item.name}</h3>
                           <p className="text-brand-700 font-bold mt-1">
                             {formatPrice(unit)} / adet
                             {item.upsellPromo && (
@@ -378,72 +428,60 @@ export default function CartPage() {
 
             {step === 2 && (
               <div
-                className="rounded-2xl border border-brand-200 bg-white p-6 shadow-card space-y-4 animate-slide-up"
+                className="rounded-2xl border border-brand-200 bg-white p-5 sm:p-6 shadow-card space-y-4 animate-slide-up"
                 onFocusCapture={handleFormStart}
               >
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-accent-gold" /> Teslimat Bilgileri
+                  <MapPin className="h-5 w-5 text-accent-gold" /> Teslimat adresi
                 </h2>
                 {customerPrefillSource && hasSavedCustomer && (
                   <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
                     {customerPrefillSource === 'member'
-                      ? 'Hesabınızdaki kayıtlı adres ve iletişim bilgileri kullanılıyor. Gerekirse düzenleyebilirsiniz.'
-                      : 'Önceki siparişinizden kayıtlı bilgiler kullanılıyor. Gerekirse düzenleyebilirsiniz.'}
+                      ? 'Kayıtlı adresiniz yüklendi — isterseniz düzenleyin.'
+                      : 'Son sipariş bilgileriniz yüklendi — isterseniz düzenleyin.'}
                   </p>
                 )}
-                <p className="text-xs text-gray-500">Tüm alanlar zorunludur.</p>
-                {[
-                  ['name', 'Ad Soyad *', 'text'],
-                  ['phone', 'Telefon *', 'tel'],
-                  ['email', 'E-posta *', 'email'],
-                  ['city', 'İl *', 'text'],
-                  ['district', 'İlçe *', 'text'],
-                  ['address', 'Açık Adres *', 'textarea'],
-                ].map(([key, label, type]) => {
-                  const inputId = fieldId('checkout', key);
-                  return (
-                  <div key={key}>
-                    <label htmlFor={inputId} className="text-xs font-medium text-brand-800">
-                      {label}
-                    </label>
-                    {type === 'textarea' ? (
-                      <textarea
-                        id={inputId}
-                        rows={3}
-                        value={customer[key]}
-                        onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
-                        className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/20"
-                        required
-                      />
-                    ) : (
-                      <input
-                        id={inputId}
-                        type={type}
-                        value={customer[key]}
-                        onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
-                        className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/20"
-                        required
-                        autoComplete={
-                          key === 'email'
-                            ? 'email'
-                            : key === 'phone'
-                              ? 'tel'
-                              : key === 'name'
-                                ? 'name'
-                                : undefined
-                        }
-                      />
-                    )}
-                  </div>
-                  );
-                })}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  {DELIVERY_FIELDS.map(({ key, label, type, autoComplete, half }) => {
+                    const inputId = fieldId('checkout', key);
+                    const fieldWrapClass = half ? 'sm:col-span-1' : 'sm:col-span-2';
+                    return (
+                      <div key={key} className={fieldWrapClass}>
+                        <label htmlFor={inputId} className="text-xs font-medium text-brand-800">
+                          {label}
+                        </label>
+                        {type === 'textarea' ? (
+                          <textarea
+                            id={inputId}
+                            rows={3}
+                            value={customer[key]}
+                            onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
+                            placeholder="Mahalle, sokak, bina no, daire"
+                            className="mt-1 w-full rounded-xl border border-brand-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/20"
+                            required
+                          />
+                        ) : (
+                          <input
+                            id={inputId}
+                            type={type}
+                            value={customer[key]}
+                            onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
+                            className="mt-1 w-full rounded-xl border border-brand-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/20"
+                            required
+                            autoComplete={autoComplete}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
             {step === 3 && (
               <div className="space-y-4 animate-slide-up">
                 <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-accent-gold" /> Ödeme
+                  <CreditCard className="h-5 w-5 text-accent-gold" /> Kart ile güvenli ödeme
                 </h2>
 
                 <div className="rounded-2xl border-2 border-brand-600 bg-gradient-to-br from-brand-50 via-orange-50/40 to-emerald-50/30 p-5 ring-2 ring-brand-200">
@@ -451,11 +489,16 @@ export default function CartPage() {
                     <CreditCard className="h-5 w-5 text-accent-gold" />
                     Kredi / Banka Kartı
                   </div>
-                  <p className="mt-2 text-sm text-brand-700">
-                    PayTR güvenli ödeme altyapısı ile anında ödeme yapın.
+                  <p className="mt-2 text-sm text-brand-700 leading-relaxed">
+                    Kapıda ödeme yok — kart bilgileriniz yalnızca PayTR güvenli ekranında girilir.
                   </p>
                   <p className="mt-3 text-2xl font-bold text-brand-900">{formatPrice(orderTotal)}</p>
+                  <div className="mt-4">
+                    <CardBrandIcons size="sm" />
+                  </div>
                 </div>
+
+                <PaymentTrustStrip />
 
                 <CheckoutLegalConsent
                   accepted={legalAccepted}
@@ -464,38 +507,9 @@ export default function CartPage() {
                 />
               </div>
             )}
-          </div>
 
-          <div className="space-y-4">
-            {step === 1 && !shipping.eligible && <CartUpsellPanel compact />}
-
-            <OrderSummary
-              items={items}
-              discount={discount}
-              shipping={shipping}
-              orderTotal={orderTotal}
-              couponInput={couponInput}
-              onCouponInput={setCouponInput}
-              onApplyCoupon={applyCoupon}
-              onRemoveCoupon={removeCoupon}
-              couponApplied={couponApplied}
-              couponError={couponError}
-              couponLoading={couponLoading}
-            />
-
-            {formError && (
-              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 max-md:hidden">
-                {formError}
-              </p>
-            )}
-            <CheckoutActions
-              step={step}
-              setStep={setStep}
-              goNext={goNext}
-              handleSubmit={handleSubmit}
-              submitting={submitting}
-              className="hidden md:flex"
-            />
+            <CheckoutTrustPanel className="lg:hidden" />
+            <CheckoutWhatsAppSupport />
           </div>
         </div>
         </div>
@@ -509,6 +523,7 @@ export default function CartPage() {
           total={orderTotal}
           onBack={step > 1 ? () => setStep((s) => s - 1) : null}
           showPaymentIcon={step >= 3}
+          trustHint={step >= 3 ? '256 Bit SSL · PayTR Güvencesi' : 'Hızlı kargo · İade desteği'}
         />
       </div>
     </>
@@ -537,6 +552,47 @@ function CheckoutActions({ step, setStep, goNext, handleSubmit, submitting, clas
   );
 }
 
+function CouponFields({
+  couponApplied,
+  couponInput,
+  onCouponInput,
+  onApplyCoupon,
+  onRemoveCoupon,
+  couponError,
+  couponLoading,
+}) {
+  if (couponApplied) {
+    return (
+      <>
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span className="text-emerald-800 font-mono font-bold">{couponApplied.coupon?.code}</span>
+          <button type="button" onClick={onRemoveCoupon} className="text-xs text-red-600 hover:underline">
+            Kaldır
+          </button>
+        </div>
+        <p className="text-xs text-emerald-700">{couponApplied.label}</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex gap-2">
+        <input
+          value={couponInput}
+          onChange={(e) => onCouponInput(e.target.value.toUpperCase())}
+          placeholder="KUPON"
+          className="flex-1 rounded-lg border border-brand-200 px-2 py-1.5 text-sm font-mono uppercase"
+        />
+        <Button type="button" variant="secondary" size="sm" onClick={onApplyCoupon} disabled={couponLoading}>
+          {couponLoading ? '...' : 'Uygula'}
+        </Button>
+      </div>
+      {couponError && <p className="text-xs text-red-600">{couponError}</p>}
+    </>
+  );
+}
+
 function OrderSummary({
   items,
   discount,
@@ -552,41 +608,56 @@ function OrderSummary({
 }) {
   const upsellSave = getUpsellSavings(items);
   const parts = Array.isArray(discount.parts) ? discount.parts : [];
+  const itemCount = items.reduce((n, i) => n + (i.quantity || 1), 0);
 
   return (
-    <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-card sticky top-24">
-      <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
-        <Truck className="h-5 w-5 text-accent-gold" /> Sipariş Özeti
-      </h2>
+    <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card lg:sticky lg:top-24">
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
+          <Truck className="h-5 w-5 text-accent-gold shrink-0" /> Sipariş Özeti
+        </h2>
+        <span className="text-xs font-semibold text-brand-600 bg-white border border-brand-100 rounded-full px-2.5 py-1 shrink-0">
+          {itemCount} ürün
+        </span>
+      </div>
 
-      <div className="mt-4 rounded-xl border border-brand-100 bg-white p-3 space-y-2">
+      <p className="mt-2 text-lg font-extrabold text-brand-900 tabular-nums md:hidden">
+        {formatPrice(orderTotal)}
+      </p>
+
+      <details className="mt-3 rounded-xl border border-brand-100 bg-white md:hidden">
+        <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-semibold text-brand-800 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1">
+            <Ticket className="h-3.5 w-3.5" /> Kupon kodunuz var mı?
+          </span>
+          <span className="text-brand-500">▾</span>
+        </summary>
+        <div className="px-3 pb-3 space-y-2 border-t border-brand-50">
+          <CouponFields
+            couponApplied={couponApplied}
+            couponInput={couponInput}
+            onCouponInput={onCouponInput}
+            onApplyCoupon={onApplyCoupon}
+            onRemoveCoupon={onRemoveCoupon}
+            couponError={couponError}
+            couponLoading={couponLoading}
+          />
+        </div>
+      </details>
+
+      <div className="mt-4 hidden md:block rounded-xl border border-brand-100 bg-white p-3 space-y-2">
         <p className="text-xs font-semibold text-brand-800 flex items-center gap-1">
           <Ticket className="h-3.5 w-3.5" /> Kupon kodu
         </p>
-        {couponApplied ? (
-          <div className="flex items-center justify-between gap-2 text-sm">
-            <span className="text-emerald-800 font-mono font-bold">{couponApplied.coupon?.code}</span>
-            <button type="button" onClick={onRemoveCoupon} className="text-xs text-red-600 hover:underline">
-              Kaldır
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <input
-              value={couponInput}
-              onChange={(e) => onCouponInput(e.target.value.toUpperCase())}
-              placeholder="KUPON"
-              className="flex-1 rounded-lg border border-brand-200 px-2 py-1.5 text-sm font-mono uppercase"
-            />
-            <Button type="button" variant="secondary" size="sm" onClick={onApplyCoupon} disabled={couponLoading}>
-              {couponLoading ? '...' : 'Uygula'}
-            </Button>
-          </div>
-        )}
-        {couponError && <p className="text-xs text-red-600">{couponError}</p>}
-        {couponApplied && (
-          <p className="text-xs text-emerald-700">{couponApplied.label}</p>
-        )}
+        <CouponFields
+          couponApplied={couponApplied}
+          couponInput={couponInput}
+          onCouponInput={onCouponInput}
+          onApplyCoupon={onApplyCoupon}
+          onRemoveCoupon={onRemoveCoupon}
+          couponError={couponError}
+          couponLoading={couponLoading}
+        />
       </div>
 
       <dl className="mt-4 space-y-2 text-sm">
