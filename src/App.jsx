@@ -34,6 +34,7 @@ const LegalPage = lazyWithRetry(() => import('@/pages/LegalPage'));
 const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
 const RegisterPage = lazyWithRetry(() => import('@/pages/RegisterPage'));
 const OrderTrackPage = lazyWithRetry(() => import('@/pages/OrderTrackPage'));
+const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'));
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
 const BlogPostPage = lazyWithRetry(() => import('@/pages/BlogPostPage'));
 const AccountOverviewPage = lazyWithRetry(() => import('@/pages/account/AccountOverviewPage'));
