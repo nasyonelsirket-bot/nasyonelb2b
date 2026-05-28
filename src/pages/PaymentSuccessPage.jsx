@@ -6,14 +6,65 @@ import Button from '@/components/ui/Button';
 import ConfettiBurst from '@/components/payment/ConfettiBurst';
 import { useCart } from '@/context/CartContext';
 import { fetchPaymentStatus } from '@/services/paytrApi';
-import { clearPaymentSession } from '@/utils/paytrPaymentSession';
+import {
+  clearPaymentSession,
+  persistPurchaseAnalytics,
+  readPurchaseAnalytics,
+} from '@/utils/paytrPaymentSession';
 import { trackPurchase } from '@/lib/analytics/ga4';
 import { trackMetaPurchase } from '@/lib/analytics/meta';
+import { hasMetaPurchaseTracked } from '@/lib/analytics/metaPurchase';
 import { loadSavedCheckoutCustomer } from '@/utils/checkoutCustomer';
 
 const REDIRECT_SECONDS = 5;
 const POLL_INTERVAL_MS = 2000;
-const POLL_MAX_ATTEMPTS = 20;
+const POLL_MAX_ATTEMPTS = 45;
+
+function resolvePurchasePayload(orderId, status, cartItems) {
+  const snapshot = readPurchaseAnalytics(orderId);
+  const apiItems = Array.isArray(status?.items) ? status.items : [];
+  const cart = Array.isArray(cartItems) ? cartItems : [];
+  const items = apiItems.length ? apiItems : cart.length ? cart : snapshot?.items || [];
+
+  const value =
+    Number(status?.orderTotal) ||
+    Number(snapshot?.value) ||
+    items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
+
+  const userData =
+    status?.customer ||
+    loadSavedCheckoutCustomer() ||
+    snapshot?.userData ||
+    null;
+
+  return { items, value, userData };
+}
+
+function firePurchaseEvents(orderId, status, cartItems) {
+  if (!orderId || hasMetaPurchaseTracked(orderId)) {
+    return true;
+  }
+
+  const { items, value, userData } = resolvePurchasePayload(orderId, status, cartItems);
+  if (!value || value <= 0) return false;
+
+  trackPurchase({
+    transactionId: orderId,
+    items,
+    value,
+  });
+
+  trackMetaPurchase({
+    transactionId: orderId,
+    items,
+    value,
+    userData,
+    pathname: '/odeme/basarili',
+    eventSourceUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+  });
+
+  return true;
+}
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
@@ -62,30 +113,14 @@ export default function PaymentSuccessPage() {
       }
     };
 
-    const finalizeSuccess = () => {
+    const finalizeSuccess = (status) => {
       if (cancelled || cartCleared.current || finalized) return;
       finalized = true;
       stopPolling();
       cartCleared.current = true;
       clearPaymentSession(orderId);
 
-      if (!tracked.current && items?.length) {
-        const purchaseValue = items.reduce(
-          (s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0),
-          0,
-        );
-        const userData = loadSavedCheckoutCustomer();
-        trackPurchase({
-          transactionId: orderId,
-          items,
-          value: purchaseValue,
-        });
-        trackMetaPurchase({
-          transactionId: orderId,
-          items,
-          value: purchaseValue,
-          userData,
-        });
+      if (firePurchaseEvents(orderId, status, items)) {
         tracked.current = true;
       }
       clearCart();
@@ -108,8 +143,8 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        if (status.paid) {
-          finalizeSuccess();
+        if (status.paid || status.purchaseConfirmed) {
+          finalizeSuccess(status);
           return;
         }
 

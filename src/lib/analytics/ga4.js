@@ -151,19 +151,30 @@ export function trackBeginCheckout(items, pathname) {
 
 export function trackPurchase({
   transactionId,
-  items,
+  items = [],
   value,
   shipping = 0,
   coupon = '',
   pathname,
 }) {
-  if (!transactionId || !items?.length) return;
+  const orderId = String(transactionId || '').trim();
+  if (!orderId) return;
+
+  const mappedItems = Array.isArray(items) ? items : [];
+  const total =
+    Number(value) ||
+    mappedItems.reduce(
+      (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
+      0,
+    );
+  if (!total || total <= 0) return;
+
   emitEcommerceEvent('purchase', {
-    items,
-    value,
+    items: mappedItems,
+    value: total,
     pathname,
     extra: {
-      transaction_id: String(transactionId),
+      transaction_id: orderId,
       shipping: Number(shipping) || 0,
       coupon: coupon || undefined,
     },

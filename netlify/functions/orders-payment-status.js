@@ -28,6 +28,32 @@ function isOrderPaid(order) {
   return false;
 }
 
+function isOrderFailed(order) {
+  if (!order || typeof order !== 'object') return false;
+  return (
+    order.paymentStatus === 'failed' ||
+    order.payment_status === 'failed' ||
+    order.status === 'cancelled'
+  );
+}
+
+function canConfirmPurchase(order) {
+  if (!order || isOrderFailed(order)) return false;
+  if (isOrderPaid(order)) return true;
+  return Boolean(order.paytrClientReturnAt);
+}
+
+function mapAnalyticsItems(items = []) {
+  return (Array.isArray(items) ? items : []).map((item) => ({
+    id: item.id ?? item.sku ?? item.productId ?? null,
+    sku: item.sku ?? null,
+    name: item.name ?? 'Ürün',
+    price: Number(item.price) || 0,
+    quantity: Math.max(1, Number(item.quantity) || 1),
+    image: item.image ?? null,
+  }));
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: HEADERS, body: '' };
@@ -49,10 +75,8 @@ exports.handler = async (event) => {
     }
 
     const paid = isOrderPaid(order);
-    const failed =
-      order.paymentStatus === 'failed' ||
-      order.payment_status === 'failed' ||
-      order.status === 'cancelled';
+    const failed = isOrderFailed(order);
+    const purchaseConfirmed = canConfirmPurchase(order);
 
     return {
       statusCode: 200,
@@ -65,7 +89,20 @@ exports.handler = async (event) => {
         paymentStatus: order.paymentStatus || order.payment_status || null,
         paid,
         failed,
+        purchaseConfirmed,
+        orderTotal: Number(order.orderTotal) || 0,
+        items: mapAnalyticsItems(order.items),
+        customer: order.customer
+          ? {
+              name: order.customer.name || '',
+              email: order.customer.email || '',
+              phone: order.customer.phone || '',
+              city: order.customer.city || '',
+              district: order.customer.district || '',
+            }
+          : null,
         callbackReceived: Boolean(order.paytrCallbackAt),
+        clientReturnAt: order.paytrClientReturnAt || null,
       }),
     };
   } catch (err) {

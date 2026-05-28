@@ -1,5 +1,6 @@
 const STORAGE_PREFIX = 'paytr_pay_';
 const LAST_ORDER_KEY = 'paytr_last_order';
+const PURCHASE_ANALYTICS_PREFIX = 'purchase_analytics_';
 const memoryCache = new Map();
 const inflightPromises = new Map();
 
@@ -106,6 +107,7 @@ export function clearPaymentSession(orderId) {
     memoryCache.delete(`nav:${orderId}`);
     try {
       sessionStorage.removeItem(storageKey(orderId));
+      sessionStorage.removeItem(`${PURCHASE_ANALYTICS_PREFIX}${orderId}`);
     } catch {
       /* ignore */
     }
@@ -114,5 +116,32 @@ export function clearPaymentSession(orderId) {
     sessionStorage.removeItem(LAST_ORDER_KEY);
   } catch {
     /* ignore */
+  }
+}
+
+/** Purchase pixel yedek verisi — sepet temizlense bile thank-you sayfasında kullanılır */
+export function persistPurchaseAnalytics(orderId, payload) {
+  if (!orderId || !payload) return;
+  try {
+    sessionStorage.setItem(
+      `${PURCHASE_ANALYTICS_PREFIX}${orderId}`,
+      JSON.stringify({
+        ...payload,
+        savedAt: Date.now(),
+      }),
+    );
+  } catch {
+    /* private mode */
+  }
+}
+
+export function readPurchaseAnalytics(orderId) {
+  if (!orderId) return null;
+  try {
+    const raw = sessionStorage.getItem(`${PURCHASE_ANALYTICS_PREFIX}${orderId}`);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
 }

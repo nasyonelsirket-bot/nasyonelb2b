@@ -114,6 +114,30 @@ export default function PaymentPage() {
   }, [orderId]);
 
   useEffect(() => {
+    if (!iframeUrl || !orderId) return undefined;
+
+    const iframe = iframeRef.current;
+    if (!iframe) return undefined;
+
+    const maybeRedirectToSuccess = () => {
+      try {
+        const src = String(iframe.contentWindow?.location?.href || iframe.src || '');
+        if (!src) return;
+        if (src.includes('/odeme/basarili') || src.includes('/api/paytr/return-ok')) {
+          const url = new URL(src, window.location.origin);
+          const oid = url.searchParams.get('oid') || orderId;
+          window.location.replace(`/odeme/basarili?oid=${encodeURIComponent(oid)}`);
+        }
+      } catch {
+        /* cross-origin — PayTR domain; ignore until same-origin redirect */
+      }
+    };
+
+    iframe.addEventListener('load', maybeRedirectToSuccess);
+    return () => iframe.removeEventListener('load', maybeRedirectToSuccess);
+  }, [iframeUrl, orderId]);
+
+  useEffect(() => {
     if (!iframeUrl || !orderId || resizerStartedByOrder.has(orderId)) return undefined;
 
     let cancelled = false;

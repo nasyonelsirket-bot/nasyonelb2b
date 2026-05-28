@@ -43,6 +43,7 @@ import { validateCouponRemote } from '@/services/promotionApi';
 import { fieldId } from '@/utils/formFieldId';
 import { formatPrice } from '@/utils/whatsapp';
 import { startPaytrPayment } from '@/services/paytrApi';
+import { persistPurchaseAnalytics } from '@/utils/paytrPaymentSession';
 import {
   trackBeginCheckout,
   trackFormView,
@@ -248,6 +249,12 @@ export default function CartPage() {
       });
       saveCheckoutCustomer(customer);
       trackFormSubmit(items, { success: true });
+      persistPurchaseAnalytics(result.orderId, {
+        items: mapItemsForOrder(items),
+        value: orderTotal,
+        orderNumber: result.orderNumber,
+        userData: customer,
+      });
       navigate('/odeme', {
         state: {
           orderId: result.orderId,

@@ -6,6 +6,11 @@ import {
   ensureFbcFromUrl,
   buildMetaUserData,
 } from './metaIdentity';
+import {
+  purchaseEventId,
+  hasMetaPurchaseTracked,
+  markMetaPurchaseTracked,
+} from './metaPurchase';
 
 let initializedPixelId = null;
 const pendingFbq = [];
@@ -105,11 +110,11 @@ async function relayCapiEvent({
   }
 }
 
-function emitMetaEvent(eventName, customData, { userData, pathname, eventSourceUrl } = {}) {
+function emitMetaEvent(eventName, customData, { userData, pathname, eventSourceUrl, eventId: eventIdOverride } = {}) {
   if (!canTrack(pathname)) return null;
 
   ensureFbcFromUrl();
-  const eventId = createEventId();
+  const eventId = eventIdOverride || createEventId();
 
   callFbq('track', eventName, customData, { eventID: eventId });
 
@@ -226,26 +231,45 @@ export function trackMetaInitiateCheckout(items, { userData, pathname } = {}) {
 
 export function trackMetaPurchase({
   transactionId,
-  items,
+  items = [],
   value,
   userData,
   pathname,
+  eventSourceUrl,
 }) {
-  if (!transactionId || !items?.length) return;
+  const orderId = String(transactionId || '').trim();
+  if (!orderId) return null;
+  if (hasMetaPurchaseTracked(orderId)) return null;
 
-  const contents = buildContentsPayload(items);
-  const total = Number(value) || cartValue(items);
-  const names = mapCartContents(items).map((i) => i.name).join(', ');
+  const mappedItems = Array.isArray(items) ? items.filter(Boolean) : [];
+  const total = Number(value) || (mappedItems.length ? cartValue(mappedItems) : 0);
+  if (!Number.isFinite(total) || total <= 0) return null;
 
-  emitMetaEvent(
-    'Purchase',
-    {
-      ...contents,
-      content_name: names,
-      value: total,
-      currency: META_CURRENCY,
-      order_id: String(transactionId),
-    },
-    { userData, pathname },
-  );
+  const contents = mappedItems.length ? buildContentsPayload(mappedItems) : {};
+  const names = mappedItems.length
+    ? mapCartContents(mappedItems).map((i) => i.name).join(', ')
+    : undefined;
+
+  const eventId = purchaseEventId(orderId) || createEventId();
+
+  const customData = {
+    value: total,
+    currency: META_CURRENCY,
+    order_id: orderId,
+    ...(names ? { content_name: names } : {}),
+    ...(mappedItems.length ? contents : {}),
+  };
+
+  const emittedId = emitMetaEvent('Purchase', customData, {
+    userData,
+    pathname,
+    eventSourceUrl,
+    eventId,
+  });
+
+  if (emittedId) {
+    markMetaPurchaseTracked(orderId, emittedId);
+  }
+
+  return emittedId;
 }
