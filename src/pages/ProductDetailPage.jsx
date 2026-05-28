@@ -26,7 +26,9 @@ import ProductRatingStars from '@/components/product/ProductRatingStars';
 import ProductReviewsSection from '@/components/product/ProductReviewsSection';
 import { getProductRatingSummary } from '@/utils/productReviews';
 import { trackRecentlyViewed } from '@/utils/recentlyViewed';
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { FREE_SHIPPING_LABEL, FREE_SHIPPING_SUBLABEL } from '@/constants/commerceCopy';
+import { getMinOrderQtyForProduct } from '@/utils/minOrderQty';
+import MinOrderQtyNotice from '@/components/product/MinOrderQtyNotice';
 import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
 
 function AccordionSection({ title, children, defaultOpen = false }) {
@@ -52,7 +54,15 @@ export default function ProductDetailPage() {
   const { getProductByIdOrSlug, products } = useStore();
   const { addToCart } = useCart();
   const product = getProductByIdOrSlug(idOrSlug);
+  const minOrder = useMemo(
+    () => (product ? getMinOrderQtyForProduct(product) : { minQty: 1 }),
+    [product],
+  );
   const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    if (product) setQty(minOrder.minQty);
+  }, [product?.id, minOrder.minQty]);
   const [imageIndex, setImageIndex] = useState(0);
   const gallery = useMemo(() => getProductImages(product), [product]);
   const activeImage = gallery[imageIndex] || gallery[0];
@@ -189,10 +199,12 @@ export default function ProductDetailPage() {
             </div>
             <KdvNotice className="mt-2" />
 
+            <MinOrderQtyNotice product={product} className="mt-3" />
+
             <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600">
               <span className="inline-flex items-center gap-1">
                 <Truck className="h-3.5 w-3.5 text-emerald-600" />
-                {FREE_SHIPPING_THRESHOLD_TL} TL+ kargo bedava
+                {FREE_SHIPPING_LABEL}
               </span>
               <span className="inline-flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5 text-brand-600" />
@@ -205,9 +217,10 @@ export default function ProductDetailPage() {
             <div className="mt-6 max-w-md lg:max-w-md">
               <QuantityControls
                 quantity={qty}
+                minQty={minOrder.minQty}
                 onChange={setQty}
                 onIncrement={(n) => setQty((q) => q + n)}
-                onDecrement={(n) => setQty((q) => Math.max(1, q - n))}
+                onDecrement={(n) => setQty((q) => Math.max(minOrder.minQty, q - n))}
               />
             </div>
 
@@ -228,7 +241,7 @@ export default function ProductDetailPage() {
               <AccordionSection title="Kargo & Teslimat" defaultOpen>
                 <p>
                   Stoktaki siparişler genellikle aynı gün veya ertesi iş günü hazırlanır; çoğu sipariş 1–2 iş günü içinde kargoya verilir.
-                  {FREE_SHIPPING_THRESHOLD_TL} TL ve üzeri siparişlerde kargo bedava.
+                  {FREE_SHIPPING_SUBLABEL}.
                   Teslimat süresi bölgeye göre 1–5 iş günü arasında değişebilir.
                 </p>
               </AccordionSection>

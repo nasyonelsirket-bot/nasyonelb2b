@@ -3,6 +3,7 @@ import { loadFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 import { trackAddToCart, trackRemoveFromCart } from '@/lib/analytics/ga4';
 import { trackMetaAddToCart } from '@/lib/analytics/meta';
 import { getCartSubtotal } from '@/utils/cartLinePricing';
+import { clampQtyToMin } from '@/utils/minOrderQty';
 
 const CartContext = createContext(null);
 
@@ -46,19 +47,23 @@ export function CartProvider({ children }) {
 
   const addToCart = useCallback(
     (product, quantity = 1) => {
-      const qty = Math.max(1, parseInt(quantity, 10) || 1);
+      const requested = Math.max(1, parseInt(quantity, 10) || 1);
+      let trackedQty = requested;
       setItems((prev) => {
         const existing = prev.find((i) => i.id === product.id);
+        const nextQty = existing ? existing.quantity + requested : requested;
+        const qty = clampQtyToMin(product, nextQty);
+        trackedQty = qty;
         if (existing) {
           return prev.map((i) =>
-            i.id === product.id ? { ...i, quantity: i.quantity + qty } : i,
+            i.id === product.id ? { ...i, quantity: qty } : i,
           );
         }
         return [...prev, { ...product, quantity: qty }];
       });
-      trackAddToCart(product, qty);
-      trackMetaAddToCart(product, qty);
-      notifyAddedToCart(product, qty);
+      trackAddToCart(product, trackedQty);
+      trackMetaAddToCart(product, trackedQty);
+      notifyAddedToCart(product, trackedQty);
     },
     [notifyAddedToCart],
   );
@@ -77,14 +82,16 @@ export function CartProvider({ children }) {
       };
       setItems((prev) => {
         const existing = prev.find((i) => i.id === product.id);
+        const nextQty = existing ? existing.quantity + qty : qty;
+        const finalQty = clampQtyToMin({ ...product, ...lineExtras }, nextQty);
         if (existing) {
           return prev.map((i) =>
             i.id === product.id
-              ? { ...i, quantity: i.quantity + qty, ...lineExtras }
+              ? { ...i, quantity: finalQty, ...lineExtras }
               : i,
           );
         }
-        return [...prev, { ...product, quantity: qty, ...lineExtras }];
+        return [...prev, { ...product, quantity: finalQty, ...lineExtras }];
       });
       trackAddToCart(product, qty);
       trackMetaAddToCart(product, qty);
@@ -97,9 +104,10 @@ export function CartProvider({ children }) {
     setItems((prev) =>
       prev.map((i) => {
         if (i.id !== productId) return i;
-        const q = quantity <= 0 ? 0 : Math.max(1, parseInt(quantity, 10) || 1);
+        if (quantity <= 0) return { ...i, quantity: 0 };
+        const q = clampQtyToMin(i, parseInt(quantity, 10) || 1);
         return { ...i, quantity: q };
-      }),
+      }).filter((i) => i.quantity > 0),
     );
   }, []);
 

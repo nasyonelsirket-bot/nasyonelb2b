@@ -8,7 +8,7 @@ export const ABOUT_PARAGRAPHS = [
   'Nasyonel Toys, çocukların hayal gücünü, motor becerilerini ve öğrenme merakını destekleyen eğitici oyuncakları ailelerle buluşturan online oyuncak mağazasıdır. Amacımız; sadece oyun değil, gelişime katkı sunan ürünlerle güvenilir bir alışveriş deneyimi yaşatmaktır.',
   'Koleksiyonumuzda ahşap eğitici setler, montessori materyalleri, zeka ve dikkat geliştiren puzzle’lar, STEM odaklı yapı setleri ve yaş grubuna uygun öğrenme oyuncakları yer alır. Her ürün seçiminde güvenlik standartları, dayanıklılık ve çocuğun yaşına uygunluk kriterlerimizin önünde gelir.',
   'Eğitici oyuncakların faydasına inanıyoruz: el-göz koordinasyonu, problem çözme, yaratıcılık, sosyal beceriler ve öz güven… Ürünlerimiz bu becerileri doğal ve eğlenceli bir oyun akışı içinde desteklemek için özenle seçilir.',
-  'En çok tercih edilen ürünleri sitemizde öne çıkarıyoruz; aileler kanıtlanmış fırsatları doğrudan bizden, şeffaf fiyatlarla alabiliyor. 500 TL üzeri siparişlerde kargo bedava.',
+  'En çok tercih edilen ürünleri sitemizde öne çıkarıyoruz; aileler kanıtlanmış fırsatları doğrudan bizden, şeffaf fiyatlarla alabiliyor. Tüm siparişlerde ücretsiz kargo.',
   'Doğal malzeme, yumuşak formlar, canlı renkler ve uzun ömürlü kullanım ön plandadır. Bebek ve okul öncesi dönemden ilkokul çağına kadar geniş bir yaş aralığına hitap eden kategorilerle her çocuğa uygun bir seçenek sunmayı hedefliyoruz.',
   'Sipariş sürecimiz sade: sepetinizi oluşturun, teslimat bilgilerinizi girin ve PayTR ile güvenli kart ödemesini tamamlayın. Onay e-postanız kısa süre içinde iletilir.',
 ];
@@ -26,7 +26,7 @@ export const ABOUT_HIGHLIGHTS = [
   },
   {
     title: 'Aile Dostu Alışveriş',
-    desc: '500 TL üzeri kargo bedava, net fiyat, kolay sipariş süreci.',
+    desc: 'Ücretsiz kargo, net fiyat, kolay sipariş süreci.',
     iconKey: 'cart',
   },
   {

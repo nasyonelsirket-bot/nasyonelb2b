@@ -42,6 +42,20 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Sipariş boş' }) };
   }
 
+  const minQtyResult = validateOrderItemsMinQty(items);
+  if (!minQtyResult.ok) {
+    const first = minQtyResult.violations[0];
+    return {
+      statusCode: 400,
+      headers: HEADERS,
+      body: JSON.stringify({
+        error: first
+          ? `"${first.name}" için minimum ${first.minQty} adet gerekli`
+          : 'Minimum sipariş adedi kuralları sağlanmıyor',
+      }),
+    };
+  }
+
   const customer = body.customer && typeof body.customer === 'object' ? body.customer : {};
   const customerName = String(customer.name || customer.companyName || '').trim();
   if (!customerName) {
@@ -105,9 +119,7 @@ exports.handler = async (event) => {
     promotions: promosForTotals,
   });
 
-  const shippingFee = Number(body.shipping?.shippingFee) || 0;
-  const shippingEligible = body.shipping?.eligible === true;
-  const payableShipping = shippingEligible ? 0 : shippingFee;
+  const payableShipping = 0;
   const orderTotal = Math.round((serverTotals.grandTotal + payableShipping) * 100) / 100;
 
   if (!Number.isFinite(orderTotal) || orderTotal <= 0) {

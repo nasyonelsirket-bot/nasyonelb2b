@@ -209,7 +209,9 @@ export const DEFAULT_SETTINGS = {
   homepageLayout: null,
   promotions: {
     ibanDiscountPercent: 0,
-    freeShippingThreshold: 500,
+    freeShippingThreshold: 0,
+    highValueDiscountThreshold: 500,
+    highValueDiscountPercent: 5,
     standardShippingFee: 100,
     deliveryReward: {
       enabled: true,
@@ -224,7 +226,7 @@ export const DEFAULT_SETTINGS = {
         id: 'camp-bundle',
         type: 'bundle',
         title: 'Birlikte al — kargo bedava',
-        description: '500 TL üzeri ücretsiz kargo; sepette uyumlu ürün önerisi %5 indirimli.',
+        description: 'Ücretsiz kargo; minimum adet önerileri ve 500 TL üzeri ekstra %5 indirim.',
         active: true,
       },
     ],

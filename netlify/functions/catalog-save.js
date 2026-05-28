@@ -3,6 +3,8 @@
  */
 const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { sanitizeProductsSeo } = require('../../lib/productSeo.cjs');
+const { migrateLegacyProductPrices } = require('../../lib/legacyPriceMigration.cjs');
+const { validateOrderItemsMinQty } = require('../../lib/minOrderQty.cjs');
 const { resolveCanonicalSiteUrl } = require('../../lib/canonicalSiteUrl.cjs');
 const { DEFAULT_META_DESCRIPTION } = require('../../lib/siteSeo.cjs');
 
@@ -108,7 +110,11 @@ exports.handler = async (event) => {
     };
   }
 
-  const products = sanitizeProductsSeo(Array.isArray(body.products) ? body.products : []);
+  let products = sanitizeProductsSeo(Array.isArray(body.products) ? body.products : []);
+  const priceMigration = migrateLegacyProductPrices(products);
+  if (priceMigration.changed) {
+    products = priceMigration.products;
+  }
   const categories = Array.isArray(body.categories) ? body.categories : [];
   const banners = Array.isArray(body.banners) ? body.banners : [];
   const rawSettings = body.settings && typeof body.settings === 'object' ? body.settings : null;

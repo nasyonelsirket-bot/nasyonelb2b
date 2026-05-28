@@ -1,7 +1,11 @@
+import { HIGH_VALUE_DISCOUNT_THRESHOLD_TL, HIGH_VALUE_DISCOUNT_PERCENT } from '@/constants/commerceCopy';
+
 export const DEFAULT_PROMOTIONS = {
   ibanDiscountPercent: 10,
-  freeShippingThreshold: 500,
-  standardShippingFee: 100,
+  freeShippingThreshold: 0,
+  standardShippingFee: 0,
+  highValueDiscountThreshold: HIGH_VALUE_DISCOUNT_THRESHOLD_TL,
+  highValueDiscountPercent: HIGH_VALUE_DISCOUNT_PERCENT,
   deliveryReward: {
     enabled: true,
     percent: 10,
@@ -15,19 +19,20 @@ export const DEFAULT_PROMOTIONS = {
   bundleRules: [],
 };
 
-function normalizeFreeShippingThreshold(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) return 500;
-  if (n === 750) return 500;
-  return n;
+function normalizeFreeShippingThreshold() {
+  return 0;
 }
 
 export function normalizePromotions(raw) {
   const p = raw && typeof raw === 'object' ? raw : {};
   return {
     ibanDiscountPercent: Number(p.ibanDiscountPercent) || 10,
-    freeShippingThreshold: normalizeFreeShippingThreshold(p.freeShippingThreshold),
-    standardShippingFee: Number(p.standardShippingFee) || 100,
+    freeShippingThreshold: 0,
+    standardShippingFee: 0,
+    highValueDiscountThreshold:
+      Number(p.highValueDiscountThreshold) || HIGH_VALUE_DISCOUNT_THRESHOLD_TL,
+    highValueDiscountPercent:
+      Number(p.highValueDiscountPercent) || HIGH_VALUE_DISCOUNT_PERCENT,
     deliveryReward: {
       ...DEFAULT_PROMOTIONS.deliveryReward,
       ...(p.deliveryReward || {}),
@@ -124,6 +129,22 @@ export function computeCartTotals({ subtotal, paymentMethod, couponResult, promo
     });
   }
 
+  const hvThreshold = Number(promos.highValueDiscountThreshold) || HIGH_VALUE_DISCOUNT_THRESHOLD_TL;
+  const hvPercent = Number(promos.highValueDiscountPercent) || HIGH_VALUE_DISCOUNT_PERCENT;
+  let highValueDiscountEarned = false;
+  if (amount >= hvThreshold && hvPercent > 0) {
+    const hvOff = Math.round(amount * (hvPercent / 100) * 100) / 100;
+    if (hvOff > 0) {
+      discountAmount += hvOff;
+      highValueDiscountEarned = true;
+      parts.push({
+        type: 'high_value',
+        amount: hvOff,
+        label: `${hvThreshold} TL üzeri ekstra %${hvPercent} indirim`,
+      });
+    }
+  }
+
   discountAmount = Math.min(discountAmount, amount);
   const grandTotal = Math.round((amount - discountAmount) * 100) / 100;
 
@@ -142,8 +163,15 @@ export function computeCartTotals({ subtotal, paymentMethod, couponResult, promo
           ? couponResult.label
           : '',
     upsellMessage: null,
-    currentDiscountMessage:
-      couponResult?.ok
+    highValueDiscountEarned,
+    highValueDiscountThreshold: hvThreshold,
+    highValueDiscountRemaining: highValueDiscountEarned
+      ? 0
+      : Math.max(0, hvThreshold - amount),
+    highValueDiscountPercent: hvPercent,
+    currentDiscountMessage: highValueDiscountEarned
+      ? `${hvThreshold} TL üzeri alışverişe ekstra %${hvPercent} indirim kazandınız 🎉`
+      : couponResult?.ok
         ? couponResult.label
         : null,
   };

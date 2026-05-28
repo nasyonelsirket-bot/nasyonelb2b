@@ -1,45 +1,29 @@
-import { formatPrice } from '@/utils/whatsapp';
+import {
+  FREE_SHIPPING_LABEL,
+  FREE_SHIPPING_SUBLABEL,
+} from '@/constants/commerceCopy';
 
-export const FREE_SHIPPING_THRESHOLD_TL = 500;
-export const STANDARD_SHIPPING_FEE_TL = 100;
+/** @deprecated Kargo artık eşiksiz ücretsiz; yalnızca geriye dönük importlar için */
+export const FREE_SHIPPING_THRESHOLD_TL = 0;
+export const STANDARD_SHIPPING_FEE_TL = 0;
 
-export function getFreeShippingStatus(subtotal, threshold = FREE_SHIPPING_THRESHOLD_TL) {
+/** Tüm siparişlerde kargo ücreti yok */
+export function getFreeShippingStatus(subtotal) {
   const amount = Math.max(0, Number(subtotal) || 0);
-
-  if (amount <= 0) {
-    return {
-      subtotal: 0,
-      threshold,
-      eligible: false,
-      remaining: threshold,
-      progressPercent: 0,
-      shippingFee: 0,
-      upsellMessage: null,
-      successMessage: null,
-    };
-  }
-
-  const eligible = amount >= threshold;
-  const remaining = Math.max(0, threshold - amount);
-  const progressPercent = Math.min(100, (amount / threshold) * 100);
-  const shippingFee = eligible ? 0 : STANDARD_SHIPPING_FEE_TL;
 
   return {
     subtotal: amount,
-    threshold,
-    eligible,
-    remaining,
-    progressPercent,
-    shippingFee,
-    upsellMessage: !eligible
-      ? `${formatPrice(remaining)} daha ekleyin, kargo bedava!`
-      : null,
-    successMessage: eligible ? `${threshold} TL üzeri — kargo bedava!` : null,
+    threshold: 0,
+    eligible: amount > 0,
+    remaining: 0,
+    progressPercent: amount > 0 ? 100 : 0,
+    shippingFee: 0,
+    label: FREE_SHIPPING_LABEL,
+    upsellMessage: null,
+    successMessage: amount > 0 ? FREE_SHIPPING_SUBLABEL : null,
   };
 }
 
-export function getOrderPayableTotal(discountGrandTotal, shipping) {
-  const base = Math.max(0, Number(discountGrandTotal) || 0);
-  const fee = shipping?.shippingFee || 0;
-  return Math.round((base + fee) * 100) / 100;
+export function getOrderPayableTotal(discountGrandTotal) {
+  return Math.round(Math.max(0, Number(discountGrandTotal) || 0) * 100) / 100;
 }

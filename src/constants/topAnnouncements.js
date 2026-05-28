@@ -1,35 +1,24 @@
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { FREE_SHIPPING_LABEL, HIGH_VALUE_DISCOUNT_THRESHOLD_TL } from '@/constants/commerceCopy';
 
-/** Üst turuncu şerit — dönen duyurular */
+export const ANNOUNCEMENT_ROTATE_MS = 6500;
+
 export const TOP_ANNOUNCEMENTS = [
   {
-    highlight: `${FREE_SHIPPING_THRESHOLD_TL} TL ve Üzeri Ücretsiz Kargo`,
-    rest: 'Tüm siparişlerinizde geçerli ·',
+    id: 'free-ship',
+    highlight: FREE_SHIPPING_LABEL,
+    rest: ' — Sepete özel ücretsiz kargo fırsatı',
+    href: '/kategoriler',
   },
   {
-    highlight: '14 İş Günü İade Hakkı',
-    rest: 'Yasal süre içinde iade ve cayma ·',
+    id: 'secure-pay',
+    highlight: 'Güvenli Ödeme',
+    rest: ' — PayTR ile 256 bit SSL korumalı alışveriş',
+    href: '/sepet',
   },
   {
-    highlight: 'Güvenli Kart Ödemesi',
-    rest: 'PayTR altyapısı ile 256-bit SSL ·',
-  },
-  {
-    highlight: 'Eğitici Oyuncak Koleksiyonu',
-    rest: 'Kaliteli ürünler · hızlı kargo ·',
-  },
-  {
-    highlight: '%5 Sepet İndirimi',
-    rest: `${FREE_SHIPPING_THRESHOLD_TL} TL üzeri uyumlu ürün önerilerinde ·`,
-  },
-  {
-    highlight: 'Çok Satan Ürünler',
-    rest: 'Satış performansına dayalı sıralama ·',
-  },
-  {
-    highlight: 'Ücretsiz Üyelik',
-    rest: 'Sipariş takibi ve adres yönetimi ·',
+    id: 'hv-discount',
+    highlight: `%${5} Ekstra İndirim`,
+    rest: ` — ${HIGH_VALUE_DISCOUNT_THRESHOLD_TL} TL üzeri alışverişlerde otomatik`,
+    href: '/en-cok-satanlar',
   },
 ];
-
-export const ANNOUNCEMENT_ROTATE_MS = 4200;

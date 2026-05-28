@@ -14,12 +14,14 @@ import { getProductImageAlt } from '@/utils/productSeoContent';
 import ProductRatingStars from '@/components/product/ProductRatingStars';
 import { getProductRatingSummary } from '@/utils/productReviews';
 import { getProductCardBadges } from '@/utils/productCardBadges';
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { FREE_SHIPPING_SHORT } from '@/constants/commerceCopy';
+import { getMinOrderQtyForProduct } from '@/utils/minOrderQty';
 
 function ProductCard({ product }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
-  const [qty, setQty] = useState(1);
+  const minOrder = getMinOrderQtyForProduct(product);
+  const [qty, setQty] = useState(minOrder.minQty);
   const onSale = hasProductDiscount(product);
   const pct = getDiscountPercent(product);
   const { avg: ratingAvg, count: reviewCount } = getProductRatingSummary(product);
@@ -91,7 +93,7 @@ function ProductCard({ product }) {
         <div className="mt-1.5 hidden sm:flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500">
           <span className="inline-flex items-center gap-1 text-emerald-700">
             <Truck className="h-3 w-3" aria-hidden />
-            {FREE_SHIPPING_THRESHOLD_TL} TL+ kargo bedava
+            {FREE_SHIPPING_SHORT}
           </span>
           <span className="inline-flex items-center gap-1 text-brand-600">
             <ShieldCheck className="h-3 w-3" aria-hidden />

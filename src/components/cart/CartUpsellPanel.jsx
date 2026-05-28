@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Gift, Plus, Truck, Tag, ExternalLink } from 'lucide-react';
+import { Gift, Plus, Tag, ExternalLink, Package, Sparkles } from 'lucide-react';
 import { getProductPath } from '@/utils/productSeo';
 import Button from '@/components/ui/Button';
 import ProductImage from '@/components/product/ProductImage';
@@ -9,83 +9,21 @@ import { normalizePromotions } from '@/utils/promotions';
 import { getCartUpsellOffers } from '@/utils/cartUpsell';
 import { getCartSubtotal, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
 import { formatPrice } from '@/utils/whatsapp';
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { HIGH_VALUE_DISCOUNT_THRESHOLD_TL } from '@/constants/commerceCopy';
 
-export default function CartUpsellPanel({ compact = false }) {
-  const { items, addUpsellToCart } = useCart();
-  const { products, settings } = useStore();
-  const promos = normalizePromotions(settings?.promotions);
-
-  const subtotal = getCartSubtotal(items);
-  const { bundle, eligible } = getCartUpsellOffers(items, products, subtotal, promos);
-  const threshold = promos.freeShippingThreshold || FREE_SHIPPING_THRESHOLD_TL;
-
-  if (!eligible || !bundle) return null;
+function UpsellCard({ bundle, onAdd, compact }) {
+  if (!bundle?.picked?.[0]) return null;
 
   const line = bundle.picked[0];
-  if (!line) return null;
-
   const { product, quantity, promo } = line;
-  const discounted = getEffectiveUnitPrice({ ...product, upsellPromo: promo });
+  const discounted = promo
+    ? getEffectiveUnitPrice({ ...product, upsellPromo: promo })
+    : Number(product.price) || 0;
   const listPrice = Number(product.price) || 0;
-
   const productUrl = getProductPath(product);
 
-  const addSuggested = (e) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
-    addUpsellToCart(product, quantity, {
-      promo,
-      upsellDiscountPercent: line.upsellDiscountPercent,
-      upsellOfferPrice: line.upsellOfferPrice,
-    });
-  };
-
-  const isAdminRule = bundle.source === 'admin_rule';
-  const headline = isAdminRule
-    ? bundle.ruleTitle || 'Birlikte al önerisi'
-    : bundle.reachesFreeShipping
-      ? `${threshold} TL'yi tamamla — kargo bedava!`
-      : 'Sepete uyumlu ürün önerisi';
-
   return (
-    <div
-      className={`rounded-2xl border-2 border-dashed border-amber-300 bg-gradient-to-br from-amber-50 via-orange-50/40 to-emerald-50/50 animate-slide-up ${
-        compact ? 'p-3 space-y-2' : 'p-4 space-y-3'
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow">
-          <Gift className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h3 className="font-display font-bold text-brand-900 text-sm leading-tight">{headline}</h3>
-          <p className="text-xs text-brand-700 mt-0.5">
-            <Truck className="inline h-3 w-3 text-emerald-600 mr-0.5" />
-            {isAdminRule ? (
-              <>
-                <span className="font-medium">{bundle.triggerName}</span> sepette ·{' '}
-                {bundle.discountType === 'fixed' ? (
-                  <span className="font-semibold text-emerald-700">
-                    {formatPrice(bundle.offerPrice)} kampanya fiyatı
-                  </span>
-                ) : (
-                  <span className="font-semibold text-emerald-700">%{bundle.discountPercent} indirim</span>
-                )}
-                {bundle.grantFreeShipping && bundle.reachesFreeShipping ? ' · kargo bedava' : ''}
-              </>
-            ) : bundle.reachesFreeShipping ? (
-              <>
-                {formatPrice(bundle.remaining)} eksik ·{' '}
-                <span className="font-semibold text-emerald-700">%5 indirimli</span> tek ürün
-              </>
-            ) : (
-              <>En uyumlu ürün · %5 indirim</>
-            )}
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-2">
       <Link
         to={productUrl}
         className={`flex gap-3 rounded-xl border border-brand-100 bg-white p-2.5 shadow-sm hover:border-brand-300 hover:shadow-md transition-all group ${
@@ -96,10 +34,12 @@ export default function CartUpsellPanel({ compact = false }) {
           <ProductImage src={product.image} alt="" variant="thumb" className="!w-full !h-full" />
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-100 rounded px-1.5 py-0.5 w-fit mb-1">
-            <Tag className="h-3 w-3" />
-            %{bundle.discountPercent} indirim
-          </span>
+          {bundle.discountPercent > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-orange-700 bg-orange-100 rounded px-1.5 py-0.5 w-fit mb-1">
+              <Tag className="h-3 w-3" />
+              %{bundle.discountPercent} indirim
+            </span>
+          )}
           <p className="text-sm font-medium text-brand-900 line-clamp-2 leading-snug group-hover:text-brand-700">
             {product.name}
           </p>
@@ -108,43 +48,120 @@ export default function CartUpsellPanel({ compact = false }) {
               <span className="text-xs text-gray-400 line-through">{formatPrice(listPrice)}</span>
             )}
             <span className="text-base font-bold text-brand-800">{formatPrice(discounted)}</span>
+            {quantity > 1 && (
+              <span className="text-xs text-gray-500">× {quantity} adet</span>
+            )}
           </div>
-          <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 group-hover:text-brand-800">
-            Ürünü gör
-            <ExternalLink className="h-3.5 w-3.5" />
-          </span>
         </div>
       </Link>
-
-      <p className="text-xs text-gray-600">
-        Tahmini sepet:{' '}
-        <strong className={bundle.reachesFreeShipping ? 'text-emerald-700' : 'text-brand-800'}>
-          {formatPrice(bundle.projectedSubtotal)}
-        </strong>
-        {bundle.reachesFreeShipping ? (
-          <span className="text-emerald-700 font-semibold"> · kargo bedava</span>
-        ) : (
-          <span>
-            {' '}
-            · {threshold} TL için{' '}
-            {formatPrice(Math.max(0, threshold - bundle.projectedSubtotal))} daha gerekir
-          </span>
-        )}
-      </p>
 
       <Button
         type="button"
         variant="primary"
         size={compact ? 'sm' : 'md'}
         className="w-full text-xs sm:text-sm"
-        onClick={(e) => addSuggested(e)}
+        onClick={(e) => onAdd(e, line)}
       >
         <Plus className="h-4 w-4" />
-        Sepete ekle
-        {bundle.discountType === 'fixed'
-          ? ` (${formatPrice(bundle.offerPrice)})`
-          : ` (%${bundle.discountPercent} indirim)`}
+        Sepete ekle ({quantity} adet)
       </Button>
     </div>
   );
+}
+
+function UpsellBlock({ icon: Icon, tone, headline, subline, bundle, onAdd, compact }) {
+  if (!bundle) return null;
+
+  return (
+    <div
+      className={`rounded-2xl border-2 border-dashed animate-slide-up ${tone} ${
+        compact ? 'p-3 space-y-2' : 'p-4 space-y-3'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white shadow">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-display font-bold text-brand-900 text-sm leading-tight">{headline}</h3>
+          <p className="text-xs text-brand-700 mt-0.5">{subline}</p>
+        </div>
+      </div>
+      <UpsellCard bundle={bundle} onAdd={onAdd} compact={compact} />
+    </div>
+  );
+}
+
+export default function CartUpsellPanel({ compact = false }) {
+  const { items, addUpsellToCart, addToCart } = useCart();
+  const { products, settings } = useStore();
+  const promos = normalizePromotions(settings?.promotions);
+
+  const subtotal = getCartSubtotal(items);
+  const offers = getCartUpsellOffers(items, products, subtotal, promos);
+
+  const handleAdd = (e, line) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    const { product, quantity, promo } = line;
+    if (promo) {
+      addUpsellToCart(product, quantity, { promo, upsellDiscountPercent: 5 });
+    } else {
+      addToCart(product, quantity);
+    }
+  };
+
+  if (!items.length) return null;
+
+  const blocks = [];
+
+  if (offers.minQty) {
+    blocks.push(
+      <UpsellBlock
+        key="min-qty"
+        icon={Package}
+        tone="border-amber-300 bg-gradient-to-br from-amber-50 via-orange-50/40 to-white"
+        headline={offers.minQty.headline}
+        subline={offers.minQty.message}
+        bundle={offers.minQty}
+        onAdd={handleAdd}
+        compact={compact}
+      />,
+    );
+  }
+
+  if (offers.highValue && subtotal < HIGH_VALUE_DISCOUNT_THRESHOLD_TL) {
+    blocks.push(
+      <UpsellBlock
+        key="high-value"
+        icon={Sparkles}
+        tone="border-violet-300 bg-gradient-to-br from-violet-50 via-purple-50/40 to-white"
+        headline={offers.highValue.headline}
+        subline={offers.highValue.message}
+        bundle={offers.highValue}
+        onAdd={handleAdd}
+        compact={compact}
+      />,
+    );
+  }
+
+  if (offers.bundle && offers.eligible) {
+    const b = offers.bundle;
+    blocks.push(
+      <UpsellBlock
+        key="admin-bundle"
+        icon={Gift}
+        tone="border-emerald-300 bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white"
+        headline={b.ruleTitle || 'Birlikte al önerisi'}
+        subline={b.message || 'Sepete özel öneri'}
+        bundle={b}
+        onAdd={handleAdd}
+        compact={compact}
+      />,
+    );
+  }
+
+  if (!blocks.length) return null;
+
+  return <div className="space-y-3">{blocks}</div>;
 }

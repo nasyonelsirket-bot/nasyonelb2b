@@ -1,11 +1,12 @@
 import { Clock, Truck, ShieldCheck, RotateCcw, Star } from 'lucide-react';
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { FREE_SHIPPING_SHORT, HIGH_VALUE_DISCOUNT_THRESHOLD_TL } from '@/constants/commerceCopy';
 
 /** Ürün sayfası dönüşüm — kargo, güven, hızlı sipariş (mevcut temaya uyumlu) */
 export default function ProductConversionTrust({ className = '' }) {
   const items = [
     { icon: Clock, label: 'Bugün sipariş — hızlı hazırlık', tone: 'text-amber-800 bg-amber-50 border-amber-200' },
-    { icon: Truck, label: `${FREE_SHIPPING_THRESHOLD_TL} TL+ kargo bedava`, tone: 'text-emerald-800 bg-emerald-50 border-emerald-200' },
+    { icon: Truck, label: FREE_SHIPPING_SHORT, tone: 'text-emerald-800 bg-emerald-50 border-emerald-200' },
+    { icon: Star, label: `${HIGH_VALUE_DISCOUNT_THRESHOLD_TL} TL+ ekstra %5 indirim`, tone: 'text-violet-800 bg-violet-50 border-violet-200' },
     { icon: ShieldCheck, label: 'PayTR güvenli ödeme', tone: 'text-brand-800 bg-brand-50 border-brand-100' },
     { icon: RotateCcw, label: '14 iş günü iade', tone: 'text-brand-800 bg-brand-50 border-brand-100' },
     { icon: Star, label: 'Gerçek müşteri yorumları', tone: 'text-brand-800 bg-brand-50 border-brand-100' },

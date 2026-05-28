@@ -24,9 +24,12 @@ import {
 } from '@/utils/categories';
 import { migrateProductsSeo, normalizeProductSeoFields } from '@/utils/productSeo';
 import { migrateProductsReviews } from '@/utils/productReviews';
+import { migrateLegacyProductPrices } from '@/utils/legacyPriceMigration';
 
 function migrateCatalog(products) {
-  return migrateProductsReviews(migrateProductsSeo(products));
+  const seo = migrateProductsSeo(products);
+  const reviewed = migrateProductsReviews(seo);
+  return migrateLegacyProductPrices(reviewed).products;
 }
 
 const StoreContext = createContext(null);

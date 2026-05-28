@@ -6,8 +6,9 @@ import QuantityControls from '@/components/product/QuantityControls';
 import ProductImage from '@/components/product/ProductImage';
 import { useCart } from '@/context/CartContext';
 import { getCartSubtotal, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
-import { getFreeShippingStatus } from '@/utils/cartShipping';
 import { formatPrice } from '@/utils/whatsapp';
+import { FREE_SHIPPING_LABEL } from '@/constants/commerceCopy';
+import { getMinOrderQtyForProduct, validateCartMinQty } from '@/utils/minOrderQty';
 import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
 import useDialogA11y from '@/hooks/useDialogA11y';
 
@@ -17,7 +18,7 @@ export default function HomeCartDrawer({ open, onClose }) {
   const panelRef = useRef(null);
 
   const subtotal = getCartSubtotal(items);
-  const shipping = getFreeShippingStatus(subtotal);
+  const minQtyCheck = validateCartMinQty(items);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -81,6 +82,7 @@ export default function HomeCartDrawer({ open, onClose }) {
             <ul className="space-y-3">
               {items.map((item) => {
                 const unit = getEffectiveUnitPrice(item);
+                const { minQty, message } = getMinOrderQtyForProduct(item);
                 return (
                   <li
                     key={item.id}
@@ -96,6 +98,9 @@ export default function HomeCartDrawer({ open, onClose }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-brand-900 line-clamp-2">{item.name}</p>
+                      {message && item.quantity < minQty && (
+                        <p className="text-[10px] text-amber-800 mt-0.5">{message}</p>
+                      )}
                       <p className="text-sm font-bold text-brand-700 mt-0.5">
                         <span className="sr-only">Birim fiyat </span>
                         {formatPrice(unit)} × {item.quantity}
@@ -103,6 +108,7 @@ export default function HomeCartDrawer({ open, onClose }) {
                       <div className="mt-2 max-w-[200px]">
                         <QuantityControls
                           quantity={item.quantity}
+                          minQty={minQty}
                           onChange={(q) => setQuantity(item.id, q)}
                           onIncrement={(n) => increment(item.id, n)}
                           onDecrement={(n) => decrement(item.id, n)}
@@ -136,49 +142,26 @@ export default function HomeCartDrawer({ open, onClose }) {
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3">
               <p className="text-xs font-semibold text-emerald-900 flex items-center gap-1.5">
                 <Truck className="h-4 w-4" aria-hidden />
-                {shipping.eligible
-                  ? 'Kargo bedava!'
-                  : `${formatPrice(shipping.remaining)} daha — kargo bedava`}
+                {FREE_SHIPPING_LABEL}
               </p>
-              {!shipping.eligible && (
-                <div
-                  className="mt-2 h-2 rounded-full bg-white overflow-hidden border border-emerald-200"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(shipping.progressPercent)}
-                  aria-label="Ücretsiz kargo eşiği ilerlemesi"
-                >
-                  <div
-                    className="h-full bg-emerald-500 transition-all"
-                    style={{ width: `${shipping.progressPercent}%` }}
-                  />
-                </div>
-              )}
             </div>
+
+            {!minQtyCheck.ok && (
+              <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-2">
+                {minQtyCheck.summary}
+              </p>
+            )}
 
             <div className="flex justify-between text-base font-bold text-brand-900">
               <span>Ara toplam</span>
-              <span>{formatPrice(totalPrice)}</span>
+              <span>{formatPrice(subtotal)}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                Alışverişe devam
+            <Link to="/sepet" onClick={onClose}>
+              <Button variant="gold" size="lg" className="w-full">
+                Sepete git
+                <ArrowRight className="h-5 w-5" />
               </Button>
-              <Link to="/sepet" onClick={onClose} className="block">
-                <Button type="button" variant="gold" className="w-full">
-                  Ödemeye geç
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Button>
-              </Link>
-            </div>
-            <Link
-              to="/sepet"
-              onClick={onClose}
-              className="block text-center text-sm font-semibold text-brand-700 hover:text-brand-900"
-            >
-              Tam sepet sayfasını aç →
             </Link>
           </footer>
         )}

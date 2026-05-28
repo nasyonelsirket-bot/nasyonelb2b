@@ -4,7 +4,7 @@ import { MAP_ADDRESS } from '@/utils/categories';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { loadFromStorage, loadArrayFromStorage, saveToStorage, KEYS } from '@/utils/storage';
 
-export const BRAND_VERSION = 16;
+export const BRAND_VERSION = 17;
 const BRAND_VERSION_KEY = 'b2b_brand_version';
 
 function shouldResetTagline(tagline) {

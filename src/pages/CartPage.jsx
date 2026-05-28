@@ -36,9 +36,10 @@ import {
   EMPTY_CHECKOUT_CUSTOMER,
 } from '@/utils/checkoutCustomer';
 import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
-import { getFreeShippingStatus, getOrderPayableTotal, FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
+import { validateCartMinQty, getMinOrderQtyForProduct } from '@/utils/minOrderQty';
+import { HIGH_VALUE_DISCOUNT_THRESHOLD_TL, HIGH_VALUE_DISCOUNT_LABEL } from '@/constants/commerceCopy';
 import { normalizePromotions } from '@/utils/promotions';
-import { getBundleFreeShippingOverride } from '@/utils/bundleRules';
 import { validateCouponRemote } from '@/services/promotionApi';
 import { fieldId } from '@/utils/formFieldId';
 import { formatPrice } from '@/utils/whatsapp';
@@ -86,21 +87,9 @@ export default function CartPage() {
       }),
     [totalPrice, promos, couponApplied],
   );
-  const shipping = useMemo(() => {
-    const threshold = promos.freeShippingThreshold || FREE_SHIPPING_THRESHOLD_TL;
-    const base = getFreeShippingStatus(discount.subtotal, threshold);
-    const bundleShip = getBundleFreeShippingOverride(items, promos.bundleRules, threshold);
-    if (bundleShip?.eligible) {
-      return {
-        ...base,
-        eligible: true,
-        shippingFee: 0,
-        successMessage: bundleShip.message,
-        upsellMessage: null,
-      };
-    }
-    return base;
-  }, [discount.subtotal, promos.freeShippingThreshold, promos.bundleRules, items]);
+  const shipping = useMemo(() => getFreeShippingStatus(discount.subtotal), [discount.subtotal]);
+
+  const minQtyCheck = useMemo(() => validateCartMinQty(items), [items]);
   const orderTotal = useMemo(
     () => getOrderPayableTotal(discount.grandTotal, shipping),
     [discount.grandTotal, shipping],
@@ -197,6 +186,10 @@ export default function CartPage() {
 
   const goNext = () => {
     setFormError('');
+    if (!minQtyCheck.ok) {
+      setFormError(minQtyCheck.summary || 'Minimum sipariş adedi kuralları sağlanmıyor.');
+      return;
+    }
     if (step === 1 && hasSavedCustomer) {
       setStep(3);
       return;
@@ -213,6 +206,11 @@ export default function CartPage() {
 
   const handleSubmit = async () => {
     setFormError('');
+    if (!minQtyCheck.ok) {
+      setFormError(minQtyCheck.summary || 'Minimum sipariş adedi kuralları sağlanmıyor.');
+      setStep(1);
+      return;
+    }
     if (!legalAccepted) {
       setFormError('Devam etmek için sözleşme onayını işaretleyin.');
       return;
@@ -332,8 +330,23 @@ export default function CartPage() {
           ))}
         </nav>
 
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
           <FreeShippingBanner subtotal={discount.subtotal} />
+          {!minQtyCheck.ok && (
+            <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+              {minQtyCheck.summary}
+            </p>
+          )}
+          {discount.highValueDiscountEarned && (
+            <p className="text-sm text-violet-900 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2.5 font-medium">
+              {HIGH_VALUE_DISCOUNT_LABEL}
+            </p>
+          )}
+          {!discount.highValueDiscountEarned && discount.highValueDiscountRemaining > 0 && (
+            <p className="text-sm text-brand-800 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
+              {formatPrice(discount.highValueDiscountRemaining)} daha ekleyin — {HIGH_VALUE_DISCOUNT_THRESHOLD_TL} TL üzeri ekstra %5 indirim
+            </p>
+          )}
         </div>
 
         <div className="mt-8 checkout-grid grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
@@ -406,6 +419,7 @@ export default function CartPage() {
                           <div className="mt-3 max-w-md">
                             <QuantityControls
                               quantity={item.quantity}
+                              minQty={getMinOrderQtyForProduct(item).minQty}
                               onChange={(q) => setQuantity(item.id, q)}
                               onIncrement={(n) => increment(item.id, n)}
                               onDecrement={(n) => decrement(item.id, n)}
