@@ -1,16 +1,13 @@
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { TRUST_STRIP_LINE } from '@/constants/commerceCopy';
 
 export default function HomeTrustSection() {
-  const threshold = new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: 'TRY',
-    maximumFractionDigits: 0,
-  }).format(FREE_SHIPPING_THRESHOLD_TL);
-
   return (
-    <section className="bg-white border-y border-brand-100 py-3 sm:py-4" aria-label="Güven ve hizmet">
-      <p className="text-center text-xs sm:text-sm text-brand-600 px-4">
-        {threshold} ve üzeri siparişlerde kargo bedava · Güvenli kart ödemesi
+    <section
+      className="bg-gradient-to-r from-brand-50/80 via-white to-brand-50/80 border-y border-brand-100/80 py-2.5 sm:py-3"
+      aria-label="Güven ve teslimat"
+    >
+      <p className="text-center text-xs sm:text-sm font-medium text-brand-700 px-4 tracking-wide">
+        {TRUST_STRIP_LINE}
       </p>
     </section>
   );

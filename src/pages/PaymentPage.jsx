@@ -271,7 +271,7 @@ export default function PaymentPage() {
             </div>
 
             <aside className="checkout-summary-column order-1 lg:order-2 lg:col-span-2 space-y-4">
-              <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 shadow-card lg:sticky lg:top-24">
+              <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-white p-5 sm:p-6 shadow-card">
                 <h2 className="font-display font-bold text-brand-900">Sipariş Özeti</h2>
                 {(orderNumber || orderId) && (
                   <p className="mt-1 text-xs text-gray-500">Sipariş no: {orderNumber || orderId}</p>

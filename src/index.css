@@ -576,24 +576,29 @@
     }
   }
 
+  /* Mobilde sipariş özeti sticky değil — form/önerilerin üstüne binmesin */
   .checkout-order-summary {
-    position: sticky !important;
-    top: 0;
-    z-index: 30;
-    box-shadow:
-      0 4px 24px rgba(10, 31, 77, 0.08),
-      0 1px 0 rgba(255, 255, 255, 0.9) inset;
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
   }
 
   .checkout-order-summary::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -0.75rem;
-    height: 0.75rem;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), transparent);
-    pointer-events: none;
+    display: none;
+  }
+
+  .checkout-summary-column {
+    position: relative;
+    z-index: 0;
+  }
+
+  .checkout-form-column {
+    position: relative;
+    z-index: 1;
+  }
+
+  .checkout-recommendations {
+    padding-bottom: 0.5rem;
   }
 
   .checkout-whatsapp-support {
@@ -606,5 +611,34 @@
     font-weight: 700;
     letter-spacing: 0.02em;
     color: #059669;
+  }
+}
+
+/* Desktop checkout — sipariş özeti yan sütunda sticky, içerikle çakışmaz */
+@media (min-width: 1024px) {
+  .checkout-grid {
+    align-items: start;
+  }
+
+  .checkout-summary-column {
+    position: relative;
+    isolation: isolate;
+    align-self: start;
+  }
+
+  .checkout-form-column {
+    position: relative;
+    z-index: 1;
+  }
+
+  .checkout-order-summary {
+    position: sticky;
+    top: 6rem;
+    z-index: 10;
+    align-self: start;
+    max-height: calc(100dvh - 7.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }

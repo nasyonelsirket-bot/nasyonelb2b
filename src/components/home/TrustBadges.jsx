@@ -1,20 +1,14 @@
-import { FREE_SHIPPING_THRESHOLD_TL } from '@/utils/cartShipping';
+import { TRUST_STRIP_LINE } from '@/constants/commerceCopy';
 
 /** Ana sayfa üstü — kompakt güven metni */
 export default function TrustBadges() {
-  const threshold = new Intl.NumberFormat('tr-TR', {
-    style: 'currency',
-    currency: 'TRY',
-    maximumFractionDigits: 0,
-  }).format(FREE_SHIPPING_THRESHOLD_TL);
-
   return (
     <section
-      className="border-y border-brand-100 bg-white py-3 sm:py-4"
-      aria-label="Kargo ve ödeme bilgisi"
+      className="border-y border-brand-100 bg-gradient-to-r from-brand-50/60 to-white py-2.5 sm:py-3"
+      aria-label="Güven ve teslimat"
     >
-      <p className="text-center text-xs sm:text-sm text-brand-600 px-4">
-        {threshold} ve üzeri siparişlerde kargo bedava · Güvenli kart ödemesi
+      <p className="text-center text-xs sm:text-sm font-medium text-brand-700 px-4 tracking-wide">
+        {TRUST_STRIP_LINE}
       </p>
     </section>
   );

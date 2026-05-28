@@ -15,7 +15,7 @@ import Button from '@/components/ui/Button';
 import KdvNotice from '@/components/ui/KdvNotice';
 import QuantityControls from '@/components/product/QuantityControls';
 import FreeShippingBanner from '@/components/cart/FreeShippingBanner';
-import CartUpsellPanel from '@/components/cart/CartUpsellPanel';
+import CartRecommendations from '@/components/cart/CartRecommendations';
 import CheckoutLegalConsent from '@/components/cart/CheckoutLegalConsent';
 import MobileCheckoutStickyBar from '@/components/cart/MobileCheckoutStickyBar';
 import CheckoutTrustPanel from '@/components/checkout/CheckoutTrustPanel';
@@ -38,7 +38,12 @@ import {
 import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
 import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
 import { validateCartMinQty, getMinOrderQtyForProduct } from '@/utils/minOrderQty';
-import { HIGH_VALUE_DISCOUNT_THRESHOLD_TL, HIGH_VALUE_DISCOUNT_LABEL } from '@/constants/commerceCopy';
+import {
+  HIGH_VALUE_DISCOUNT_THRESHOLD_TL,
+  HIGH_VALUE_DISCOUNT_LABEL,
+  FREE_SHIPPING_LABEL,
+  FREE_SHIPPING_SUBLABEL,
+} from '@/constants/commerceCopy';
 import { normalizePromotions } from '@/utils/promotions';
 import { validateCouponRemote } from '@/services/promotionApi';
 import { fieldId } from '@/utils/formFieldId';
@@ -351,12 +356,6 @@ export default function CartPage() {
 
         <div className="mt-8 checkout-grid grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="checkout-summary-column order-1 lg:order-2 lg:col-span-1 space-y-4">
-            {step === 1 && !shipping.eligible && (
-              <div className="hidden lg:block">
-                <CartUpsellPanel compact />
-              </div>
-            )}
-
             <OrderSummary
               items={items}
               discount={discount}
@@ -444,6 +443,7 @@ export default function CartPage() {
                 >
                   Sepeti Temizle
                 </button>
+                <CartRecommendations />
               </div>
             )}
 
@@ -584,33 +584,46 @@ function CouponFields({
 }) {
   if (couponApplied) {
     return (
-      <>
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-emerald-800 font-mono font-bold">{couponApplied.coupon?.code}</span>
-          <button type="button" onClick={onRemoveCoupon} className="text-xs text-red-600 hover:underline">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm text-emerald-900 font-mono font-bold tracking-wide">
+            {couponApplied.coupon?.code}
+          </span>
+          <button
+            type="button"
+            onClick={onRemoveCoupon}
+            className="text-xs font-semibold text-red-600 hover:text-red-700"
+          >
             Kaldır
           </button>
         </div>
-        <p className="text-xs text-emerald-700">{couponApplied.label}</p>
-      </>
+        <p className="text-xs text-emerald-800 leading-relaxed">{couponApplied.label}</p>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-2">
       <div className="flex gap-2">
         <input
           value={couponInput}
           onChange={(e) => onCouponInput(e.target.value.toUpperCase())}
-          placeholder="KUPON"
-          className="flex-1 rounded-lg border border-brand-200 px-2 py-1.5 text-sm font-mono uppercase"
+          placeholder="Kupon kodu"
+          className="flex-1 min-w-0 rounded-xl border border-brand-200 bg-brand-50/40 px-3 py-2.5 text-sm font-mono uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal placeholder:font-sans focus:ring-2 focus:ring-brand-500/15 focus:border-brand-300"
         />
-        <Button type="button" variant="secondary" size="sm" onClick={onApplyCoupon} disabled={couponLoading}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onApplyCoupon}
+          disabled={couponLoading}
+          className="shrink-0 px-4"
+        >
           {couponLoading ? '...' : 'Uygula'}
         </Button>
       </div>
-      {couponError && <p className="text-xs text-red-600">{couponError}</p>}
-    </>
+      {couponError && <p className="text-xs font-medium text-red-600">{couponError}</p>}
+    </div>
   );
 }
 
@@ -632,28 +645,46 @@ function OrderSummary({
   const itemCount = items.reduce((n, i) => n + (i.quantity || 1), 0);
 
   return (
-    <div className="checkout-order-summary rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-4 sm:p-6 shadow-card lg:sticky lg:top-24">
+    <div className="checkout-order-summary rounded-2xl border border-brand-200/90 bg-gradient-to-br from-brand-50 via-white to-white p-5 sm:p-6 shadow-card">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-display font-bold text-brand-900 flex items-center gap-2">
-          <Truck className="h-5 w-5 text-accent-gold shrink-0" /> Sipariş Özeti
+        <h2 className="font-display text-lg font-bold text-brand-900 flex items-center gap-2">
+          <Truck className="h-5 w-5 text-accent-gold shrink-0" aria-hidden />
+          Sipariş Özeti
         </h2>
-        <span className="text-xs font-semibold text-brand-600 bg-white border border-brand-100 rounded-full px-2.5 py-1 shrink-0">
+        <span className="text-xs font-semibold text-brand-700 bg-white border border-brand-100 rounded-full px-2.5 py-1 shrink-0 tabular-nums">
           {itemCount} ürün
         </span>
       </div>
 
-      <p className="mt-2 text-lg font-extrabold text-brand-900 tabular-nums md:hidden">
+      {shipping.eligible && (
+        <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50/60 px-3 py-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white shadow-sm">
+            <Truck className="h-4 w-4" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-emerald-900 leading-tight">{FREE_SHIPPING_LABEL}</p>
+            <p className="text-[11px] sm:text-xs text-emerald-800/90 mt-0.5 leading-snug">
+              {FREE_SHIPPING_SUBLABEL}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-4 text-xl font-extrabold text-brand-900 tabular-nums tracking-tight md:hidden">
         {formatPrice(orderTotal)}
       </p>
 
-      <details className="mt-3 rounded-xl border border-brand-100 bg-white md:hidden">
-        <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-semibold text-brand-800 flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1">
-            <Ticket className="h-3.5 w-3.5" /> Kupon kodunuz var mı?
+      <details className="checkout-coupon-mobile mt-4 rounded-xl border border-brand-100 bg-white md:hidden">
+        <summary className="cursor-pointer list-none px-3.5 py-3 text-sm font-semibold text-brand-800 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+          <span className="inline-flex items-center gap-1.5">
+            <Ticket className="h-4 w-4 text-brand-600 shrink-0" aria-hidden />
+            Kupon kodunuz var mı?
           </span>
-          <span className="text-brand-500">▾</span>
+          <span className="text-brand-400 text-xs font-bold" aria-hidden>
+            ▾
+          </span>
         </summary>
-        <div className="px-3 pb-3 space-y-2 border-t border-brand-50">
+        <div className="px-3.5 pb-3.5 pt-0 border-t border-brand-50">
           <CouponFields
             couponApplied={couponApplied}
             couponInput={couponInput}
@@ -666,9 +697,10 @@ function OrderSummary({
         </div>
       </details>
 
-      <div className="mt-4 hidden md:block rounded-xl border border-brand-100 bg-white p-3 space-y-2">
-        <p className="text-xs font-semibold text-brand-800 flex items-center gap-1">
-          <Ticket className="h-3.5 w-3.5" /> Kupon kodu
+      <div className="checkout-coupon-desktop mt-5 hidden md:block rounded-xl border border-brand-100 bg-white p-4">
+        <p className="text-sm font-semibold text-brand-900 flex items-center gap-1.5 mb-3">
+          <Ticket className="h-4 w-4 text-brand-600 shrink-0" aria-hidden />
+          Kupon kodu
         </p>
         <CouponFields
           couponApplied={couponApplied}
@@ -681,47 +713,51 @@ function OrderSummary({
         />
       </div>
 
-      <dl className="mt-4 space-y-2 text-sm">
-        <div className="flex justify-between text-gray-600">
-          <dt>Ara toplam</dt>
-          <dd className="font-medium text-brand-900">{formatPrice(discount.subtotal)}</dd>
+      <dl className="mt-5 space-y-3 text-sm">
+        <div className="flex justify-between gap-3 text-brand-600">
+          <dt className="font-medium">Ara toplam</dt>
+          <dd className="font-semibold text-brand-900 tabular-nums">{formatPrice(discount.subtotal)}</dd>
         </div>
         {upsellSave > 0 && (
-          <p className="text-xs text-emerald-800 bg-emerald-50 rounded-lg px-2 py-1.5">
+          <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 leading-relaxed">
             Öneri ürün indirimi ile {formatPrice(upsellSave)} tasarruf (ara toplama dahil)
           </p>
         )}
         {parts.length > 0
           ? parts.map((p) => (
-              <div key={`${p.type}-${p.label}`} className="flex justify-between text-emerald-700">
-                <dt className="pr-2">{p.label}</dt>
-                <dd className="font-semibold shrink-0">-{formatPrice(p.amount)}</dd>
+              <div key={`${p.type}-${p.label}`} className="flex justify-between gap-3 text-emerald-700">
+                <dt className="pr-2 font-medium leading-snug">{p.label}</dt>
+                <dd className="font-bold shrink-0 tabular-nums">-{formatPrice(p.amount)}</dd>
               </div>
             ))
           : discount.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald-700">
-                <dt>{discount.tierLabel}</dt>
-                <dd className="font-semibold">-{formatPrice(discount.discountAmount)}</dd>
+              <div className="flex justify-between gap-3 text-emerald-700">
+                <dt className="font-medium">{discount.tierLabel}</dt>
+                <dd className="font-bold tabular-nums">-{formatPrice(discount.discountAmount)}</dd>
               </div>
             )}
-        <div className="flex justify-between text-brand-800">
-          <dt>Kargo</dt>
-          <dd className="font-semibold">
+        <div className="flex justify-between gap-3 items-center text-brand-800 pt-0.5">
+          <dt className="font-medium">Kargo</dt>
+          <dd>
             {shipping.eligible ? (
-              <span className="text-emerald-600">Bedava</span>
+              <span className="inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+                {FREE_SHIPPING_LABEL}
+              </span>
             ) : (
-              formatPrice(shipping.shippingFee)
+              <span className="font-bold tabular-nums">{formatPrice(shipping.shippingFee)}</span>
             )}
           </dd>
         </div>
-        <div className="flex justify-between border-t border-brand-200 pt-2 text-base">
-          <dt className="font-bold text-brand-900">Toplam</dt>
-          <dd className="font-bold text-brand-700 text-xl">{formatPrice(orderTotal)}</dd>
+        <div className="flex justify-between gap-3 border-t border-brand-200 pt-3 mt-1">
+          <dt className="text-base font-bold text-brand-900">Toplam</dt>
+          <dd className="text-xl font-extrabold text-brand-800 tabular-nums tracking-tight">
+            {formatPrice(orderTotal)}
+          </dd>
         </div>
       </dl>
-      <KdvNotice className="mt-3" />
+      <KdvNotice className="mt-4 text-xs" />
       {discount.upsellMessage && (
-        <p className="mt-3 text-xs font-medium text-amber-800 bg-amber-50 rounded-lg px-3 py-2">
+        <p className="mt-3 text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
           {discount.upsellMessage}
         </p>
       )}

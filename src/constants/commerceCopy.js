@@ -8,3 +8,7 @@ export const FREE_SHIPPING_SHORT = 'Ücretsiz kargo';
 export const HIGH_VALUE_DISCOUNT_THRESHOLD_TL = 500;
 export const HIGH_VALUE_DISCOUNT_PERCENT = 5;
 export const HIGH_VALUE_DISCOUNT_LABEL = '500 TL üzeri alışverişe ekstra %5 indirim kazandınız 🎉';
+
+/** Ana sayfa / güven şeridi — premium kısa metin */
+export const TRUST_STRIP_LINE = 'Güvenli Ödeme · Hızlı Teslimat';
+export const TRUST_STRIP_LINE_ALT = 'Türkiye Geneli Hızlı Kargo';
