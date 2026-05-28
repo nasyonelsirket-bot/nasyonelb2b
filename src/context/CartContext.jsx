@@ -114,9 +114,11 @@ export function CartProvider({ children }) {
   const increment = useCallback(
     (productId, amount = 1) => {
       setItems((prev) =>
-        prev.map((i) =>
-          i.id === productId ? { ...i, quantity: i.quantity + amount } : i,
-        ),
+        prev.map((i) => {
+          if (i.id !== productId) return i;
+          const next = i.quantity + amount;
+          return { ...i, quantity: clampQtyToMin(i, next) };
+        }),
       );
       triggerAnimation();
     },

@@ -23,7 +23,7 @@ import CheckoutUrgencyBanner from '@/components/checkout/CheckoutUrgencyBanner';
 import CheckoutWhatsAppSupport from '@/components/checkout/CheckoutWhatsAppSupport';
 import CardBrandIcons from '@/components/checkout/CardBrandIcons';
 import PaymentTrustStrip from '@/components/trust/PaymentTrustStrip';
-import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice } from '@/utils/cartLinePricing';
+import { mapItemsForOrder, getUpsellSavings, getEffectiveUnitPrice, getCartSubtotal } from '@/utils/cartLinePricing';
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
 import { getSiteUrl } from '@/utils/canonicalSiteUrl';
@@ -35,9 +35,9 @@ import {
   loadSavedCheckoutCustomer,
   EMPTY_CHECKOUT_CUSTOMER,
 } from '@/utils/checkoutCustomer';
-import { getCartDiscount, PAYMENT_PAYTR } from '@/utils/cartDiscount';
-import { getFreeShippingStatus, getOrderPayableTotal } from '@/utils/cartShipping';
-import { validateCartMinQty, getMinOrderQtyForProduct } from '@/utils/minOrderQty';
+import { getMinOrderQtyForProduct } from '@/utils/minOrderQty';
+import { useCheckoutTotals } from '@/hooks/useCheckoutTotals';
+import { buildPaytrPaymentPayload } from '@/utils/cartCheckoutTotals';
 import {
   HIGH_VALUE_DISCOUNT_THRESHOLD_TL,
   HIGH_VALUE_DISCOUNT_LABEL,
@@ -66,8 +66,7 @@ const STEPS = [
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { items, totalPrice, removeFromCart, setQuantity, increment, decrement, clearCart } =
-    useCart();
+  const { items, removeFromCart, setQuantity, increment, decrement, clearCart } = useCart();
   const { settings } = useStore();
   const { profile, isLoggedIn } = useMember();
 
@@ -84,21 +83,12 @@ export default function CartPage() {
 
   const promos = useMemo(() => normalizePromotions(settings.promotions), [settings.promotions]);
 
-  const discount = useMemo(
-    () =>
-      getCartDiscount(totalPrice, PAYMENT_PAYTR, {
-        promotions: promos,
-        couponResult: couponApplied,
-      }),
-    [totalPrice, promos, couponApplied],
-  );
-  const shipping = useMemo(() => getFreeShippingStatus(discount.subtotal), [discount.subtotal]);
-
-  const minQtyCheck = useMemo(() => validateCartMinQty(items), [items]);
-  const orderTotal = useMemo(
-    () => getOrderPayableTotal(discount.grandTotal, shipping),
-    [discount.grandTotal, shipping],
-  );
+  const checkoutTotals = useCheckoutTotals({
+    items,
+    promotions: promos,
+    couponResult: couponApplied,
+  });
+  const { discount, shipping, finalTotal: orderTotal, minQtyCheck } = checkoutTotals;
 
   const checkoutTracked = useRef(false);
   const formViewTracked = useRef(false);
@@ -147,7 +137,7 @@ export default function CartPage() {
       const result = await validateCouponRemote({
         code,
         email: customer.email.trim(),
-        subtotal: totalPrice,
+        subtotal: getCartSubtotal(items),
       });
       setCouponApplied({
         ok: true,
@@ -230,12 +220,14 @@ export default function CartPage() {
 
     setSubmitting(true);
     try {
-      const result = await startPaytrPayment({
-        siteName: settings.siteName || 'Nasyonel Toys',
-        siteUrl: getSiteUrl(settings),
-        siteLogoUrl: settings.logoUrl,
-        pdfSettings: settings.pdfSettings,
-        notifyEmail: settings.contactEmail,
+      const paymentPayload = buildPaytrPaymentPayload({
+        settings: {
+          siteName: settings.siteName || 'Nasyonel Toys',
+          siteUrl: getSiteUrl(settings),
+          siteLogoUrl: settings.logoUrl,
+          pdfSettings: settings.pdfSettings,
+          contactEmail: settings.contactEmail,
+        },
         customer: {
           name: customer.name.trim(),
           phone: customer.phone.trim(),
@@ -244,12 +236,12 @@ export default function CartPage() {
           city: customer.city.trim(),
           district: customer.district.trim(),
         },
-        items: mapItemsForOrder(items),
-        discount,
-        shipping,
-        orderTotal,
+        items,
+        checkoutTotals,
         couponCode: discount.couponCode || undefined,
       });
+
+      const result = await startPaytrPayment(paymentPayload);
       saveCheckoutCustomer(customer);
       trackFormSubmit(items, { success: true });
       persistPurchaseAnalytics(result.orderId, {

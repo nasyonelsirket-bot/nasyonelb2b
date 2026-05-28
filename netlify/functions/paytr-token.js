@@ -15,6 +15,7 @@ const {
   mintPaytrMerchantOid,
   siteBaseUrl,
 } = require('../../lib/paytrHelpers.cjs');
+const { validateOrderItemsMinQty } = require('../../lib/minOrderQty.cjs');
 
 const HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -22,7 +23,45 @@ const HEADERS = {
   'Content-Type': 'application/json',
 };
 
+const BEDAVA_TOKENS = new Set(['bedava', 'ücretsiz', 'free', 'ucretsiz']);
+
+function toPaymentNumber(value, fallback = 0) {
+  if (value == null || value === '') return fallback;
+  if (typeof value === 'string') {
+    const t = value.trim();
+    if (!t || BEDAVA_TOKENS.has(t.toLocaleLowerCase('tr'))) return fallback;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeShippingFromBody(shipping) {
+  if (!shipping || typeof shipping !== 'object') {
+    return { shippingFee: 0, eligible: false };
+  }
+  return {
+    shippingFee: Math.max(0, toPaymentNumber(shipping.shippingFee, 0)),
+    eligible: Boolean(shipping.eligible),
+    subtotal: toPaymentNumber(shipping.subtotal, 0),
+  };
+}
+
+function jsonError(statusCode, message, detail) {
+  const body = { error: message };
+  if (detail) body.detail = String(detail);
+  return { statusCode, headers: HEADERS, body: JSON.stringify(body) };
+}
+
 exports.handler = async (event) => {
+  try {
+    return await handlePaytrToken(event);
+  } catch (err) {
+    console.error('[paytr-token] unhandled:', err?.stack || err);
+    return jsonError(500, err?.message || 'Ödeme başlatılamadı', err?.stack);
+  }
+};
+
+async function handlePaytrToken(event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: HEADERS, body: '' };
   }
@@ -87,8 +126,13 @@ exports.handler = async (event) => {
     (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
     0,
   );
-  const clientSubtotal = Number(body.discount?.subtotal);
-  const subtotal = clientSubtotal > 0 ? clientSubtotal : itemsSubtotal;
+  const clientSubtotal = toPaymentNumber(body.discount?.subtotal, 0);
+  const subtotal =
+    itemsSubtotal > 0 ? Math.round(itemsSubtotal * 100) / 100 : clientSubtotal;
+
+  if (!Number.isFinite(subtotal) || subtotal <= 0) {
+    return jsonError(400, 'Geçersiz ara toplam');
+  }
 
   let couponResult = null;
   const couponCode = String(body.couponCode || body.discount?.couponCode || '').trim();
@@ -119,11 +163,16 @@ exports.handler = async (event) => {
     promotions: promosForTotals,
   });
 
-  const payableShipping = 0;
+  const shippingNormalized = normalizeShippingFromBody(body.shipping);
+  const payableShipping = shippingNormalized.shippingFee;
   const orderTotal = Math.round((serverTotals.grandTotal + payableShipping) * 100) / 100;
 
-  if (!Number.isFinite(orderTotal) || orderTotal <= 0) {
-    return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Geçersiz tutar' }) };
+  if (!Number.isFinite(orderTotal) || Number.isNaN(orderTotal) || orderTotal <= 0) {
+    return jsonError(
+      400,
+      'Geçersiz tutar',
+      `grandTotal=${serverTotals.grandTotal} shipping=${payableShipping}`,
+    );
   }
 
   const base = siteBaseUrl(event);
@@ -171,7 +220,7 @@ exports.handler = async (event) => {
     items,
     discount,
     couponCode: serverTotals.couponCode || null,
-    shipping: body.shipping || null,
+    shipping: shippingNormalized,
     paymentMethod,
     orderTotal,
     notifyEmail: body.notifyEmail || process.env.ORDER_NOTIFY_EMAIL || '',
@@ -236,10 +285,6 @@ exports.handler = async (event) => {
     };
   } catch (err) {
     console.error('[paytr-token] error:', err?.stack || err);
-    return {
-      statusCode: 500,
-      headers: HEADERS,
-      body: JSON.stringify({ error: err.message || 'Ödeme başlatılamadı' }),
-    };
+    return jsonError(500, err?.message || 'Ödeme başlatılamadı', err?.stack);
   }
-};
+}
