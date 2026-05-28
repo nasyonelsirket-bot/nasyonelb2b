@@ -3,57 +3,36 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '@/context/StoreContext';
 import { PRODUCTS_SECTION_PATH } from '@/constants/siteLinks';
-import { optimizeBannerImage } from '@/utils/imageOptimize';
+import { resolveBannersForSlot } from '@/utils/bannerCatalog';
+import { bannerImageUrl } from '@/utils/bannerImage';
 
 const AUTO_MS = 6500;
 const SWIPE_THRESHOLD = 48;
 
-function preloadHeroImage(src) {
-  if (!src || typeof document === 'undefined') return undefined;
-  const href = optimizeBannerImage(src);
-  const existing = document.querySelector(`link[data-hero-preload="${href}"]`);
-  if (existing) return undefined;
-
-  const link = document.createElement('link');
-  link.rel = 'preload';
-  link.as = 'image';
-  link.href = href;
-  link.setAttribute('data-hero-preload', href);
-  document.head.appendChild(link);
-
-  return () => {
-    link.remove();
-  };
-}
-
 /**
- * @param {{ bannerIds?: string[] }} props
- * bannerIds doluysa yalnızca seçilen görseller; boşsa tüm aktif bannerlar
+ * @param {{ sectionId: string, bannerIds?: string[], revision?: number }} props
+ * bannerIds — veritabanı/yerleşim sırası; boşsa alan gösterilmez
  */
-export default function HeroBanner({ bannerIds }) {
-  const { banners } = useStore();
-  const allActive = useMemo(
-    () => (Array.isArray(banners) ? banners : []).filter((b) => b.active !== false && b.image),
-    [banners],
+export default function HeroBanner({ sectionId, bannerIds, revision = 0 }) {
+  const { banners, bannerRevision } = useStore();
+  const globalRevision = revision || bannerRevision;
+
+  const active = useMemo(
+    () => resolveBannersForSlot(banners, bannerIds),
+    [banners, bannerIds],
   );
 
-  const active = useMemo(() => {
-    const ids = Array.isArray(bannerIds) ? bannerIds.filter(Boolean) : [];
-    if (!ids.length) return allActive;
-    const byId = new Map(allActive.map((b) => [b.id, b]));
-    const picked = ids.map((id) => byId.get(id)).filter(Boolean);
-    // Ayarlardaki ID'ler henüz yüklenmemiş banner'larla eşleşmezse tüm aktif bannerları göster
-    return picked.length ? picked : allActive;
-  }, [allActive, bannerIds]);
+  const carouselKey = `${sectionId}-${(bannerIds || []).join(',')}-${globalRevision}`;
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [loaded, setLoaded] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const touchStart = useRef(null);
 
   const count = active.length;
   const current = active[index];
-  const currentSrc = current?.image ? optimizeBannerImage(current.image) : '';
+  const bustToken = current?.updatedAt || globalRevision;
+  const currentSrc = current?.image ? bannerImageUrl(current.image, bustToken) : '';
 
   const go = useCallback(
     (delta) => {
@@ -65,19 +44,29 @@ export default function HeroBanner({ bannerIds }) {
   );
 
   useEffect(() => {
+    setIndex(0);
+    setLoaded(false);
+  }, [carouselKey]);
+
+  useEffect(() => {
     setIndex((i) => (count ? Math.min(i, count - 1) : 0));
   }, [count]);
 
   useEffect(() => {
-    if (!active[0]?.image) return undefined;
-    return preloadHeroImage(active[0].image);
-  }, [active]);
-
-  useEffect(() => {
-    if (!currentSrc || typeof window === 'undefined') return;
+    if (!currentSrc || typeof window === 'undefined') return undefined;
     const img = new window.Image();
     img.src = currentSrc;
-    if (img.complete) setLoaded(true);
+    if (img.complete) {
+      setLoaded(true);
+      return undefined;
+    }
+    const onLoad = () => setLoaded(true);
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onLoad);
+    return () => {
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onLoad);
+    };
   }, [currentSrc]);
 
   useEffect(() => {
@@ -116,6 +105,7 @@ export default function HeroBanner({ bannerIds }) {
 
   return (
     <section
+      key={carouselKey}
       className="hero-carousel relative mx-2 mt-3 sm:mx-6 sm:mt-6 lg:mx-auto lg:max-w-7xl lg:px-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -147,6 +137,7 @@ export default function HeroBanner({ bannerIds }) {
                 />
               )}
               <img
+                key={currentSrc}
                 src={currentSrc}
                 alt={current.title?.trim() || 'Kampanya bannerı'}
                 className={`hero-banner-img absolute inset-0 w-full h-full object-contain object-center transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}

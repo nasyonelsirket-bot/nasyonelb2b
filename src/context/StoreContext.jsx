@@ -25,6 +25,13 @@ import {
 import { migrateProductsSeo, normalizeProductSeoFields } from '@/utils/productSeo';
 import { migrateProductsReviews } from '@/utils/productReviews';
 import { migrateLegacyProductPrices } from '@/utils/legacyPriceMigration';
+import { pruneBannerIdFromLayout } from '@/utils/bannerCatalog';
+import {
+  clearBannerCaches,
+  loadBannersFromStorage,
+  logBannerState,
+  persistBannersToStorage,
+} from '@/utils/bannerStorage';
 
 function migrateCatalog(products) {
   const seo = migrateProductsSeo(products);
@@ -55,8 +62,8 @@ function persistPublishedCatalog(remote) {
   if (!remote?.products?.length) return;
   saveToStorage(KEYS.PRODUCTS, remote.products);
   if (Array.isArray(remote.categories)) saveToStorage(KEYS.CATEGORIES, remote.categories);
-  if (Array.isArray(remote.banners) && remote.banners.length) {
-    saveToStorage(KEYS.BANNERS, remote.banners);
+  if (Array.isArray(remote.banners)) {
+    persistBannersToStorage(remote.banners);
   }
 }
 
@@ -65,13 +72,13 @@ function hydrateInitialCatalog(migration) {
   const cachedProducts = loadProductsCache();
   if (meta?.updatedAt && cachedProducts.length) {
     const cachedCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
-    const cachedBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+    const cachedBanners = loadBannersFromStorage();
     return {
       products: migrateCatalog(cachedProducts),
       categories: refreshCategoryIcons(
         cachedCategories.length ? cachedCategories : buildCategoriesFromProducts(cachedProducts),
       ),
-      banners: cachedBanners.length ? cachedBanners : DEMO_BANNERS,
+      banners: cachedBanners,
       source: 'cache',
       updatedAt: meta.updatedAt,
     };
@@ -81,13 +88,13 @@ function hydrateInitialCatalog(migration) {
     const localProducts = loadArrayFromStorage(KEYS.PRODUCTS, []);
     if (localProducts.length) {
       const localCategories = loadArrayFromStorage(KEYS.CATEGORIES, []);
-      const localBanners = loadArrayFromStorage(KEYS.BANNERS, []);
+      const localBanners = loadBannersFromStorage();
       return {
         products: migrateCatalog(localProducts),
         categories: refreshCategoryIcons(
           localCategories.length ? localCategories : buildCategoriesFromProducts(localProducts),
         ),
-        banners: localBanners.length ? localBanners : DEMO_BANNERS,
+        banners: localBanners,
         source: 'local',
         updatedAt: null,
       };
@@ -99,7 +106,7 @@ function hydrateInitialCatalog(migration) {
     categories: refreshCategoryIcons(
       migration?.categories?.length ? migration.categories : DEMO_CATEGORIES,
     ),
-    banners: DEMO_BANNERS,
+    banners: [...DEMO_BANNERS],
     source: 'local',
     updatedAt: null,
   };
@@ -119,6 +126,7 @@ export function StoreProvider({ children }) {
   const [catalogUpdatedAt, setCatalogUpdatedAt] = useState(initialCatalog.updatedAt);
 
   const [publishing, setPublishing] = useState(false);
+  const [bannerRevision, setBannerRevision] = useState(() => Date.now());
 
   const applyRemoteCatalog = useCallback((remote) => {
     if (!remote?.products?.length) return false;
@@ -152,8 +160,9 @@ export function StoreProvider({ children }) {
         cachedCategories.length ? cachedCategories : buildCategoriesFromProducts(cachedProducts),
       ),
     );
-    const cachedBanners = loadArrayFromStorage(KEYS.BANNERS, []);
-    if (cachedBanners.length) setBanners(cachedBanners);
+    const cachedBanners = loadBannersFromStorage();
+    setBanners(cachedBanners);
+    setBannerRevision(Date.now());
     setCatalogSource('cache');
     setCatalogUpdatedAt(meta.updatedAt);
     return true;
@@ -170,8 +179,9 @@ export function StoreProvider({ children }) {
         localCategories.length ? localCategories : buildCategoriesFromProducts(localProducts),
       ),
     );
-    const localBanners = loadArrayFromStorage(KEYS.BANNERS, []);
-    if (localBanners.length) setBanners(localBanners);
+    const localBanners = loadBannersFromStorage();
+    setBanners(localBanners);
+    setBannerRevision(Date.now());
     setCatalogSource('local');
     return true;
   }, []);
@@ -185,7 +195,8 @@ export function StoreProvider({ children }) {
       if (applyLocalAdminCatalog()) return;
       setProducts(migrateCatalog(DEMO_PRODUCTS));
       setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
-      setBanners(DEMO_BANNERS);
+      setBanners([...DEMO_BANNERS]);
+      setBannerRevision(Date.now());
       setCatalogSource('local');
     } catch (err) {
       console.error('Katalog yüklenemedi:', err);
@@ -234,7 +245,7 @@ export function StoreProvider({ children }) {
   }, [categories, catalogReady]);
   useEffect(() => {
     if (!catalogReady || !isAdminSession()) return;
-    saveToStorage(KEYS.BANNERS, banners);
+    persistBannersToStorage(banners);
   }, [banners, catalogReady]);
   useEffect(() => {
     saveToStorage(KEYS.SETTINGS, settings);
@@ -337,21 +348,65 @@ export function StoreProvider({ children }) {
     setCategories(refreshCategoryIcons(syncedCategories, { force: true }));
   }, []);
 
-  const addBanner = useCallback((banner) => {
-    setBanners((prev) => [...prev, { ...banner, id: banner.id || `banner-${Date.now()}` }]);
+  const bumpBannerRevision = useCallback(() => {
+    setBannerRevision(Date.now());
   }, []);
+
+  const addBanner = useCallback((banner) => {
+    const next = {
+      ...banner,
+      id: banner.id || `bnr-${Date.now()}`,
+      updatedAt: Date.now(),
+      active: banner.active !== false,
+    };
+    setBanners((prev) => {
+      const list = [...prev, next];
+      persistBannersToStorage(list);
+      logBannerState('add', list, settings);
+      return list;
+    });
+    bumpBannerRevision();
+  }, [settings, bumpBannerRevision]);
 
   const updateBanner = useCallback((id, updates) => {
-    setBanners((prev) => prev.map((b) => (b.id === id ? { ...b, ...updates } : b)));
-  }, []);
+    setBanners((prev) => {
+      const list = prev.map((b) =>
+        b.id === id ? { ...b, ...updates, updatedAt: Date.now() } : b,
+      );
+      persistBannersToStorage(list);
+      logBannerState('update', list, settings);
+      return list;
+    });
+    bumpBannerRevision();
+  }, [settings, bumpBannerRevision]);
 
   const deleteBanner = useCallback((id) => {
-    setBanners((prev) => prev.filter((b) => b.id !== id));
-  }, []);
+    if (!id) return;
+    let nextSettings = settings;
+    setSettings((prev) => {
+      const layoutPatch = pruneBannerIdFromLayout(prev, id);
+      nextSettings = layoutPatch ? { ...prev, ...layoutPatch } : prev;
+      return nextSettings;
+    });
+    setBanners((prev) => {
+      const list = prev.filter((b) => b.id !== id);
+      clearBannerCaches(list);
+      logBannerState('delete', list, nextSettings);
+      return list;
+    });
+    bumpBannerRevision();
+  }, [settings, bumpBannerRevision]);
 
   const updateSettings = useCallback((updates) => {
-    setSettings((prev) => ({ ...prev, ...updates }));
-  }, []);
+    setSettings((prev) => {
+      const next = { ...prev, ...updates };
+      if (updates.homepageLayout) {
+        bumpBannerRevision();
+        logBannerState('layout', banners, next);
+      }
+      return next;
+    });
+  }, [banners, bumpBannerRevision]);
 
   const getProductById = useCallback(
     (id) => (Array.isArray(products) ? products : []).find((p) => p.id === id),
@@ -376,7 +431,9 @@ export function StoreProvider({ children }) {
   const resetToDemo = useCallback(() => {
     setProducts(migrateCatalog(DEMO_PRODUCTS));
     setCategories(refreshCategoryIcons(DEMO_CATEGORIES));
-    setBanners(DEMO_BANNERS);
+    setBanners([...DEMO_BANNERS]);
+    clearBannerCaches([]);
+    setBannerRevision(Date.now());
     setSettings({ ...DEFAULT_SETTINGS, pdfSettings: mergePdfSettings(DEFAULT_SETTINGS.pdfSettings) });
     setCatalogSource('local');
     try {
@@ -404,6 +461,9 @@ export function StoreProvider({ children }) {
         const updatedAt = result.updatedAt || new Date().toISOString();
         setCatalogSource('server');
         setCatalogUpdatedAt(updatedAt);
+        persistBannersToStorage(Array.isArray(banners) ? banners : []);
+        setBannerRevision(Date.now());
+        logBannerState('publish', banners, settings);
         saveCatalogMeta({
           updatedAt,
           productCount: list.length,
@@ -425,7 +485,9 @@ export function StoreProvider({ children }) {
       products,
       categories: sortedCategories,
       banners,
+      bannerRevision,
       settings,
+      bumpBannerRevision,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -460,7 +522,9 @@ export function StoreProvider({ children }) {
       categories,
       sortedCategories,
       banners,
+      bannerRevision,
       settings,
+      bumpBannerRevision,
       catalogReady,
       catalogLoadError,
       catalogSource,

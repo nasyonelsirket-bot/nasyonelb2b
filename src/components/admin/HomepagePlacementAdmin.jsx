@@ -172,7 +172,8 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
       homepageLayout: payload,
       homepageSlots: layoutToHomepageSlots({ sections: payload.sections }),
     });
-    showMsg('Ana sayfa düzeni kaydedildi. Müşteriler görsün diye «Siteye Yayınla» yapın.');
+    store.bumpBannerRevision?.();
+    showMsg('Ana sayfa düzeni kaydedildi — önizleme güncellendi. Müşteriler için «Siteye Yayınla» yapın.');
   };
 
   const addProduct = (productId) => {
@@ -406,8 +407,8 @@ export default function HomepagePlacementAdmin({ store, showMsg }) {
 
       {isBanner && (
         <p className="text-xs text-gray-500 bg-orange-50 border border-orange-100 rounded-lg px-3 py-2">
-          Admin → Bannerlar sekmesinden yüklediğiniz görselleri bu alana atayın. Hiç seçmezseniz tüm
-          aktif bannerlar gösterilir.
+          Admin → Bannerlar sekmesinden yüklediğiniz görselleri bu alana sırayla atayın. Seçim
+          yapmazsanız bu alan ana sayfada görünmez.
         </p>
       )}
       {sectionMeta && !isBanner && (

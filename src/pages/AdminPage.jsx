@@ -14,6 +14,7 @@ import ImageDropzone from '@/components/admin/ImageDropzone';
 import EmojiPicker from '@/components/admin/EmojiPicker';
 import { suggestEmojiForName } from '@/data/categoryEmojis';
 import { processImageFile } from '@/utils/imageUpload';
+import { bannerImageUrl } from '@/utils/bannerImage';
 import { useStore } from '@/context/StoreContext';
 import { parseExcelFile } from '@/utils/excel';
 import { syncAllTrendyolProducts } from '@/services/trendyol';
@@ -435,7 +436,18 @@ function CategoryAdmin({ store, setMsg }) {
 
 function BannerAdmin({ store, setMsg }) {
   const banners = Array.isArray(store.banners) ? store.banners : [];
+  const revision = store.bannerRevision || Date.now();
   const [b, setB] = useState({ title: '', subtitle: '', image: '', link: '', active: true });
+
+  const handleDelete = (banner) => {
+    if (!banner?.id) return;
+    if (!window.confirm('Bu banner silinsin mi?')) return;
+    startTransition(() => {
+      store.deleteBanner(banner.id);
+      setMsg('Banner silindi — ana sayfa önizlemesi güncellendi');
+    });
+  };
+
   const add = () => {
     if (!b.image?.trim()) {
       setMsg('Banner için görsel yükleyin');
@@ -477,21 +489,30 @@ function BannerAdmin({ store, setMsg }) {
       <Button variant="primary" onClick={add} disabled={!b.image?.trim()}>
         Banner Ekle
       </Button>
-      <ul className="space-y-3 mt-4">
-        {banners.map((banner) => (
-          <li key={banner.id} className="flex gap-3 items-center border-b border-brand-50 py-3">
-            {banner.image && (
-              <img src={banner.image} alt="" className="h-14 w-28 rounded object-contain bg-brand-950 shrink-0" />
-            )}
-            <span className="flex-1 text-sm font-medium truncate">
-              {banner.title?.trim() || 'Başlıksız banner'}
-              {banner.link ? ` · ${banner.link}` : ''}
-            </span>
-            <button type="button" onClick={() => store.deleteBanner(banner.id)} className="text-red-600 shrink-0">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </li>
-        ))}
+      <ul className="space-y-3 mt-4" key={`banner-list-${revision}`}>
+        {banners.length === 0 ? (
+          <li className="text-sm text-gray-500 py-4">Aktif banner yok. Yukarıdan görsel yükleyin.</li>
+        ) : (
+          banners.map((banner, index) => (
+            <li key={`${banner.id}-${banner.updatedAt || revision}`} className="flex gap-3 items-center border-b border-brand-50 py-3">
+              {banner.image && (
+                <img
+                  src={bannerImageUrl(banner.image, banner.updatedAt || revision)}
+                  alt=""
+                  className="h-14 w-28 rounded object-contain bg-brand-950 shrink-0"
+                />
+              )}
+              <span className="flex-1 text-sm font-medium truncate">
+                <span className="text-gray-400 mr-1">#{index + 1}</span>
+                {banner.title?.trim() || 'Başlıksız banner'}
+                {banner.link ? ` · ${banner.link}` : ''}
+              </span>
+              <button type="button" onClick={() => handleDelete(banner)} className="text-red-600 shrink-0">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </li>
+          ))
+        )}
       </ul>
     </div>
   );

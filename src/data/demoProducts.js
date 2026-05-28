@@ -9,24 +9,8 @@ export const DEMO_CATEGORIES = [
   { id: 'cat-6', name: 'Parti & Kutlama', slug: 'parti-kutlama', icon: '🎉' },
 ];
 
-export const DEMO_BANNERS = [
-  {
-    id: 'banner-1',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1558060379-ef192627cc42?w=1600&q=85',
-    link: '/#urunler',
-    active: true,
-  },
-  {
-    id: 'banner-2',
-    title: '',
-    subtitle: '',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1600&q=85',
-    link: '/#urunler',
-    active: true,
-  },
-];
+/** Varsayılan boş — hardcoded hero görselleri yok */
+export const DEMO_BANNERS = [];
 
 export const DEMO_PRODUCTS = [
   {

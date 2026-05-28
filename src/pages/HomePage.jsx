@@ -38,7 +38,7 @@ function defaultBestsellerSubtitle(layout, catalog) {
 }
 
 export default function HomePage() {
-  const { products, settings } = useStore();
+  const { products, settings, bannerRevision } = useStore();
   const homepageLayout = useMemo(() => normalizeHomepageLayout(settings), [settings]);
   const [params] = useSearchParams();
   const { hash } = useLocation();
@@ -139,9 +139,14 @@ export default function HomePage() {
   const renderBanner = (sectionId) => {
     const cfg = homepageLayout.sections[sectionId];
     if (!cfg || cfg.enabled === false) return null;
+    const ids = cfg.bannerIds || [];
     return (
-      <div key={sectionId} id={sectionId} className="scroll-mt-32">
-        <HeroBanner bannerIds={cfg.bannerIds} />
+      <div key={`${sectionId}-${ids.join(',')}-${bannerRevision}`} id={sectionId} className="scroll-mt-32">
+        <HeroBanner
+          sectionId={sectionId}
+          bannerIds={ids}
+          revision={bannerRevision}
+        />
       </div>
     );
   };
