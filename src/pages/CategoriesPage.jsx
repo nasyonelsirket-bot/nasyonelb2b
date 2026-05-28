@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useStore } from '@/context/StoreContext';
 import SEO from '@/components/seo/SEO';
 import ProductGrid from '@/components/home/ProductGrid';
 import EmptyCategoryFallback from '@/components/category/EmptyCategoryFallback';
-import { useStore } from '@/context/StoreContext';
+import { MAIN_CATEGORIES } from '@/data/mainCategories';
+import CategoryInternalLinks from '@/components/category/CategoryInternalLinks';
 import { getCategorySearchScore } from '@/data/categorySearchRank';
 import { getBestSellerProducts } from '@/utils/productBestseller';
 
@@ -67,13 +69,22 @@ export default function CategoriesPage() {
   return (
     <>
       <SEO
-        title={hepsi ? 'Tüm Ürünler' : 'Kategoriler'}
+        title={hepsi ? 'Tüm Ürünler' : cat ? `${cat} Oyuncakları` : 'Oyuncak Kategorileri'}
+        metaTitle={
+          hepsi
+            ? 'Tüm Oyuncak Ürünleri | Nasyonel Toys'
+            : cat
+              ? `${cat} | Nasyonel Toys Kataloğu`
+              : 'Oyuncak Kategorileri | Eğitici ve Çocuk Oyuncakları'
+        }
         description={
           hepsi
-            ? 'Nasyonel Toys tüm ürünler — eğitici oyuncaklar, güvenli ödeme ve hızlı kargo.'
-            : 'Nasyonel Toys oyuncak kategorileri ve ürün fiyatları'
+            ? 'Nasyonel Toys tüm ürünler — eğitici oyuncaklar, peluş, zeka oyunları. Güvenli ödeme, hızlı kargo.'
+            : cat
+              ? `${cat} kategorisinde uygun fiyatlı oyuncaklar. Hızlı kargo ve güvenli alışveriş.`
+              : 'Eğitici oyuncak, peluş, zeka oyunları, bebek oyuncakları ve kutu oyunları. Kategorilere göre filtreleyin.'
         }
-        path={hepsi ? '/kategoriler?hepsi=1' : '/kategoriler'}
+        path={hepsi ? '/kategoriler?hepsi=1' : cat ? `/kategoriler?cat=${encodeURIComponent(cat)}` : '/kategoriler'}
       />
       <div className="bg-brand-900 text-white py-8 sm:py-10">
         <div className="mx-auto max-w-7xl px-4">
@@ -92,6 +103,15 @@ export default function CategoriesPage() {
             >
               Tümü
             </Link>
+            {MAIN_CATEGORIES.map((mc) => (
+              <Link
+                key={mc.slug}
+                to={`/${mc.slug}`}
+                className="rounded-full px-3 py-1.5 text-sm font-medium bg-brand-800 text-white hover:bg-brand-700"
+              >
+                {mc.icon} {mc.name}
+              </Link>
+            ))}
             <Link
               to="/kategoriler?hepsi=1"
               className={`rounded-full px-4 py-1.5 text-sm font-medium ${hepsi ? 'bg-accent-gold text-brand-950' : 'bg-brand-800 text-white hover:bg-brand-700'}`}
@@ -185,6 +205,7 @@ export default function CategoriesPage() {
               suggestions={suggestions}
             />
           )}
+          <CategoryInternalLinks />
         </div>
       )}
     </>

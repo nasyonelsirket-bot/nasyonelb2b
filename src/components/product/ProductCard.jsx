@@ -10,6 +10,7 @@ import KdvNotice from '@/components/ui/KdvNotice';
 import { getPrimaryImage } from '@/utils/productImage';
 import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
 import { getProductLink } from '@/utils/productSeo';
+import { getProductImageAlt } from '@/utils/productSeoContent';
 import ProductRatingStars from '@/components/product/ProductRatingStars';
 import { getProductRatingSummary } from '@/utils/productReviews';
 import { getProductCardBadges } from '@/utils/productCardBadges';
@@ -53,7 +54,7 @@ function ProductCard({ product }) {
         )}
         <ProductImage
           src={getPrimaryImage(product)}
-          alt={product.name}
+          alt={getProductImageAlt(product)}
           variant="card"
           className="rounded-t-lg sm:rounded-t-2xl"
           imgClassName="product-card-img"

@@ -36,7 +36,8 @@ export default function BestSellersPage() {
     <>
       <SEO
         title={title}
-        description="Trendyol satış verilerine göre en çok tercih edilen oyuncaklar."
+        metaTitle={`${title} | Çocuk Oyuncakları — Nasyonel Toys`}
+        description="En çok satan eğitici oyuncaklar, peluş ve zeka oyuncakları. Güvenli ödeme, hızlı kargo ve ücretsiz kargo fırsatıyla Nasyonel Toys'ta."
         path="/en-cok-satanlar"
       />
       <div className="bg-white min-h-[50vh]">

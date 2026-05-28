@@ -47,6 +47,10 @@ export default function ProductSchema({ product }) {
     description: getProductMetaDescription(product, settings),
     image: product.image,
     url: productUrl,
+    brand: {
+      '@type': 'Brand',
+      name: siteName,
+    },
     offers,
   };
 

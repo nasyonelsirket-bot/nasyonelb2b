@@ -13,6 +13,8 @@ export const MAIN_CATEGORIES = [
       'Çocukların en sevdiği yumuşak peluş oyuncaklar; güvenli malzemeler ve geniş model seçeneği.',
     seoFooter:
       'Peluş oyuncak kategorisinde Nasyonel Toys güvenilir alışveriş ve uygun fiyat sunar. Türkiye geneli hızlı kargo.',
+    seoBody:
+      'Yumuşak peluş oyuncaklar, bebek ve çocuklar için duygusal güven ve hayal gücü oyunlarını destekler. Sevimli karakter peluşları, hayvan figürleri ve hediye setleri bu kategoride yer alır. Güvenli malzeme ve hijyenik üretim önceliğimizdir.',
     keywords: ['peluş', 'pelus', 'yumuşak', 'bebek figür', 'bebek & figür', 'oyuncak bebek'],
   },
   {
@@ -27,6 +29,8 @@ export const MAIN_CATEGORIES = [
       'Motor beceri, yaratıcılık ve öğrenmeyi destekleyen eğitici oyuncak koleksiyonu.',
     seoFooter:
       'Eğitici oyuncaklar ile çocukların öğrenme yolculuğuna Nasyonel Toys ile güvenle eşlik edin.',
+    seoBody:
+      'Montessori oyuncak, ahşap eğitici set, STEM kitleri ve öğrenme oyunları bu kategoride bir arada. Eğitici oyuncak seçerken yaşa uygunluk ve güvenlik sertifikalarına dikkat edin. Çocuk gelişim oyuncağı arayan aileler için geniş ürün yelpazesi sunuyoruz.',
     keywords: ['eğitici', 'egitici', 'montessori', 'öğrenme', 'stem', 'ahşap', 'bulmaca'],
   },
   {
@@ -39,6 +43,8 @@ export const MAIN_CATEGORIES = [
       'Aile ve arkadaş grupları için kutu oyunları. Strateji, eğlence ve sosyal beceri geliştiren oyunlar.',
     intro: 'Her yaş için eğlenceli kutu oyunları ve masa oyunları.',
     seoFooter: 'Kutu oyunları kategorisinde en popüler seçenekler Nasyonel Toys’ta.',
+    seoBody:
+      'Aile oyunları, strateji oyunları ve parti oyunları çocukların sosyal becerilerini güçlendirir. Kutu oyunu seçerken yaş aralığı ve oyun süresine göre filtreleme yapabilirsiniz.',
     keywords: ['kutu oyun', 'masa oyun', 'board', 'strateji oyun'],
   },
   {
@@ -51,6 +57,8 @@ export const MAIN_CATEGORIES = [
       'Puzzle, yapboz ve zeka geliştiren oyuncaklar. Dikkat ve problem çözme becerilerini destekler.',
     intro: 'Zeka ve dikkat geliştiren puzzle, yapboz ve mantık oyunları.',
     seoFooter: 'Zeka oyuncakları ile eğlenceli öğrenme deneyimi sunuyoruz.',
+    seoBody:
+      'Puzzle, yapboz, mantık oyunları ve zeka geliştirici oyuncaklar dikkat ve problem çözme becerilerini destekler. Zeka oyuncakları okul öncesi ve ilkokul döneminde en çok tercih edilen kategorilerdendir.',
     keywords: ['zeka', 'puzzle', 'yapboz', 'bulmaca', 'mantık'],
   },
   {
@@ -63,6 +71,8 @@ export const MAIN_CATEGORIES = [
       'Bebekler için güvenli, yumuşak ve gelişim odaklı oyuncaklar. 0–3 yaş uygun ürünler.',
     intro: 'Bebeklerin güvenle oynayabileceği, yaşa uygun oyuncak seçenekleri.',
     seoFooter: 'Bebek oyuncaklarında güvenlik ve kalite önceliğimizdir.',
+    seoBody:
+      '0–3 yaş bebek oyuncakları yumuşak, güvenli ve duyusal uyaran sunan ürünlerden oluşur. Bebek oyuncakları seçerinde CE uyumluluğu ve yutulabilir parça içermemesi kritik öneme sahiptir.',
     keywords: ['bebek', '0-3', 'emzik', 'cıngırak', 'aktivite', 'bebek oyuncak'],
   },
   {
@@ -75,6 +85,8 @@ export const MAIN_CATEGORIES = [
       'Deniz, havuz ve açık hava oyuncakları. Yaz tatili için eğlenceli outdoor ürünler.',
     intro: 'Yaz ayları için deniz, kum ve açık hava oyuncakları.',
     seoFooter: 'Yazlık oyuncaklar ile outdoor eğlence Nasyonel Toys’ta.',
+    seoBody:
+      'Deniz, havuz, kum ve bahçe oyuncakları yaz tatilinde çocukların aktif kalmasını sağlar. Yazlık oyuncak kategorisinde su tabancası, plaj setleri ve spor oyuncakları bulunur.',
     keywords: ['yaz', 'deniz', 'havuz', 'kum', 'outdoor', 'açık hava', 'su tabancası'],
   },
 ];

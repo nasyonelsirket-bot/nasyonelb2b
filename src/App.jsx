@@ -34,7 +34,8 @@ const LegalPage = lazyWithRetry(() => import('@/pages/LegalPage'));
 const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
 const RegisterPage = lazyWithRetry(() => import('@/pages/RegisterPage'));
 const OrderTrackPage = lazyWithRetry(() => import('@/pages/OrderTrackPage'));
-const FaqPage = lazyWithRetry(() => import('@/pages/FaqPage'));
+const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
+const BlogPostPage = lazyWithRetry(() => import('@/pages/BlogPostPage'));
 const AccountOverviewPage = lazyWithRetry(() => import('@/pages/account/AccountOverviewPage'));
 const AccountOrdersPage = lazyWithRetry(() => import('@/pages/account/AccountOrdersPage'));
 const AccountAddressesPage = lazyWithRetry(() => import('@/pages/account/AccountAddressesPage'));
@@ -90,6 +91,8 @@ export default function App() {
                 <Route path="kayit" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
                 <Route path="siparis-takip" element={<Suspense fallback={<PageLoader />}><OrderTrackPage /></Suspense>} />
                 <Route path="sss" element={<Suspense fallback={<PageLoader />}><FaqPage /></Suspense>} />
+                <Route path="blog" element={<Suspense fallback={<PageLoader />}><BlogIndexPage /></Suspense>} />
+                <Route path="blog/:slug" element={<Suspense fallback={<PageLoader />}><BlogPostPage /></Suspense>} />
                 <Route
                   path="hesabim"
                   element={

@@ -15,6 +15,10 @@ import { formatPrice } from '@/utils/whatsapp';
 import { getDiscountPercent, hasProductDiscount } from '@/utils/productPricing';
 import { getProductImages } from '@/utils/productImage';
 import ProductImage from '@/components/product/ProductImage';
+import { getProductImageAlt } from '@/utils/productSeoContent';
+import ProductConversionTrust from '@/components/product/ProductConversionTrust';
+import ProductSeoSections from '@/components/product/ProductSeoSections';
+import RelatedProductsStrip from '@/components/product/RelatedProductsStrip';
 import { trackViewItem } from '@/lib/analytics/ga4';
 import { trackMetaViewContent } from '@/lib/analytics/meta';
 import { getProductPath } from '@/utils/productSeo';
@@ -45,7 +49,7 @@ function AccordionSection({ title, children, defaultOpen = false }) {
 export default function ProductDetailPage() {
   const { id: idOrSlug } = useParams();
   const navigate = useNavigate();
-  const { getProductByIdOrSlug } = useStore();
+  const { getProductByIdOrSlug, products } = useStore();
   const { addToCart } = useCart();
   const product = getProductByIdOrSlug(idOrSlug);
   const [qty, setQty] = useState(1);
@@ -129,10 +133,11 @@ export default function ProductDetailPage() {
           <div className="space-y-3 min-w-0">
             <ProductImage
               src={activeImage}
-              alt={product.name}
+              alt={getProductImageAlt(product, imageIndex)}
               variant="detail"
               className="rounded-2xl border border-brand-100 shadow-card w-full"
               loading="eager"
+              fetchPriority="high"
             />
             {gallery.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 snap-x">
@@ -147,7 +152,13 @@ export default function ProductDetailPage() {
                         : 'border-brand-100 opacity-80 hover:opacity-100'
                     }`}
                   >
-                    <ProductImage src={url} alt="" variant="thumb" className="!w-16 !h-16" loading="lazy" />
+                    <ProductImage
+                      src={url}
+                      alt={getProductImageAlt(product, i)}
+                      variant="thumb"
+                      className="!w-16 !h-16"
+                      loading="lazy"
+                    />
                   </button>
                 ))}
               </div>
@@ -189,6 +200,8 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
+            <ProductConversionTrust className="mt-4" />
+
             <div className="mt-6 max-w-md lg:max-w-md">
               <QuantityControls
                 quantity={qty}
@@ -211,13 +224,11 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <div className="mt-8 space-y-3">
-              <AccordionSection title="Ürün Açıklaması" defaultOpen>
-                <p className="whitespace-pre-line">{product.description || 'Açıklama yakında eklenecek.'}</p>
-              </AccordionSection>
-              <AccordionSection title="Kargo & Teslimat">
+            <div className="mt-6 space-y-3">
+              <AccordionSection title="Kargo & Teslimat" defaultOpen>
                 <p>
-                  Stoktan hızlı hazırlık. {FREE_SHIPPING_THRESHOLD_TL} TL ve üzeri siparişlerde kargo bedava.
+                  Stoktaki siparişler genellikle aynı gün veya ertesi iş günü hazırlanır; çoğu sipariş 1–2 iş günü içinde kargoya verilir.
+                  {FREE_SHIPPING_THRESHOLD_TL} TL ve üzeri siparişlerde kargo bedava.
                   Teslimat süresi bölgeye göre 1–5 iş günü arasında değişebilir.
                 </p>
               </AccordionSection>
@@ -225,10 +236,13 @@ export default function ProductDetailPage() {
                 <PaymentTrustStrip compact />
               </AccordionSection>
             </div>
+
+            <ProductSeoSections product={product} />
           </div>
         </div>
 
         <ProductReviewsSection product={product} />
+        <RelatedProductsStrip product={product} allProducts={products} />
       </div>
 
       {/* Mobil — sabit Sepete Ekle (alt menünün üstünde) */}
@@ -240,7 +254,7 @@ export default function ProductDetailPage() {
           type="button"
           variant="yellow"
           size="lg"
-          className="w-full min-h-[48px] rounded-full text-base font-bold shadow-lg"
+          className="w-full min-h-[52px] rounded-full text-base font-bold shadow-lg"
           onClick={handleAdd}
           disabled={!inStock}
         >

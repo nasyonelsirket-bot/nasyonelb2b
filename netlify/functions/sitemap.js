@@ -5,6 +5,14 @@ const { getCatalogStore } = require('../../lib/catalogBlobStore.cjs');
 const { getProductPath } = require('../../lib/productSeoPath.cjs');
 const { CANONICAL_SITE_URL } = require('../../lib/canonicalSiteUrl.cjs');
 
+const BLOG_SLUGS = [
+  '3-yas-egitici-oyuncak-onerileri',
+  'cocuk-gelisimini-destekleyen-oyuncaklar',
+  'montessori-oyuncak-nedir',
+  'telefon-bagimliligini-azaltan-oyuncaklar',
+  'cocuklar-icin-en-faydali-oyuncaklar',
+];
+
 const HEADERS = {
   'Content-Type': 'application/xml; charset=utf-8',
   'Cache-Control': 'public, max-age=3600, s-maxage=3600',
@@ -20,6 +28,7 @@ const STATIC_PAGES = [
   { path: '/yazlik-oyuncaklar', changefreq: 'weekly', priority: '0.85' },
   { path: '/en-cok-satanlar', changefreq: 'daily', priority: '0.9' },
   { path: '/kategoriler', changefreq: 'weekly', priority: '0.9' },
+  { path: '/blog', changefreq: 'weekly', priority: '0.75' },
   { path: '/hakkimizda', changefreq: 'monthly', priority: '0.7' },
   { path: '/iletisim', changefreq: 'monthly', priority: '0.8' },
   { path: '/sss', changefreq: 'monthly', priority: '0.6' },
@@ -65,6 +74,10 @@ exports.handler = async (event) => {
       urlEntry(p.path, p.changefreq, p.priority, p.path === '/' ? updatedAt : null),
     );
 
+    const blogEntries = BLOG_SLUGS.map((slug) =>
+      urlEntry(`/blog/${slug}`, 'monthly', '0.7', null),
+    );
+
     const productEntries = (Array.isArray(products) ? products : [])
       .filter((p) => p && (p.id || p.slug) && p.name)
       .map((p) => urlEntry(getProductPath(p), 'weekly', '0.8', null));
@@ -72,6 +85,7 @@ exports.handler = async (event) => {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticEntries.join('\n')}
+${blogEntries.join('\n')}
 ${productEntries.join('\n')}
 </urlset>`;
 

@@ -12,7 +12,8 @@ export default function FaqPage() {
     <>
       <SEO
         title="Sıkça Sorulan Sorular"
-        description="Kargo, iade, PayTR güvenli ödeme ve sipariş takibi hakkında sıkça sorulan sorular."
+        metaTitle="SSS | Kargo, İade ve Güvenli Ödeme — Nasyonel Toys"
+        description="Kargo süresi, ücretsiz kargo, iade koşulları, PayTR güvenli ödeme ve sipariş takibi hakkında sıkça sorulan sorular."
         path="/sss"
       />
       <FaqSchema items={FAQ_ITEMS} />

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import CategorySchema from '@/components/seo/CategorySchema';
+import CategoryInternalLinks from '@/components/category/CategoryInternalLinks';
 import SEO from '@/components/seo/SEO';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
@@ -105,6 +107,7 @@ export default function CategoryLandingPage() {
         description={main.seoDescription}
         path={subFilter ? `${path}?alt=${encodeURIComponent(subFilter)}` : path}
       />
+      <CategorySchema category={main} products={filtered} />
       <BreadcrumbSchema
         items={[
           { name: 'Ana Sayfa', href: '/' },
@@ -152,11 +155,13 @@ export default function CategoryLandingPage() {
 
       <ProductGrid products={filtered} title="" subtitle={`${filtered.length} ürün`} showSort />
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 space-y-8">
         <div className="rounded-2xl border border-brand-100 bg-white p-6 sm:p-8 text-sm text-gray-600 leading-relaxed">
           <h2 className="font-display font-bold text-brand-900 mb-2">{main.name} hakkında</h2>
           <p>{main.seoFooter}</p>
+          {main.seoBody && <p className="mt-4">{main.seoBody}</p>}
         </div>
+        <CategoryInternalLinks currentSlug={main.slug} />
       </section>
     </>
   );

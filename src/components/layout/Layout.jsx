@@ -5,6 +5,7 @@ import Footer from './Footer';
 import MobileBottomNav from './MobileBottomNav';
 import CartAddedToast from '@/components/cart/CartAddedToast';
 import MetaPixel from '@/components/analytics/MetaPixel';
+import WhatsAppFab from '@/components/layout/WhatsAppFab';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 function isCheckoutPath(pathname) {
@@ -39,6 +40,7 @@ export default function Layout() {
         İçeriğe atla
       </a>
       <MetaPixel />
+      <WhatsAppFab />
       <Header />
       <CartAddedToast />
       <main
