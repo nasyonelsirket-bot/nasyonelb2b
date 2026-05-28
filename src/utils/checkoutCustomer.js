@@ -11,6 +11,33 @@ export const EMPTY_CHECKOUT_CUSTOMER = {
   district: '',
 };
 
+/** Teslimat adresi form alanları — tek kaynak (CartPage + admin önizleme) */
+export const DELIVERY_FIELDS = [
+  { key: 'name', label: 'Ad Soyad', type: 'text', autoComplete: 'name', half: false },
+  { key: 'phone', label: 'Telefon', type: 'tel', autoComplete: 'tel', half: true },
+  { key: 'email', label: 'E-posta', type: 'email', autoComplete: 'email', half: true },
+  {
+    key: 'address',
+    label: 'Adres',
+    type: 'textarea',
+    autoComplete: 'street-address',
+    half: false,
+  },
+  { key: 'city', label: 'İl', type: 'text', autoComplete: 'address-level1', half: true },
+  { key: 'district', label: 'İlçe', type: 'text', autoComplete: 'address-level2', half: true },
+];
+
+export function normalizeCheckoutCustomer(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return { ...EMPTY_CHECKOUT_CUSTOMER };
+  }
+  const out = { ...EMPTY_CHECKOUT_CUSTOMER };
+  for (const { key } of DELIVERY_FIELDS) {
+    if (key in raw) out[key] = String(raw[key] ?? '');
+  }
+  return out;
+}
+
 export function isCheckoutCustomerComplete(c) {
   if (!c) return false;
   return Boolean(

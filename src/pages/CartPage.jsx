@@ -34,6 +34,8 @@ import {
   isCheckoutCustomerComplete,
   loadSavedCheckoutCustomer,
   EMPTY_CHECKOUT_CUSTOMER,
+  DELIVERY_FIELDS,
+  normalizeCheckoutCustomer,
 } from '@/utils/checkoutCustomer';
 import { getMinOrderQtyForProduct } from '@/utils/minOrderQty';
 import { useCheckoutTotals } from '@/hooks/useCheckoutTotals';
@@ -71,7 +73,7 @@ export default function CartPage() {
   const { profile, isLoggedIn } = useMember();
 
   const [step, setStep] = useState(1);
-  const [customer, setCustomer] = useState(() => ({ ...EMPTY_CHECKOUT_CUSTOMER }));
+  const [customer, setCustomer] = useState(() => normalizeCheckoutCustomer(EMPTY_CHECKOUT_CUSTOMER));
   const [customerPrefillSource, setCustomerPrefillSource] = useState(null);
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -101,7 +103,7 @@ export default function CartPage() {
     const { customer: pre, source } = resolveCartCustomerPrefill({ profile, isLoggedIn });
     if (!isCheckoutCustomerComplete(pre)) return;
     if (source === 'member' || !customerPrefilled.current) {
-      setCustomer(pre);
+      setCustomer(normalizeCheckoutCustomer(pre));
       setCustomerPrefillSource(source);
       customerPrefilled.current = true;
     }
@@ -439,7 +441,7 @@ export default function CartPage() {
               </div>
             )}
 
-            {step === 2 && (
+            {step === 2 && Array.isArray(DELIVERY_FIELDS) && DELIVERY_FIELDS.length > 0 && (
               <div
                 className="rounded-2xl border border-brand-200 bg-white p-5 sm:p-6 shadow-card space-y-4 animate-slide-up"
                 onFocusCapture={handleFormStart}
@@ -456,8 +458,10 @@ export default function CartPage() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {DELIVERY_FIELDS.map(({ key, label, type, autoComplete, half }) => {
+                    if (!key || !(key in EMPTY_CHECKOUT_CUSTOMER)) return null;
                     const inputId = fieldId('checkout', key);
                     const fieldWrapClass = half ? 'sm:col-span-1' : 'sm:col-span-2';
+                    const value = customer?.[key] ?? '';
                     return (
                       <div key={key} className={fieldWrapClass}>
                         <label htmlFor={inputId} className="text-xs font-medium text-brand-800">
@@ -467,8 +471,12 @@ export default function CartPage() {
                           <textarea
                             id={inputId}
                             rows={3}
-                            value={customer[key]}
-                            onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
+                            value={value}
+                            onChange={(e) =>
+                              setCustomer((prev) =>
+                                normalizeCheckoutCustomer({ ...prev, [key]: e.target.value }),
+                              )
+                            }
                             placeholder="Mahalle, sokak, bina no, daire"
                             className="mt-1 w-full rounded-xl border border-brand-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/20"
                             required
@@ -477,8 +485,12 @@ export default function CartPage() {
                           <input
                             id={inputId}
                             type={type}
-                            value={customer[key]}
-                            onChange={(e) => setCustomer({ ...customer, [key]: e.target.value })}
+                            value={value}
+                            onChange={(e) =>
+                              setCustomer((prev) =>
+                                normalizeCheckoutCustomer({ ...prev, [key]: e.target.value }),
+                              )
+                            }
                             className="mt-1 w-full rounded-xl border border-brand-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/20"
                             required
                             autoComplete={autoComplete}
